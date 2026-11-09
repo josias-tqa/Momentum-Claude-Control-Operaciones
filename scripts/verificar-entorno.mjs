@@ -199,7 +199,10 @@ const jobs = lectura('or.jobs', 'Jobs de las últimas 24 h', ['or', 'jobs', 'lis
   (items) => `${items.length} job(s); por estado: ${JSON.stringify(contarPor(items, ['State', 'state']))}`);
 lectura('or.jobs.faulted', 'Jobs Faulted de los últimos 7 días', ['or', 'jobs', 'list', ...alcanceCarpeta, '--state', 'Faulted', '--created-after', haceHoras(24 * 7), '--limit', '5']);
 
-const jobConLogs = jobs && jobs.items.find((j) => campoValor(j, ['Key', 'key', 'JobKey']));
+// Preferir un job ya terminado (Faulted/Successful): uno Pending o Running todavía no tiene logs.
+const conClave = (j) => campoValor(j, ['Key', 'key', 'JobKey']);
+const terminado = (j) => ['Faulted', 'Successful', 'Stopped'].includes(String(campoValor(j, ['State', 'state'])));
+const jobConLogs = jobs && (jobs.items.find((j) => conClave(j) && terminado(j)) || jobs.items.find(conClave));
 if (jobConLogs) {
   const clave = campoValor(jobConLogs, ['Key', 'key', 'JobKey']);
   lectura('or.logs', 'Logs de un job (conteo por nivel)', ['or', 'jobs', 'logs', String(clave), ...(carpeta ? ['--folder-path', carpeta] : []), '--limit', '100'],
