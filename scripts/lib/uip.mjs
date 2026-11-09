@@ -24,9 +24,21 @@ export const LECTURA_PERMITIDA = {
   triggers: ['list', 'get', 'history'],
   machines: ['list', 'get'],
   'audit-logs': ['list'],
+  // Paquetes y librerías (feed del tenant): metadatos y DESCARGA del .nupkg para leer el código de la
+  // versión desplegada. La descarga solo se permite hacia work/ (ver destinoPermitido).
+  packages: ['list', 'get', 'versions', 'entry-points', 'download'],
+  libraries: ['list', 'get', 'versions', 'download'],
 };
 
-const FLAGS_PROHIBIDOS = ['--export', '--destination', '-d'];
+const FLAGS_PROHIBIDOS = ['--export'];
+
+// Una descarga (packages/libraries download) solo puede escribir dentro de un directorio work/.
+export function destinoPermitido(ruta) {
+  if (!ruta) return false;
+  const r = String(ruta).replace(/\\/g, '/');
+  if (r.includes('..')) return false;
+  return /^(\.\/)?work\//.test(r) || /\/work\//.test(r);
+}
 
 export class ErrorUip extends Error {
   constructor(mensaje, envelope) {
@@ -42,6 +54,12 @@ export function validarComandoLectura(argv) {
   const verbos = LECTURA_PERMITIDA[recurso];
   if (!verbos || !verbos.includes(verbo)) throw new ErrorUip(`Verbo no permitido para la Torre de Control: uip or ${recurso} ${verbo}`);
   if (argv.some((a) => FLAGS_PROHIBIDOS.includes(a))) throw new ErrorUip('Flag no permitido (exportación a archivo)');
+  const iDest = argv.findIndex((a) => a === '--destination' || a === '-d');
+  if (verbo === 'download') {
+    if (iDest < 0 || !destinoPermitido(argv[iDest + 1])) throw new ErrorUip('Descarga permitida solo con --destination dentro de work/');
+  } else if (iDest >= 0) {
+    throw new ErrorUip('Flag --destination solo permitido en descargas de paquetes o librerías');
+  }
 }
 
 const ENV_UIP = {

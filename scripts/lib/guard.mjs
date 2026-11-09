@@ -1,5 +1,5 @@
 // Reglas del hook de solo lectura (.claude/hooks/guard-solo-lectura.mjs), separadas para poder testearlas.
-import { LECTURA_PERMITIDA } from './uip.mjs';
+import { LECTURA_PERMITIDA, destinoPermitido } from './uip.mjs';
 
 // Separa el comando en segmentos por ; && || | y saltos de línea.
 function segmentos(cmd) {
@@ -30,7 +30,11 @@ export function revisar(comando, cwd = '') {
         if (args.includes('--help') || args.includes('-h')) continue;
         const verbos = LECTURA_PERMITIDA[a1];
         if (!verbos || !verbos.includes(a2)) return `uip or ${a1 || ''} ${a2 || ''} modifica o expone datos sensibles; solo se permiten lecturas`;
-        if (args.some((x) => x === '--export' || x === '--destination')) return 'exportar logs a archivo no está permitido';
+        if (args.includes('--export')) return 'exportar logs a archivo no está permitido';
+        const iD = args.findIndex((x) => x === '--destination' || x === '-d');
+        if (a2 === 'download') {
+          if (iD < 0 || !destinoPermitido(args[iD + 1])) return 'la descarga de paquetes o librerías solo se permite con --destination dentro de work/';
+        } else if (iD >= 0) return '--destination solo se permite en descargas de paquetes o librerías hacia work/';
         continue;
       }
       return `uip ${a0} no está permitido en la rutina`;

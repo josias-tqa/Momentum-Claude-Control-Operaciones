@@ -62,6 +62,11 @@ test('fingerprint: estable ante números, fechas y GUIDs', () => {
 
 test('solo lectura: bloquea verbos que modifican Orchestrator o exponen secretos', () => {
   assert.doesNotThrow(() => validarComandoLectura(['or', 'jobs', 'list']));
+  assert.doesNotThrow(() => validarComandoLectura(['or', 'packages', 'download', 'Pkg:1.0.0', '--destination', 'work/r/pkg.nupkg']));
+  assert.doesNotThrow(() => validarComandoLectura(['or', 'libraries', 'download', 'k', '-d', '/home/user/repo/work/x.nupkg']));
+  for (const argv of [['or', 'packages', 'download', 'P:1'], ['or', 'packages', 'download', 'P:1', '-d', '/tmp/x.nupkg'], ['or', 'libraries', 'download', 'k', '-d', 'work/../../etc/x'], ['or', 'packages', 'upload', 'x'], ['or', 'packages', 'delete', 'P:1'], ['or', 'libraries', 'upload', 'x'], ['or', 'jobs', 'list', '-d', 'work/x']]) {
+    assert.throws(() => validarComandoLectura(argv), argv.join(' '));
+  }
   for (const argv of [['or', 'jobs', 'start'], ['or', 'jobs', 'stop'], ['or', 'assets', 'get-asset-value'], ['or', 'queues', 'delete'], ['or', 'processes', 'rollback'], ['solution', 'deploy'], ['or', 'jobs', 'logs', 'k', '--export']]) {
     assert.throws(() => validarComandoLectura(argv), argv.join(' '));
   }
@@ -173,6 +178,8 @@ test('hook de solo lectura: permite lecturas y bloquea escrituras', () => {
   for (const ok of ['uip --version', 'uip login --client-id env.A --client-secret env.B -t T -s "OR.Jobs.Read"', 'uip login status', 'UIPATH_TELEMETRY_DISABLED=true uip or jobs list --folder-path "Prod/Fin" --output json', 'uip or jobs logs abc --level Error', 'node scripts/collect.mjs --proyecto x', 'git clone --depth 1 https://bitbucket.org/ws/repo.git work/r/clon', 'git -C work/r/clon log -1']) {
     assert.equal(revisar(ok), null, ok);
   }
+  assert.equal(revisar('uip or packages download ValidacionDeDerechosPerformer:1.0.128 --destination work/v/p.nupkg --output json'), null);
+  for (const mal2 of ['uip or packages download X:1 --destination /tmp/x.nupkg', 'uip or libraries download k', 'uip or packages upload x.nupkg', 'uip or libraries delete k']) assert.ok(revisar(mal2), mal2);
   for (const mal of ['uip or jobs start --process X', 'uip or assets get-asset-value k', 'uip or queues delete k', 'uip solution deploy run', 'echo hola && uip or processes rollback k', 'uip or jobs logs k --export -d x.csv', 'git -C work/r/clon push origin main', 'curl -X POST https://cloud.uipath.com/org/t/orchestrator_/odata/Jobs', 'uipcli package deploy']) {
     assert.ok(revisar(mal), mal);
   }
