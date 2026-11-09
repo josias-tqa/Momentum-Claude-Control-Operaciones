@@ -18,8 +18,8 @@ producción.
 | Fase | Estado |
 |---|---|
 | 0.A — CLI `uip` en Linux cloud, sin credenciales | ✅ Completada ([detalle](docs/validacion-uip-cloud.md)) |
-| 0.B — Lecturas reales, Bitbucket y ArtifactData en el entorno de la rutina | ⏳ Pendiente: requiere crear el entorno y las credenciales |
-| 1 a 5 — Desarrollo del colector, el tablero, los skills de la rutina, el piloto y la entrega | Bloqueadas hasta el GO de la Fase 0.B |
+| 0.B — Lecturas reales, Bitbucket y ArtifactData en el entorno de la rutina | ✅ GO (2026-11-09) |
+| 1 a 5 — Desarrollo del colector, el tablero, los skills de la rutina, el piloto y la entrega | Listas para empezar |
 
 ## Contenido actual
 

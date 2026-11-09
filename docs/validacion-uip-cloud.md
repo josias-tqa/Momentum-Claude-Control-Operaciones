@@ -4,7 +4,24 @@ Antes de desarrollar la Torre de Control hay que confirmar que la rutina, corrie
 de Claude cloud, puede leer Orchestrator. Este documento registra lo validado y lo que falta.
 
 - **Fase 0.A**: sin credenciales, en un contenedor cloud. **Completada el 2026-11-09.**
-- **Fase 0.B**: con credenciales reales, en el entorno de la rutina. **Pendiente.** Se ejecuta con el skill `/verificar-entorno`.
+- **Fase 0.B**: con credenciales reales, en el entorno `momentum-operaciones`. **Completada el 2026-11-09: GO.** Se ejecuta con el skill `/verificar-entorno`.
+
+## Resultado de la Fase 0.B (2026-11-09) — GO
+
+| Comprobación | Resultado |
+|---|---|
+| Login headless (client credentials) con los 8 scopes de solo lectura | ✅ |
+| Lecturas por CLI: jobs, historial de un job, logs, colas, queue items, assets, procesos, triggers y máquinas | ✅ |
+| Fallback REST: token y `GET /odata/Folders` | ✅ HTTP 200 |
+| Hosts bloqueados por la política de red | ✅ Ninguno |
+| Bitbucket: `ls-remote` y clon superficial | ✅ Para git funciona Basic con usuario `x-token-auth` (access token). Para la API REST funciona Bearer. |
+| `ArtifactData` (set / get / delete) desde una sesión del entorno | ✅ **Sin aprobación manual** |
+
+Notas para el diseño:
+- `folders list` devuelve 0: la app no lista carpetas a nivel tenant. La rutina consulta siempre con `--folder-path`.
+- `jobs logs` solo trae líneas de jobs terminados. Cada línea tiene `Level`, `Message` y `TimeStamp`.
+- `assets list` trae el campo `Value`, y los queue items traen `SpecificContent` y `SpecificData`. **El colector los descarta sin guardarlos.**
+- `BITBUCKET_REPO_PRUEBA` acepta la URL copiada del navegador. El script la normaliza a `workspace/repo`.
 
 ## Resultado de la Fase 0.A
 
