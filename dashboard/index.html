@@ -118,6 +118,15 @@ textarea{min-height:70px;resize:vertical}
 .card.compact{padding:10px 14px;gap:6px}
 .card.compact .c-title{font-size:14px;font-weight:500}
 .actions .sp{flex:1}
+.procs{display:grid;gap:10px}
+.proc{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:8px;background:var(--bg)}
+.proc-h{display:flex;align-items:center;gap:8px}
+.proc-h b{flex:1;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:620px){.grid2{grid-template-columns:1fr}}
+.role-b{font-family:var(--mono);font-size:11px;border-radius:5px;padding:1px 6px;background:var(--surface-2);color:var(--muted)}
+.plist{display:grid;gap:6px}
+.pitem{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline;font-size:13px}
 
 /* Ver más */
 nav.more{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:16px}
@@ -246,13 +255,80 @@ function md(src) {
   return out;
 }
 
+// ---------- modelo de proyecto: uno o más procesos, cada uno con su repo ----------
+const ROLES = [['dispatcher', 'Dispatcher'], ['performer', 'Performer'], ['reporter', 'Reporter'], ['other', 'Otro']];
+const rolDe = (t) => /dispatch/i.test(t) ? 'dispatcher' : /perform/i.test(t) ? 'performer' : /report/i.test(t) ? 'reporter' : 'other';
+function procesosDe(p) {
+  if (Array.isArray(p.processes) && p.processes.length) return p.processes;
+  if (p.repo && p.repo.slug) return [{ id: slug(p.repo.slug), label: p.repo.slug, role: rolDe(p.repo.slug), repo: p.repo, docs: p.docs || { paths: [] } }]; // formato anterior
+  return [];
+}
+const repoTxt = (r) => (r && r.workspace && r.slug ? `${r.workspace}/${r.slug}` : '');
+function parseRepo(txt) {
+  const x = String(txt || '').trim().replace(/^https?:\/\/(www\.)?bitbucket\.org\//i, '').replace(/\.git$/i, '').split('/').filter(Boolean);
+  return x.length >= 2 ? { workspace: x[0], slug: x[1] } : null;
+}
+const listaDocs = (t) => String(t || '').split(',').map((x) => x.trim()).filter(Boolean);
+// Formulario editable de un proyecto (alta o configuración): S.forms[clave].
+function formDesde(p) {
+  return {
+    nombre: p ? p.name || '' : '', carpeta: p ? (p.orchestrator || {}).folderPath || '' : '', crit: p ? p.triageCriteria || '' : '',
+    docs: p ? ((p.docs || {}).paths || []).join(', ') : '',
+    procesos: p && procesosDe(p).length ? procesosDe(p).map((x) => ({ id: x.id, label: x.label || '', op: x.orchestratorProcess || '', role: x.role || rolDe(x.label || ''),
+      repo: repoTxt(x.repo), rama: (x.repo || {}).branch || 'main', docs: ((x.docs || {}).paths || []).join(', '), carpeta: x.folderPath || '' }))
+      : [{ id: '', label: 'Dispatcher', op: '', role: 'dispatcher', repo: '', rama: 'main', docs: '', carpeta: '' }, { id: '', label: 'Performer', op: '', role: 'performer', repo: '', rama: 'main', docs: '', carpeta: '' }],
+  };
+}
+// Convierte el formulario en el documento del proyecto. Devuelve { error } o { data }.
+function proyectoDesdeForm(f) {
+  if (!f.nombre.trim()) return { error: 'Falta el nombre del proyecto' };
+  if (!f.carpeta.trim()) return { error: 'Falta la carpeta de Orchestrator' };
+  const procs = f.procesos.filter((x) => x.label.trim() || x.repo.trim() || x.op.trim());
+  if (!procs.length) return { error: 'Agregá al menos un proceso' };
+  const usados = new Set(); const processes = [];
+  for (const [i, x] of procs.entries()) {
+    const repo = parseRepo(x.repo);
+    if (!repo) return { error: `Proceso ${i + 1}: falta el repositorio (URL de Bitbucket o workspace/repo)` };
+    let id = x.id || slug(x.label || x.op || repo.slug) || `proceso-${i + 1}`;
+    while (usados.has(id)) id = `${id}-${i + 1}`;
+    usados.add(id);
+    processes.push({ id, label: x.label.trim() || x.op.trim() || repo.slug, orchestratorProcess: x.op.trim() || null, role: x.role || 'other',
+      folderPath: x.carpeta.trim() && x.carpeta.trim() !== f.carpeta.trim() ? x.carpeta.trim() : null,
+      repo: { ...repo, branch: x.rama.trim() || 'main' }, docs: { paths: listaDocs(x.docs) } });
+  }
+  return { data: { name: f.nombre.trim(), orchestrator: { folderPath: f.carpeta.trim() }, processes, docs: { paths: listaDocs(f.docs) }, triageCriteria: f.crit } };
+}
+function formProyectoHtml(clave, f, { boton, botonExtra } = {}) {
+  const fid = (k, i) => `f-${clave}-${i ?? 'p'}-${k}`;
+  const inp = (k, i, v, ph = '') => `<input type="text" id="${fid(k, i)}" data-form="${esc(clave)}" data-k="${k}" ${i !== undefined ? `data-i="${i}"` : ''} value="${esc(v)}" placeholder="${esc(ph)}">`;
+  return `<div class="form">
+    <div class="grid2"><label>Nombre del proyecto${inp('nombre', undefined, f.nombre, 'Validación de derechos')}</label>
+    <label>Carpeta de Orchestrator (producción)${inp('carpeta', undefined, f.carpeta, 'Produccion/Finanzas')}</label></div>
+    <div class="sec-h" style="margin:6px 0 0"><h2>Procesos</h2><span class="cnt">${f.procesos.length}</span></div>
+    <div class="procs">${f.procesos.map((x, i) => `<div class="proc">
+      <div class="proc-h"><b>Proceso ${i + 1}</b>
+        <select id="${fid('role', i)}" data-form="${esc(clave)}" data-k="role" data-i="${i}" aria-label="Rol" style="width:auto">${ROLES.map(([k, l]) => `<option value="${k}" ${x.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        ${f.procesos.length > 1 ? `<button class="btn link" data-act="quitar-proceso" data-form="${esc(clave)}" data-i="${i}">Quitar</button>` : ''}</div>
+      <div class="grid2"><label>Nombre${inp('label', i, x.label, 'Performer')}</label>
+      <label>Nombre en Orchestrator (opcional: el alta lo detecta)${inp('op', i, x.op, 'p. ej. VD_Performer')}</label></div>
+      <label>Repositorio de Bitbucket (URL o workspace/repo)${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
+      <div class="grid2"><label>Rama${inp('rama', i, x.rama, 'main')}</label>
+      <label>Documentación en el repo (opcional, separada por coma)${inp('docs', i, x.docs, 'docs/SDD.md')}</label></div>
+      <label>Carpeta propia (solo si no usa la del proyecto)${inp('carpeta', i, x.carpeta, '')}</label>
+    </div>`).join('')}</div>
+    <div><button class="btn" data-act="agregar-proceso" data-form="${esc(clave)}">+ Agregar proceso</button></div>
+    <label>Documentación común del proyecto (opcional; rutas dentro de cualquiera de los repos)${inp('docs', undefined, f.docs, 'docs/PDD.md')}</label>
+    <label>Criterios de triage del proyecto (opcional)<textarea id="${fid('crit')}" data-form="${esc(clave)}" data-k="crit">${esc(f.crit)}</textarea></label>
+    <div class="actions">${boton}${botonExtra || ''}</div></div>`;
+}
+
 // ---------- estado ----------
 const S = {
   db: null, user: null, me: null, role: 'lector', canWrite: false, isAdmin: false,
   projects: {}, incidents: {}, work: {}, rules: {}, runs: [], settings: null, health: null,
   loaded: { projects:false, incidents:false, work:false, runs:false },
   filter: null, open: {}, panel: {}, drafts: {}, names: {}, sel: {}, activity: {}, history: {}, memory: {},
-  projTab: 'memoria', peopleHits: {}, error: null, stale: false,
+  projTab: 'memoria', peopleHits: {}, error: null, stale: false, forms: {},
 };
 try { S.filter = localStorage.getItem('torre.filtro') || null; } catch {}
 
@@ -269,6 +345,12 @@ const reportable = (i) => i.status === 'open' && (i.decision === 'escalate' || i
 const inFilter = (i) => !S.filter || i.projectId === S.filter;
 const orden = (a, b) => (SEV_ORD[a.severity] - SEV_ORD[b.severity]) || ((a.decision === 'escalate' ? 0 : 1) - (b.decision === 'escalate' ? 0 : 1)) || String(b.lastSeenAt).localeCompare(String(a.lastSeenAt));
 const projName = (id) => (S.projects[id] && S.projects[id].name) || id;
+function procLabel(i) {
+  const p = S.projects[i.projectId]; if (!p) return '';
+  const ps = procesosDe(p); if (ps.length < 2) return '';
+  const x = ps.find((y) => y.id === i.processId) || ps.find((y) => y.orchestratorProcess && y.orchestratorProcess === i.process);
+  return x ? x.label : '';
+}
 
 // ---------- personas (solo ids guardados; nombres resueltos al mostrar) ----------
 async function resolveNames(ids) {
@@ -367,6 +449,7 @@ function cardHtml(i, compacta = false) {
           <span class="pill ${esc(i.severity)}">${esc(i.severity)}</span>
           <span>${esc(CAT[i.category] || i.category)}</span>
           ${S.filter ? '' : `<span class="tag">${esc(projName(i.projectId))}</span>`}
+          ${procLabel(i) ? `<span class="tag">${esc(procLabel(i))}</span>` : ''}
           ${rec.length > 1 || i.occurrences > 1 ? `<span class="tag rec" title="Ocurrencias acumuladas en esta tarjeta">×${esc(i.occurrences)} · última ${esc(rel(i.lastSeenAt))}</span>` : `<span>${esc(rel(i.lastSeenAt))}</span>`}
           ${i.reopenCount ? '<span class="tag reo">Reapareció</span>' : ''}
           ${i.decision === 'notify' ? '<span class="tag">Aviso</span>' : ''}
@@ -572,13 +655,17 @@ function viewProyecto(id) {
   else if (tab === 'produccion') body = (m && m.productionSummary ? `<div class="md">${md(m.productionSummary)}</div>` : '')
     + `<ul class="tl">${hist.map((h) => `<li><time>${esc(fecha(h.at))}</time><span><b>${esc(HIST[h.type] || h.type)}</b> · ${esc(h.summary)}${h.ticket ? ` <span class="mono">[${esc(h.ticket)}]</span>` : ''} <span class="muted">${who(h.by)}</span></span></li>`).join('') || '<li><span></span><span class="muted">Sin historial todavía.</span></li>'}</ul>`;
   else if (tab === 'reglas') body = rulesTable(reglas, true);
-  else if (tab === 'inventario') body = invTable('Procesos', ['Nombre', 'Versión'], (inv.processes || []).map((x) => [x.name, x.version]))
+  else if (tab === 'inventario') body = invTable('Procesos en Orchestrator', ['Nombre', 'Versión', 'Del proyecto'], (inv.processes || []).map((x) => [x.name, x.version, procesosDe(p).some((y) => y.orchestratorProcess === x.name) ? 'sí' : 'no']))
     + invTable('Colas', ['Nombre', 'Reintentos'], (inv.queues || []).map((x) => [x.name, x.maxRetries]))
     + invTable('Triggers', ['Nombre', 'Tipo', 'Habilitado', 'Proceso'], (inv.triggers || []).map((x) => [x.name, x.type, x.enabled ? 'sí' : 'no', x.process]))
     + invTable('Assets (solo nombres)', ['Nombre', 'Tipo'], (inv.assets || []).map((x) => [x.nombre || x.name, x.tipo || x.type]));
   else if (tab === 'config') body = configProyecto(p);
   const tabs = [['memoria', 'Memoria de proceso'], ['produccion', 'Memoria de producción'], ['reglas', `Reglas (${reglas.length})`], ['inventario', 'Inventario'], ['config', 'Configuración']];
-  return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · <span class="mono">${esc(p.repo && p.repo.workspace)}/${esc(p.repo && p.repo.slug)}</span> · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos')
+  const procs = procesosDe(p);
+  return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${procs.length} proceso(s) · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos')
+    + `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
+      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span><span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo) || '—')}</span>${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Sin procesos configurados.</span>'}
+      ${S.isAdmin ? `<div><button class="btn link" data-act="tab" data-t="config" style="padding-left:0">Editar configuración</button></div>` : ''}</div>`
     + (p.statusNote ? `<div class="banner info">${esc(p.statusNote)}</div>` : '')
     + (S.isAdmin && p.status === 'review' ? `<div><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')
     + (S.isAdmin && p.status === 'active' ? `<div class="actions"><button class="btn" data-act="pausar" data-pid="${esc(p.id)}">Pausar control</button><button class="btn" data-act="reanalizar" data-pid="${esc(p.id)}">Pedir re-análisis</button></div>` : '')
@@ -588,12 +675,14 @@ function viewProyecto(id) {
 const invTable = (t, cols, rows) => `<h4 class="muted" style="margin:6px 0 0;font-size:12px;text-transform:uppercase;letter-spacing:.07em">${esc(t)}</h4><div class="tblw"><table><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c ?? '—')}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="muted">—</td></tr>`}</tbody></table></div>`;
 
 function configProyecto(p) {
-  const d = (k, v) => esc(S.drafts[`cfg-${p.id}-${k}`] ?? v ?? '');
-  if (!S.isAdmin) return `<dl class="kv"><dt>Criterios de triage</dt><dd>${esc(p.triageCriteria || '—')}</dd><dt>Documentación</dt><dd class="mono">${esc(((p.docs || {}).paths || []).join(', ') || '—')}</dd></dl>`;
-  return `<div class="form">
-    <label>Criterios de triage del proyecto<textarea id="cfg-${esc(p.id)}-crit">${d('crit', p.triageCriteria)}</textarea></label>
-    <label>Rutas de documentación (separadas por coma)<input type="text" id="cfg-${esc(p.id)}-docs" value="${d('docs', ((p.docs || {}).paths || []).join(', '))}"></label>
-    <div><button class="btn primary" data-act="guardar-proyecto" data-pid="${esc(p.id)}">Guardar</button></div></div>`;
+  if (!S.isAdmin) return `<dl class="kv"><dt>Criterios de triage</dt><dd>${esc(p.triageCriteria || '—')}</dd><dt>Documentación común</dt><dd class="mono">${esc(((p.docs || {}).paths || []).join(', ') || '—')}</dd></dl>`;
+  const clave = 'cfg-' + p.id;
+  if (!S.forms[clave]) S.forms[clave] = formDesde(p);
+  return formProyectoHtml(clave, S.forms[clave], {
+    boton: `<button class="btn primary" data-act="guardar-proyecto" data-pid="${esc(p.id)}" data-reanalizar="1">Guardar y re-analizar</button>`,
+    botonExtra: `<button class="btn" data-act="guardar-proyecto" data-pid="${esc(p.id)}">Solo guardar</button><button class="btn link" data-act="descartar-cambios" data-pid="${esc(p.id)}">Descartar cambios</button>
+      <span class="muted">Si cambiaste repos o procesos, conviene re-analizar: la rutina regenera la memoria y el inventario.</span>`,
+  });
 }
 
 function rulesTable(reglas, enProyecto) {
@@ -632,25 +721,31 @@ function viewAjustes() {
 
 function viewRegistrar() {
   if (!S.isAdmin) return head('Registrar proyecto', 'Solo los Admin pueden registrar proyectos.');
-  const d = (k) => esc(S.drafts['rg-' + k] || '');
-  return head('Registrar proyecto', 'La rutina analiza el proyecto (Orchestrator, código y documentación) y genera su memoria. Después lo revisás y activás.') + `<div class="box form">
-    <label>Nombre del proyecto<input type="text" id="rg-nombre" value="${d('nombre')}" placeholder="Facturación de proveedores"></label>
-    <label>Carpeta de Orchestrator (producción)<input type="text" id="rg-carpeta" value="${d('carpeta')}" placeholder="Produccion/Finanzas"></label>
-    <label>Repositorio de Bitbucket (URL o workspace/repo)<input type="text" id="rg-repo" value="${d('repo')}" placeholder="https://bitbucket.org/workspace/repo"></label>
-    <label>Rama<input type="text" id="rg-rama" value="${d('rama')}" placeholder="main"></label>
-    <label>Documentación dentro del repo (opcional, separada por coma)<input type="text" id="rg-docs" value="${d('docs')}" placeholder="docs/SDD.md, docs/PDD.md"></label>
-    <label>Criterios de triage del proyecto (opcional)<textarea id="rg-crit">${d('crit')}</textarea></label>
-    <div><button class="btn primary" data-act="registrar">Registrar y analizar</button></div></div>` + navMore('registrar');
+  if (!S.forms.nuevo) S.forms.nuevo = formDesde(null);
+  return head('Registrar proyecto', 'Un proyecto agrupa sus procesos (por ejemplo Dispatcher y Performer), cada uno con su repositorio. La rutina analiza Orchestrator, el código y la documentación y genera la memoria; después lo revisás y activás.')
+    + `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar">Registrar y analizar</button>' })}</div>` + navMore('registrar');
 }
 
 // ---------- eventos ----------
 document.addEventListener('input', (e) => {
   const t = e.target; if (!t.id) return;
   S.drafts[t.id] = t.value;
+  if (t.dataset.form && S.forms[t.dataset.form]) {
+    const f = S.forms[t.dataset.form];
+    if (t.dataset.i !== undefined) {
+      const x = f.procesos[Number(t.dataset.i)]; x[t.dataset.k] = t.value;
+      // El rol se deduce del nombre mientras no se haya elegido uno.
+      if (['label', 'op'].includes(t.dataset.k) && (x.role === 'other' || x.autoRole)) { const r = rolDe(`${x.label} ${x.op}`); if (r !== 'other' || x.autoRole) { x.role = r; x.autoRole = true; const sel = document.getElementById(`f-${t.dataset.form}-${t.dataset.i}-role`); if (sel) sel.value = r; } }
+    } else f[t.dataset.k] = t.value;
+  }
   if (t.dataset.act === 'buscar' && S.user) {
     const card = t.closest('[data-inc]'); const id = card && card.dataset.inc;
     S.user.search(t.value).then((hits) => { S.peopleHits[id] = hits; schedule(); });
   }
+});
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.tagName === 'SELECT' && t.dataset.form && S.forms[t.dataset.form]) { const x = S.forms[t.dataset.form].procesos[Number(t.dataset.i)]; x[t.dataset.k] = t.value; x.autoRole = false; }
 });
 document.addEventListener('focusin', (e) => {
   const t = e.target;
@@ -671,6 +766,9 @@ document.addEventListener('click', async (e) => {
   if (act === 'panel') { S.panel[id] = S.panel[id] === b.dataset.p ? null : b.dataset.p; S.sel[id] = {}; return schedule(); }
   if (act === 'sel') { S.sel[id] = { ...(S.sel[id] || {}), [b.dataset.k]: b.dataset.v }; return schedule(); }
   if (act === 'tab') { S.projTab = b.dataset.t; return schedule(); }
+  if (act === 'agregar-proceso') { S.forms[b.dataset.form].procesos.push({ id: '', label: '', op: '', role: 'other', repo: '', rama: 'main', docs: '', carpeta: '' }); return schedule(); }
+  if (act === 'quitar-proceso') { S.forms[b.dataset.form].procesos.splice(Number(b.dataset.i), 1); return schedule(); }
+  if (act === 'descartar-cambios') { delete S.forms['cfg-' + b.dataset.pid]; return schedule(); }
   if (act === 'comentar') {
     const txt = draft('coment'); if (!txt) return;
     b.disabled = true;
@@ -728,18 +826,22 @@ document.addEventListener('click', async (e) => {
       toast('Ajustes guardados');
     } else if (act === 'guardar-proyecto') {
       const pid = b.dataset.pid; const p = S.projects[pid];
-      const crit = S.drafts[`cfg-${pid}-crit`] ?? p.triageCriteria ?? ''; const docs = S.drafts[`cfg-${pid}-docs`] ?? ((p.docs || {}).paths || []).join(', ');
-      await S.db.doc(`projects/${pid}`).update({ triageCriteria: crit, docs: { paths: docs.split(',').map((x) => x.trim()).filter(Boolean) }, updatedAt: nowIso() });
-      toast('Proyecto actualizado');
+      const r = proyectoDesdeForm(S.forms['cfg-' + pid] || formDesde(p));
+      if (r.error) return toast(r.error);
+      // `repo` era el formato anterior (un solo repo por proyecto): se reemplaza por `processes`.
+      await S.db.doc(`projects/${pid}`).update({ ...r.data, repo: null, updatedAt: nowIso(), updatedBy: S.me || null });
+      if (b.dataset.reanalizar) {
+        await S.db.collection('requests').add({ type: 'reanalyze_project', projectId: pid, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
+        toast('Guardado. La próxima corrida re-analiza el proyecto.');
+      } else toast('Configuración guardada');
+      S.forms['cfg-' + pid] = formDesde({ ...p, ...r.data });
     } else if (act === 'registrar') {
-      const g = (k) => (S.drafts['rg-' + k] || '').trim();
-      const repo = g('repo').replace(/^https?:\/\/(www\.)?bitbucket\.org\//i, '').replace(/\.git$/i, '').split('/');
-      if (!g('nombre') || !g('carpeta') || repo.length < 2 || !repo[0] || !repo[1]) return toast('Completá nombre, carpeta y repositorio');
-      let id = slug(g('nombre')); if (S.projects[id]) id = `${id}-${Date.now().toString(36).slice(-4)}`;
-      await S.db.doc(`projects/${id}`).set({ name: g('nombre'), status: 'pending_analysis', orchestrator: { folderPath: g('carpeta') }, repo: { workspace: repo[0], slug: repo[1], branch: g('rama') || 'main' },
-        docs: { paths: g('docs').split(',').map((x) => x.trim()).filter(Boolean) }, triageCriteria: g('crit'), createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
+      const r = proyectoDesdeForm(S.forms.nuevo || formDesde(null));
+      if (r.error) return toast(r.error);
+      let id = slug(r.data.name); if (S.projects[id]) id = `${id}-${Date.now().toString(36).slice(-4)}`;
+      await S.db.doc(`projects/${id}`).set({ ...r.data, status: 'pending_analysis', createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
       await S.db.collection('requests').add({ type: 'onboard_project', projectId: id, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
-      for (const k of ['nombre', 'carpeta', 'repo', 'rama', 'docs', 'crit']) delete S.drafts['rg-' + k];
+      delete S.forms.nuevo;
       toast('Proyecto registrado: la rutina lo analiza en la próxima corrida');
       location.hash = '#proyecto-' + id;
     }

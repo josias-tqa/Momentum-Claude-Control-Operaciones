@@ -37,14 +37,35 @@ Si el problema vuelve a ocurrir, **no se crea otra tarjeta**. La misma muestra "
 
 ## Registrar un proyecto (Admin)
 
+Un **proyecto** agrupa sus **procesos**, por ejemplo un Dispatcher, un Performer y un Reporter. Normalmente comparten la carpeta de Orchestrator y cada uno tiene su propio repositorio.
+
 1. Ver más → **Registrar proyecto**. Completá:
-   - nombre;
-   - carpeta de producción de Orchestrator;
-   - repo de Bitbucket (sirve la URL copiada del navegador);
-   - rama;
-   - rutas de la documentación.
-2. La próxima corrida analiza el proyecto: inventario, baseline de 30 días, código y documentación. Genera la **memoria de proceso** y propone reglas.
+   - el nombre;
+   - la carpeta de producción de Orchestrator;
+   - los procesos: por cada uno, su nombre, el repo de Bitbucket (sirve la URL copiada del navegador) y la rama.
+     - Opcional: el nombre del proceso en Orchestrator. Si lo dejás vacío, el análisis lo detecta.
+     - Opcional: la documentación del proceso.
+     - Opcional: una carpeta propia, si no usa la del proyecto.
+   - Con **+ Agregar proceso** sumás más procesos.
+2. La próxima corrida analiza el proyecto:
+   - inventario y baseline de 30 días;
+   - el código de cada repo y la documentación;
+   - empareja cada repo con su proceso de Orchestrator y avisa si un repo no corresponde.
+   - Genera la **memoria de proceso** y propone reglas.
 3. Revisá la memoria y las reglas, y tocá **Activar el control de este proyecto**.
+
+## Corregir la configuración de un proyecto (Admin)
+
+1. Entrá al proyecto (Ver más → Proyectos) y tocá **Editar configuración**, o andá a la pestaña **Configuración**.
+2. Ahí podés cambiar:
+   - el nombre;
+   - la carpeta;
+   - los repos;
+   - agregar o quitar procesos;
+   - la documentación y los criterios de triage.
+3. **Guardar y re-analizar** guarda los cambios y pide a la próxima corrida que vuelva a analizar el proyecto: memoria, inventario y emparejamiento.
+   - Si el proyecto ya estaba activo, sigue activo.
+   - **Solo guardar** no dispara el análisis.
 
 ## Reglas
 

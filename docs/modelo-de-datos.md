@@ -15,7 +15,7 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 |---|---|---|
 | `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria |
 | `config/health`, `config/runlock` | Rutina | Última corrida, fallas consecutivas, uso de la base; lock entre corridas |
-| `projects/{id}` | Admin (alta y configuración) y rutina (salud, watermarks, inventario) | Carpeta de Orchestrator, repo de Bitbucket, rutas de docs, `status`, criterios del proyecto, baseline |
+| `projects/{id}` | Admin (alta y configuración) y rutina (salud, watermarks, inventario, emparejamiento) | Carpeta de Orchestrator, **procesos** (cada uno con su repo, su rol, su nombre en Orchestrator y, opcionalmente, su carpeta y su documentación), documentación común, `status`, criterios del proyecto, baseline. Detalle: `scripts/lib/proyecto.mjs` |
 | `memory/{projectId}` | Rutina (Admin puede corregir) | `process`: memoria de proceso (mini-PDD). `productionSummary`: resumen rodante de la memoria de producción |
 | `history/{id}` | Rutina | **Memoria de producción**, append-only y permanente |
 | `rules/{id}` | Admin (crear, aprobar) y rutina (compilar, proponer) | Regla en lenguaje natural, su `compiled`, `status` y `origin` |

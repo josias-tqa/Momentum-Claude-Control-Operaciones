@@ -16,11 +16,17 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
 
 ## Pasos
 
-1. **Código en la versión desplegada:**
+1. **Código del proceso afectado, en la versión desplegada.** Un proyecto tiene un repo por proceso.
+   - El incidente trae `processId` (Dispatcher, Performer…) y `process` (nombre en Orchestrator).
    ```bash
-   node scripts/fetch-repo.mjs --proyecto work/$RUN/db/projects/<id>.json --destino work/$RUN/repos/<id> --version <versión del proceso afectado>
+   node scripts/fetch-repo.mjs --proyecto work/$RUN/db/projects/<id>.json --proceso <processId o process> --destino work/$RUN/repos/<id>/<processId>
    ```
-   - La versión sale de `projects.inventory.processes`. El resultado dice si el ref coincide con la versión (`coincideVersion`) y el `sha`.
+   - La versión sale sola del inventario del proyecto. El resultado dice si el ref coincide con la versión (`coincideVersion`) y el `sha`.
+   - **Si el incidente es de una cola**, sin proceso, mirá los dos lados:
+     - el proceso que la escribe (Dispatcher), para saber si cargó datos inválidos;
+     - el que la consume (Performer), para saber si falla al procesarlos.
+     La memoria de proceso dice qué proceso usa cada cola.
+   - Si el incidente no tiene proceso asociado, elegilo por la evidencia (el `proceso` de los jobs o logs) o por la memoria.
    - Si no hay tag `v<versión>`, se usa la rama configurada. Decilo en el análisis: el código puede no ser exactamente el desplegado.
    - Reutilizá el clon si ya existe en esta corrida.
 2. **Ubicar el paso que falla:**
@@ -31,7 +37,7 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
      - buscar el playbook;
      - verificar con evidencia del runtime.
    - **No ejecutes** comandos de esos skills que no sean de lectura. El hook los bloquea igual.
-3. **Documentación:** leé del SDD/PDD (rutas en `projects.docs.paths`, o lo que encontró `fetch-repo`) solo las secciones relevantes:
+3. **Documentación:** leé del SDD/PDD del proceso (`processes[].docs.paths`), de la documentación común (`projects.docs.paths`) o de lo que encontró `fetch-repo`, solo las secciones relevantes:
    - tabla de excepciones (BE/AE);
    - Work Queues;
    - Assets/Configuración;
@@ -61,7 +67,7 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
   "requiresFix": false,
   "suggestedActions": [ "acción concreta para el humano (verificar credencial X en Orchestrator, coordinar con el dueño de SAP, …)" ],
   "responseOptions": [ "Requiere fix", "Comportamiento esperado", "Volver a controlar en 1 semana" ],
-  "repo": { "ref": "v1.4.0", "sha": "<sha>", "matchesDeployedVersion": true }
+  "repo": { "ref": "v1.4.0", "sha": "<sha>", "matchesDeployedVersion": true, "process": "<processId>" }
 }
 ```
 

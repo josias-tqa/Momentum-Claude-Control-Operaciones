@@ -25,7 +25,7 @@ w.data.analysis = {
   requiresFix: typeof a.requiresFix === 'boolean' ? a.requiresFix : null,
   suggestedActions: (a.suggestedActions || []).slice(0, 8).map((s) => txt(s, 500)),
   responseOptions: (a.responseOptions || []).slice(0, 5).map((s) => txt(s, 200)),
-  repo: a.repo ? { ref: String(a.repo.ref || ''), sha: String(a.repo.sha || ''), matchesDeployedVersion: Boolean(a.repo.matchesDeployedVersion) } : null,
+  repo: a.repo ? { ref: String(a.repo.ref || ''), sha: String(a.repo.sha || ''), matchesDeployedVersion: Boolean(a.repo.matchesDeployedVersion), process: a.repo.process ? String(a.repo.process).slice(0, 60) : null } : null,
   analyzedAt: new Date().toISOString(),
 };
 plan.analizar = (plan.analizar || []).filter((x) => x !== id);

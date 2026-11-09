@@ -99,6 +99,20 @@
    "Type": "Unattended",
    "Priority": "Normal",
    "MachineKey": "m1"
+  },
+  {
+   "Key": "job-99",
+   "ProcessName": "OTRO_Proyecto_Performer",
+   "State": "Faulted",
+   "CreationTime": "2026-11-09T10:30:00Z",
+   "StartTime": "2026-11-09T10:30:10Z",
+   "EndTime": "2026-11-09T10:31:00Z",
+   "HostMachineName": "VM-ROBOT-02",
+   "ReleaseKey": "rel-x",
+   "Source": "Queue",
+   "Type": "Unattended",
+   "Priority": "Normal",
+   "MachineKey": "m2"
   }
  ]
 }

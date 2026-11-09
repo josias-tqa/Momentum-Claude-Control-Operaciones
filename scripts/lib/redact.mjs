@@ -73,7 +73,9 @@ export function sanitizarQueueItem(item, cola) {
 }
 
 export function sanitizarAsset(asset) {
-  return { nombre: asset.Name ?? null, tipo: asset.ValueType ?? null, alcance: asset.ValueScope ?? null };
+  // Hay nombres de assets que incluyen números de documento (p. ej. credenciales por usuario): se enmascaran.
+  const nombre = asset.Name == null ? null : redactarTexto(String(asset.Name)).replace(/\d{6,}/g, '<id>');
+  return { nombre, tipo: asset.ValueType ?? null, alcance: asset.ValueScope ?? null };
 }
 
 export function sanitizarJob(job) {

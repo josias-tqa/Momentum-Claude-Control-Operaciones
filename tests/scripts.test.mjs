@@ -186,3 +186,55 @@ test('redacción: datos de pacientes (Colombia) — cédula, NIT y nombres etiqu
   // No debe comerse texto técnico normal.
   assert.equal(redactarTexto('Usuario o contraseña inválidos en el portal'), 'Usuario o contraseña inválidos en el portal');
 });
+
+import { normalizarProyecto, carpetasDe, filtroDeProcesos, procesoPorNombre } from '../scripts/lib/proyecto.mjs';
+import { emparejar } from '../scripts/emparejar-procesos.mjs';
+
+test('proyecto con varios procesos: la colecta filtra por los procesos del proyecto', () => {
+  const { senales } = senalesDeFixture();
+  assert.ok(!senales.jobs.some((j) => j.proceso === 'OTRO_Proyecto_Performer'), 'no trae jobs de otro proyecto de la misma carpeta');
+  assert.ok(!senales.procesos.some((p) => p.nombre === 'OTRO_Proyecto_Performer'));
+  assert.deepEqual(senales.procesosDelProyecto.map((x) => x.id), ['dispatcher', 'performer']);
+  assert.equal(senales.filtradoPorProceso, true);
+});
+
+test('proyecto con varios procesos: cada hallazgo sabe a qué proceso (y repo) pertenece', () => {
+  const { senales } = senalesDeFixture();
+  const r = evaluar({ senales, proyecto: proyecto(), reglas: [regla()] });
+  assert.equal(r.hallazgos.find((h) => h.categoria === 'login').processId, 'performer');
+  const plan = consolidar({ runId: 'r', inicio: 'x', fin: '2026-11-09T11:00:00Z', trigger: 'dry_run', proyectos: [proyecto()], incidentes: [], trabajo: [], porProyecto: [{ projectId: 'facturacion', hallazgos: r, senales }] });
+  assert.equal(plan.writes.find((w) => w.collection === 'incidents' && w.data.category === 'login').data.processId, 'performer');
+});
+
+test('proyecto: el formato anterior (un solo repo) se lee como un proceso', () => {
+  const n = normalizarProyecto({ name: 'X', orchestrator: { folderPath: 'A' }, repo: { workspace: 'w', slug: 'x-performer' }, docs: { paths: ['docs/SDD.md'] } });
+  assert.equal(n.processes.length, 1);
+  assert.equal(n.processes[0].role, 'performer');
+  assert.equal(n.processes[0].repo.slug, 'x-performer');
+  assert.equal(filtroDeProcesos(n), null, 'sin nombre de Orchestrator no filtra');
+});
+
+test('proyecto: carpetas por proceso y búsqueda por nombre de Orchestrator', () => {
+  const p = { orchestrator: { folderPath: 'Prod/VD' }, processes: [
+    { id: 'd', label: 'Dispatcher', orchestratorProcess: 'VD_Dispatcher', repo: { workspace: 'w', slug: 'd' } },
+    { id: 'r', label: 'Reporter', folderPath: 'Prod/Reportes', repo: { workspace: 'w', slug: 'r' } },
+  ] };
+  assert.deepEqual(carpetasDe(p), ['Prod/VD', 'Prod/Reportes']);
+  assert.equal(procesoPorNombre(p, 'VD_Dispatcher').id, 'd');
+  assert.equal(procesoPorNombre(p, 'VD_Reporter').id, 'r', 'por rol cuando falta el nombre');
+});
+
+test('emparejar procesos: por paquete, por rol, y sin adivinar ante ambigüedad', () => {
+  const proyecto = { orchestrator: { folderPath: 'Prod/VD' }, processes: [
+    { id: 'dispatcher', label: 'Dispatcher', repo: { workspace: 'w', slug: 'vd-dispatcher' } },
+    { id: 'performer', label: 'Performer', repo: { workspace: 'w', slug: 'vd-performer' } },
+    { id: 'otro', label: 'Otro', role: 'other', repo: { workspace: 'w', slug: 'vd-otro' } },
+  ] };
+  const inventario = { inventory: { processes: [{ name: 'VD_Dispatcher', package: 'VD.Dispatcher' }, { name: 'VD_Performer', package: 'CO_CL_Performer' }, { name: 'VD_Reporter', package: 'VD.Reporter' }] } };
+  const r = emparejar(proyecto, inventario, [{ proceso: 'performer', paquete: 'CO_CL_Performer' }]);
+  const m = Object.fromEntries(r.processes.map((x) => [x.id, x.orchestratorProcess]));
+  assert.equal(m.performer, 'VD_Performer');
+  assert.equal(m.dispatcher, 'VD_Dispatcher');
+  assert.equal(m.otro, null);
+  assert.deepEqual(r.sinDeclarar, ['VD_Reporter']);
+});

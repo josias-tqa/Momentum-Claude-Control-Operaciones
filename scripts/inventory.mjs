@@ -16,11 +16,15 @@ import { uip, uipTodo, login } from './lib/uip.mjs';
 import { sanitizarJob, sanitizarQueueItem, sanitizarAsset, sanitizarLog } from './lib/redact.mjs';
 import { normalizarFirma } from './lib/fingerprint.mjs';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
+import { normalizarProyecto, carpetasDe } from './lib/proyecto.mjs';
 
-const proyecto = desenvolver(leerJson(arg('--proyecto')));
+const proyecto = normalizarProyecto(desenvolver(leerJson(arg('--proyecto'))));
 const salida = arg('--salida');
 const dias = Number(arg('--dias') || 30);
-const F = ['--folder-path', proyecto.orchestrator.folderPath];
+// En el alta se inventaría TODA la carpeta (o carpetas) del proyecto: así se ve qué procesos hay
+// y se emparejan con los declarados (scripts/emparejar-procesos.mjs).
+const carpetas = carpetasDe(proyecto);
+const porCarpeta = (fn) => carpetas.flatMap((c) => fn(['--folder-path', c], c));
 const desde = new Date(Date.now() - dias * 86400000).toISOString();
 const errores = [];
 const intentar = (n, fn, d = []) => { try { return fn(); } catch (e) { errores.push(`${n}: ${e.message}`); return d; } };
@@ -29,16 +33,16 @@ try { login(); } catch (e) { errores.push(`login: ${e.message}`); }
 
 const percentil = (xs, p) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]; };
 
-const procesos = intentar('processes', () => uipTodo(['or', 'processes', 'list', ...F], { maximo: 500 })).map((p) => ({ name: p.Name, version: p.ProcessVersion, key: p.Key, package: p.ProcessKey }));
-const colas = intentar('queues', () => uipTodo(['or', 'queues', 'list', ...F], { maximo: 500 })).map((q) => ({ name: q.Name, key: q.Key, maxRetries: q.MaxNumberOfRetries ?? null, uniqueReference: q.EnforceUniqueReference ?? null, autoRetry: q.AcceptAutomaticallyRetry ?? null }));
-const assets = intentar('assets', () => uipTodo(['or', 'assets', 'list', ...F], { maximo: 1000 })).map(sanitizarAsset);
-const triggers = [
-  ...intentar('triggers time', () => uip(['or', 'triggers', 'list', '--type', 'time', ...F, '--limit', '200'])).map((t) => ({ ...t, __t: 'time' })),
-  ...intentar('triggers queue', () => uip(['or', 'triggers', 'list', '--type', 'queue', ...F, '--limit', '200'])).map((t) => ({ ...t, __t: 'queue' })),
-].map((t) => ({ name: t.Name, type: t.__t, enabled: t.Enabled ?? null, cron: t.StartProcessCron ?? null, timezone: t.TimeZoneId ?? null, process: t.ReleaseName ?? null }));
-const maquinas = intentar('machines', () => uip(['or', 'machines', 'list', ...F, '--limit', '100'])).map((m) => ({ name: m.Name, type: m.Type, unattendedSlots: m.UnattendedSlots ?? null }));
+const procesos = porCarpeta((F, c) => intentar(`processes [${c}]`, () => uipTodo(['or', 'processes', 'list', ...F], { maximo: 500 })).map((p) => ({ name: p.Name, version: p.ProcessVersion, key: p.Key, package: p.ProcessKey, folderPath: c })));
+const colas = porCarpeta((F, c) => intentar(`queues [${c}]`, () => uipTodo(['or', 'queues', 'list', ...F], { maximo: 500 })).map((q) => ({ name: q.Name, key: q.Key, maxRetries: q.MaxNumberOfRetries ?? null, uniqueReference: q.EnforceUniqueReference ?? null, autoRetry: q.AcceptAutomaticallyRetry ?? null, folderPath: c })));
+const assets = porCarpeta((F, c) => intentar(`assets [${c}]`, () => uipTodo(['or', 'assets', 'list', ...F], { maximo: 1000 })).map((a) => ({ ...sanitizarAsset(a), folderPath: c })));
+const triggers = porCarpeta((F, c) => [
+  ...intentar(`triggers time [${c}]`, () => uip(['or', 'triggers', 'list', '--type', 'time', ...F, '--limit', '200'])).map((t) => ({ ...t, __t: 'time' })),
+  ...intentar(`triggers queue [${c}]`, () => uip(['or', 'triggers', 'list', '--type', 'queue', ...F, '--limit', '200'])).map((t) => ({ ...t, __t: 'queue' })),
+]).map((t) => ({ name: t.Name, type: t.__t, enabled: t.Enabled ?? null, cron: t.StartProcessCron ?? null, timezone: t.TimeZoneId ?? null, process: t.ReleaseName ?? null }));
+const maquinas = porCarpeta((F, c) => intentar(`machines [${c}]`, () => uip(['or', 'machines', 'list', ...F, '--limit', '100']))).map((m) => ({ name: m.Name, type: m.Type, unattendedSlots: m.UnattendedSlots ?? null }));
 
-const jobs = intentar('jobs', () => uipTodo(['or', 'jobs', 'list', ...F, '--created-after', desde, '--sort-by', 'CreationTime desc'], { maximo: 10000 })).map(sanitizarJob);
+const jobs = porCarpeta((F, c) => intentar(`jobs [${c}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--created-after', desde, '--sort-by', 'CreationTime desc'], { maximo: 10000 })).map((j) => ({ ...sanitizarJob(j), carpeta: c })));
 const porProceso = {};
 for (const j of jobs) (porProceso[j.proceso] ||= []).push(j);
 const estadisticas = {};
@@ -64,7 +68,7 @@ for (const [proc, js] of Object.entries(porProceso)) {
 // Firmas de error más frecuentes (muestra de hasta 40 jobs fallidos).
 const firmas = {};
 for (const j of jobs.filter((x) => x.estado === 'Faulted').slice(0, 40)) {
-  const lineas = intentar(`logs ${j.key}`, () => uip(['or', 'jobs', 'logs', j.key, ...F, '--level', 'Error', '--limit', '50']));
+  const lineas = intentar(`logs ${j.key}`, () => uip(['or', 'jobs', 'logs', j.key, '--folder-path', j.carpeta, '--level', 'Error', '--limit', '50']));
   const ult = (Array.isArray(lineas) ? lineas : []).filter((l) => ['Error', 'Fatal'].includes(l.Level)).slice(-1)[0];
   if (!ult) continue;
   const s = sanitizarLog(ult, j.key);
@@ -75,7 +79,7 @@ for (const j of jobs.filter((x) => x.estado === 'Faulted').slice(0, 40)) {
 // Excepciones de negocio por día y por cola (muestra limitada).
 const businessExceptionsPerDay = {};
 for (const q of colas) {
-  const items = intentar(`queue-items ${q.name}`, () => uipTodo(['or', 'queue-items', 'list', ...F, '--queue-name', q.name, '--status', 'Failed', '--sort-by', 'Id desc', '--all-fields'], { maximo: 3000, corte: (it) => (it.EndProcessing || it.CreationTime || '') < desde }))
+  const items = intentar(`queue-items ${q.name}`, () => uipTodo(['or', 'queue-items', 'list', '--folder-path', q.folderPath, '--queue-name', q.name, '--status', 'Failed', '--sort-by', 'Id desc', '--all-fields'], { maximo: 3000, corte: (it) => (it.EndProcessing || it.CreationTime || '') < desde }))
     .map((it) => sanitizarQueueItem(it, q.name)).filter((it) => (it.fin || it.creado) >= desde);
   const negocio = items.filter((i) => i.tipoExcepcion === 'Business').length;
   businessExceptionsPerDay[q.name] = Math.round((negocio / dias) * 10) / 10;
@@ -83,6 +87,7 @@ for (const q of colas) {
 
 const resultado = {
   projectId: proyecto.id,
+  carpetas,
   generadoEn: new Date().toISOString(),
   dias,
   inventory: { processes: procesos, queues: colas, assets, triggers, machines: maquinas },

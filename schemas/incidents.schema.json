@@ -208,6 +208,13 @@
         "type": "object"
       },
       "maxItems": 10
+    },
+    "processId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 60
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",

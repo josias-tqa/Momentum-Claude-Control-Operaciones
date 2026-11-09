@@ -2,20 +2,10 @@
  "id": "facturacion",
  "version": 7,
  "data": {
-  "name": "Facturaci\u00f3n (ejemplo)",
+  "name": "Facturación (ejemplo)",
   "status": "active",
   "orchestrator": {
    "folderPath": "Produccion/Finanzas"
-  },
-  "repo": {
-   "workspace": "ejemplo",
-   "slug": "fin-facturacion",
-   "branch": "main"
-  },
-  "docs": {
-   "paths": [
-    "docs/SDD.md"
-   ]
   },
   "triageCriteria": "Errores de login en SAP: escalar siempre (bloquean todo el lote).",
   "inventory": {
@@ -48,6 +38,43 @@
     "FIN_Facturacion_Dispatcher": 2
    }
   },
-  "watermarks": {}
+  "watermarks": {},
+  "processes": [
+   {
+    "id": "dispatcher",
+    "label": "Dispatcher",
+    "orchestratorProcess": "FIN_Facturacion_Dispatcher",
+    "role": "dispatcher",
+    "folderPath": null,
+    "repo": {
+     "workspace": "ejemplo",
+     "slug": "fin-facturacion-dispatcher",
+     "branch": "main"
+    },
+    "docs": {
+     "paths": []
+    }
+   },
+   {
+    "id": "performer",
+    "label": "Performer",
+    "orchestratorProcess": "FIN_Facturacion_Performer",
+    "role": "performer",
+    "folderPath": null,
+    "repo": {
+     "workspace": "ejemplo",
+     "slug": "fin-facturacion-performer",
+     "branch": "main"
+    },
+    "docs": {
+     "paths": [
+      "docs/SDD.md"
+     ]
+    }
+   }
+  ],
+  "docs": {
+   "paths": []
+  }
  }
 }

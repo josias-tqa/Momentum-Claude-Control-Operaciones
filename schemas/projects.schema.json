@@ -3,8 +3,7 @@
   "required": [
     "name",
     "status",
-    "orchestrator",
-    "repo"
+    "orchestrator"
   ],
   "properties": {
     "name": {
@@ -128,6 +127,87 @@
     "updatedAt": {
       "type": "string",
       "maxLength": 40
+    },
+    "processes": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "orchestratorProcess": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "dispatcher",
+              "performer",
+              "reporter",
+              "other"
+            ]
+          },
+          "folderPath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          },
+          "repo": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "workspace",
+              "slug"
+            ],
+            "properties": {
+              "workspace": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "slug": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "branch": {
+                "type": "string",
+                "maxLength": 120
+              }
+            }
+          },
+          "docs": {
+            "type": "object",
+            "properties": {
+              "paths": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {
+                  "type": "string",
+                  "maxLength": 300
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",

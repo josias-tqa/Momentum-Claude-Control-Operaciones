@@ -33,6 +33,7 @@ async function abrir({ role = 'admin', vacio = false, sinDb = false, viewport = 
 }
 const ok = [];
 const paso = (n) => ok.push(n);
+const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then(() => true, () => false);
 
 // 1) Admin: bandeja de acción ordenada, "Para revisar", sin duplicados por tema.
 {
@@ -42,16 +43,17 @@ const paso = (n) => ok.push(n);
   const sev = await page.$$eval('main .card .pill', (els) => els.map((e) => e.textContent));
   assert.deepEqual([...sev].sort(), sev.slice().sort(), 'ordenadas por severidad');
   assert.equal(titulos.filter((t) => /login/i.test(t)).length, 1, 'una sola tarjeta de login');
-  assert.ok(await page.isVisible('text=Para revisar'), 'admin ve Para revisar');
-  assert.ok(await page.isVisible('text=×7'), 'badge de recurrencia');
+  assert.ok(await visible(page, 'text=Para revisar'), 'admin ve Para revisar');
+  assert.ok(await visible(page, 'text=×7'), 'badge de recurrencia');
   paso('admin: bandeja ordenada, una tarjeta por tema, recurrencia visible');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'admin-escritorio.png'), fullPage: true });
 
   // Detalle con análisis.
   const login = page.locator('.card', { hasText: 'login' }).first();
   await login.locator('[data-act="detalle"]').click();
-  assert.ok(await page.isVisible('text=Análisis previo'));
-  assert.ok(await page.isVisible('text=Framework/InitAllApplications.xaml:42'));
+  // Esperar al render (requestAnimationFrame) en vez de leer en el mismo tick.
+  await page.waitForSelector('text=Análisis previo', { timeout: 3000 });
+  await page.waitForSelector('text=Framework/InitAllApplications.xaml:42', { timeout: 3000 });
   paso('detalle: triage, análisis, código y evidencia');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'detalle.png'), fullPage: true });
 
@@ -82,7 +84,7 @@ const paso = (n) => ok.push(n);
   // Filtro por proyecto: un clic.
   await page.click('[data-filter="conciliacion"]');
   await page.waitForTimeout(100);
-  assert.ok(await page.isVisible('text=Todo en orden'));
+  assert.ok(await visible(page, 'text=Todo en orden'));
   await page.click('[data-filter=""]');
   paso('filtro por proyecto con un clic');
 
@@ -91,8 +93,8 @@ const paso = (n) => ok.push(n);
   await page.waitForTimeout(100);
   await page.click('a.rowi >> nth=0');
   await page.waitForTimeout(100);
-  assert.ok(await page.isVisible('text=Punto de control'));
-  assert.ok(await page.isVisible('text=Hallazgos y triage'));
+  assert.ok(await visible(page, 'text=Punto de control'));
+  assert.ok(await visible(page, 'text=Hallazgos y triage'));
   paso('corridas: checks y triage por proyecto');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'corrida.png'), fullPage: true });
 
@@ -105,27 +107,64 @@ const paso = (n) => ok.push(n);
   paso('reglas: aprobar una propuesta');
   await page.evaluate(() => { location.hash = '#proyecto-facturacion'; });
   await page.waitForTimeout(150);
-  assert.ok(await page.isVisible('text=Registra en SAP las facturas'));
+  assert.ok(await visible(page, 'text=Registra en SAP las facturas'));
   paso('proyecto: memoria de proceso');
-  // Registrar proyecto.
+  // Registrar proyecto con dos procesos (Dispatcher y Performer), cada uno con su repo.
   await page.evaluate(() => { location.hash = '#registrar'; });
   await page.waitForTimeout(100);
-  await page.fill('#rg-nombre', 'Cobranzas');
-  await page.fill('#rg-carpeta', 'Produccion/Cobranzas');
-  await page.fill('#rg-repo', 'https://bitbucket.org/elementblue/cobranzas/src/main/');
+  await page.fill('#f-nuevo-p-nombre', 'Cobranzas');
+  await page.fill('#f-nuevo-p-carpeta', 'Produccion/Cobranzas');
+  await page.fill('#f-nuevo-0-repo', 'https://bitbucket.org/elementblue/cobranzas-dispatcher/src/main/');
+  await page.fill('#f-nuevo-1-repo', 'elementblue/cobranzas-performer');
+  await page.fill('#f-nuevo-1-op', 'COB_Performer');
+  await page.click('[data-act="agregar-proceso"]');
+  await page.fill('#f-nuevo-2-label', 'Reporter');
+  await page.selectOption('#f-nuevo-2-role', 'reporter');
+  await page.fill('#f-nuevo-2-repo', 'elementblue/cobranzas-reporter');
   await page.click('[data-act="registrar"]');
   await page.waitForTimeout(150);
   const w2 = await page.evaluate(() => window.__WRITES__);
-  assert.ok(w2.some((w) => w.path === 'projects/cobranzas' && w.data.repo.slug === 'cobranzas' && w.data.status === 'pending_analysis'));
+  const nuevo = w2.find((w) => w.path === 'projects/cobranzas');
+  assert.ok(nuevo && nuevo.data.status === 'pending_analysis');
+  assert.deepEqual(nuevo.data.processes.map((x) => [x.id, x.role, x.repo.slug]), [['dispatcher', 'dispatcher', 'cobranzas-dispatcher'], ['performer', 'performer', 'cobranzas-performer'], ['reporter', 'reporter', 'cobranzas-reporter']]);
+  assert.equal(nuevo.data.processes[1].orchestratorProcess, 'COB_Performer');
+  assert.equal(nuevo.data.orchestrator.folderPath, 'Produccion/Cobranzas');
   assert.ok(w2.some((w) => w.path.startsWith('requests/') && w.data.type === 'onboard_project'));
-  paso('registrar proyecto: crea el proyecto y la solicitud de análisis');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'registrar.png'), fullPage: true });
+  paso('registrar proyecto con varios procesos, cada uno con su repo');
+
+  // Editar la configuración de un proyecto con el formato anterior (un solo repo) y re-analizar.
+  await page.evaluate(() => { location.hash = '#proyecto-nomina'; });
+  await page.waitForTimeout(150);
+  await page.click('text=Editar configuración');
+  await page.waitForTimeout(100);
+  assert.equal(await page.inputValue('#f-cfg-nomina-0-repo'), 'ejemplo/nomina');
+  await page.fill('#f-cfg-nomina-0-repo', 'https://bitbucket.org/ejemplo/nomina-performer');
+  await page.fill('#f-cfg-nomina-0-label', 'Performer');
+  assert.equal(await page.inputValue('#f-cfg-nomina-0-role'), 'performer', 'el rol se deduce del nombre');
+  await page.click('[data-act="agregar-proceso"]');
+  await page.fill('#f-cfg-nomina-1-label', 'Dispatcher');
+  await page.selectOption('#f-cfg-nomina-1-role', 'dispatcher');
+  await page.fill('#f-cfg-nomina-1-repo', 'ejemplo/nomina-dispatcher');
+  await page.click('[data-act="guardar-proyecto"][data-reanalizar="1"]');
+  await page.waitForTimeout(150);
+  const w3 = await page.evaluate(() => window.__WRITES__);
+  const upd = w3.filter((w) => w.path === 'projects/nomina').pop();
+  assert.equal(upd.data.repo, null, 'se reemplaza el formato anterior');
+  assert.deepEqual(upd.data.processes.map((x) => x.repo.slug), ['nomina-performer', 'nomina-dispatcher']);
+  assert.ok(w3.some((w) => w.path.startsWith('requests/') && w.data.type === 'reanalyze_project' && w.data.projectId === 'nomina'));
+  assert.ok(await visible(page, 'text=nomina-dispatcher'), 'el resumen de procesos se actualiza');
+  assert.equal(await page.inputValue('#f-cfg-nomina-1-repo'), 'ejemplo/nomina-dispatcher', 'el formulario queda con lo guardado');
+  assert.equal(upd.data.processes[0].role, 'performer');
+  paso('editar configuración: cambiar repo, agregar proceso, guardar y re-analizar');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'proyecto-config.png'), fullPage: true });
   await ctx.close();
 }
 
 // 2) Operador: acciones sobre incidentes, sin acciones de Admin; "Para vos".
 {
   const { page, ctx } = await abrir({ role: 'operador' });
-  assert.ok(await page.isVisible('text=Para vos'));
+  assert.ok(await visible(page, 'text=Para vos'));
   assert.ok(!(await page.isVisible('text=Para revisar')));
   assert.ok(await page.locator('[data-act="panel"]').count() > 0);
   paso('operador: ve "Para vos" y acciones rápidas, no ve tareas de Admin');
@@ -143,11 +182,11 @@ const paso = (n) => ok.push(n);
 // 4) Base vacía y sin db.
 {
   const { page, ctx } = await abrir({ vacio: true });
-  assert.ok(await page.isVisible('text=Todo en orden'));
-  assert.ok(await page.isVisible('text=Registrá el primero'));
+  assert.ok(await visible(page, 'text=Todo en orden'));
+  assert.ok(await visible(page, 'text=Registrá el primero'));
   await ctx.close();
   const r = await abrir({ sinDb: true });
-  assert.ok(await r.page.isVisible('text=necesita una sesión'));
+  assert.ok(await visible(r.page, 'text=necesita una sesión'));
   await r.ctx.close();
   paso('estados vacíos: sin datos y sin base');
 }

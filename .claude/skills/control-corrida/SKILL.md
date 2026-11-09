@@ -68,6 +68,10 @@ node scripts/evaluate.mjs --senales work/$RUN/<id>/senales.json --proyecto work/
 ```
 
 - `reglas.json` es un array con las reglas activas: `{id, ...cuerpo}` leídas de `work/$RUN/db/rules`.
+- La colecta cubre todas las carpetas del proyecto: la del proyecto más las propias de algún proceso.
+  - Si todos los procesos tienen `orchestratorProcess`, se limita a ellos: la carpeta puede compartirse con otros proyectos.
+  - Si a alguno le falta, consulta la carpeta completa y lo dice en `senales.filtradoPorProceso`.
+  - Cada hallazgo trae `processId`: el proceso del proyecto al que pertenece, que define qué repo mira el análisis.
 - Restale 5 minutos a `--desde` como solapamiento. El dedupe evita los duplicados.
 - Con más de 3 proyectos, procesalos en paralelo con subagentes, uno por proyecto, que solo ejecuten estos dos comandos.
 

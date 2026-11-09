@@ -15,6 +15,13 @@
    "Key": "rel-d",
    "ProcessKey": "FIN_Facturacion_Dispatcher",
    "IsLatestVersion": true
+  },
+  {
+   "Name": "OTRO_Proyecto_Performer",
+   "ProcessVersion": "2.0.0",
+   "Key": "rel-x",
+   "ProcessKey": "OTRO_Proyecto_Performer",
+   "IsLatestVersion": true
   }
  ]
 }

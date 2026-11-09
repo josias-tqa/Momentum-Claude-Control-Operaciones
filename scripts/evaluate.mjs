@@ -14,6 +14,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fingerprint, normalizarFirma } from './lib/fingerprint.mjs';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
+import { normalizarProyecto, procesoPorNombre } from './lib/proyecto.mjs';
 
 // ---------- clasificación por texto ----------
 const CATEGORIAS = [
@@ -113,7 +114,8 @@ const minimo = (xs) => xs.filter(Boolean).sort()[0] || null;
 const maximo = (xs) => xs.filter(Boolean).sort().slice(-1)[0] || null;
 
 // ---------- evaluación ----------
-export function evaluar({ senales, proyecto, reglas = [], ajustes = {} }) {
+export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = {} }) {
+  const proyecto = normalizarProyecto(proyectoIn);
   const projectId = senales.projectId;
   const checks = [];
   const hallazgos = [];
@@ -122,7 +124,9 @@ export function evaluar({ senales, proyecto, reglas = [], ajustes = {} }) {
 
   function hallazgo(h) {
     const fp = fingerprint({ projectId, categoria: h.categoria, proceso: h.proceso, cola: h.cola, firma: h.firmaBase ?? h.firma });
-    hallazgos.push({ id: fp, fingerprint: fp, projectId, ...h, firmaNormalizada: normalizarFirma(h.firmaBase ?? h.firma) });
+    // Proceso del proyecto (dispatcher, performer...) al que pertenece: define qué repo mira el análisis.
+    const proc = procesoPorNombre(proyecto, h.proceso);
+    hallazgos.push({ id: fp, fingerprint: fp, projectId, processId: proc ? proc.id : null, ...h, firmaNormalizada: normalizarFirma(h.firmaBase ?? h.firma) });
   }
   function check(id, nombre, resultado, observado, umbral) {
     checks.push({ id, nombre, resultado, observado, umbral: umbral ?? null });
