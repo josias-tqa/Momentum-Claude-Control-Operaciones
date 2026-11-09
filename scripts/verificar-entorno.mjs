@@ -269,12 +269,32 @@ if (!faltantes.length) {
 // ---------- 6) Bitbucket (token de solo lectura) ----------
 if (process.env.BITBUCKET_TOKEN && repoPrueba) {
   // El header de autenticación va por GIT_CONFIG_* (entorno), no por argv ni en la URL.
-  const cred = process.env.BITBUCKET_USER
-    ? 'Basic ' + Buffer.from(`${process.env.BITBUCKET_USER}:${process.env.BITBUCKET_TOKEN}`).toString('base64')
-    : `Bearer ${process.env.BITBUCKET_TOKEN}`;
-  const envGit = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://bitbucket.org/.extraHeader', GIT_CONFIG_VALUE_0: `Authorization: ${cred}` };
+  // Bitbucket acepta distintas formas según el tipo de token; se prueban en orden y se reporta cuál sirvió:
+  //  - access token de repositorio/proyecto/workspace: Basic con usuario fijo "x-token-auth";
+  //  - API token de Atlassian: Basic con BITBUCKET_USER (usuario o email) + token;
+  //  - Bearer: válido para la API REST con access tokens.
+  const tok = process.env.BITBUCKET_TOKEN;
+  const basic = (u) => 'Basic ' + Buffer.from(`${u}:${tok}`).toString('base64');
+  const estrategias = [
+    ...(process.env.BITBUCKET_USER ? [{ nombre: 'Basic BITBUCKET_USER', cred: basic(process.env.BITBUCKET_USER) }] : []),
+    { nombre: 'Basic x-token-auth (access token)', cred: basic('x-token-auth') },
+    { nombre: 'Bearer', cred: `Bearer ${tok}` },
+  ];
   const url = `https://bitbucket.org/${repoPrueba}.git`;
-  const lsr = ejecutar('git', ['ls-remote', '--heads', '--tags', url], { env: envGit, timeoutMs: 60000 });
+
+  // Diagnóstico por API REST: distingue token inválido / sin acceso al repo / tipo de token.
+  for (const e of estrategias) {
+    const r = curlConfig([`url = "https://api.bitbucket.org/2.0/repositories/${repoPrueba}?fields=slug"`, `header = "Authorization: ${e.cred}"`, `user-agent = "${USER_AGENT}"`]);
+    registrar(`bb.api.${e.nombre}`, `Bitbucket API (${e.nombre})`, separarHttp(r.stdout).http === '200' ? 'ok' : 'aviso', `HTTP ${separarHttp(r.stdout).http}`);
+  }
+
+  let envGit = null;
+  let lsr = { codigo: 1, stderr: 'sin estrategias' };
+  for (const e of estrategias) {
+    const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://bitbucket.org/.extraHeader', GIT_CONFIG_VALUE_0: `Authorization: ${e.cred}` };
+    lsr = ejecutar('git', ['ls-remote', '--heads', '--tags', url], { env, timeoutMs: 60000 });
+    if (lsr.codigo === 0) { envGit = env; registrar('bb.auth', 'Bitbucket: forma de autenticación git', 'ok', e.nombre); break; }
+  }
   if (lsr.codigo !== 0) {
     registrar('bb.lsremote', 'Bitbucket: ls-remote', 'falla', (lsr.stderr || '').split('\n').filter(Boolean).slice(-1)[0] || `código ${lsr.codigo}`);
   } else {
