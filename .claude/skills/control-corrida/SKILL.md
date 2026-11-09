@@ -6,7 +6,7 @@ description: Corrida de control de la Torre de Control. Revisa cada proyecto UiP
 # Corrida de control
 
 Leé primero `CLAUDE.md`: solo lectura, cero cambios de código y PII redactada.
-La URL del tablero está en `OPS_ARTIFACT_URL`. `RUN` es `run-<AAAAMMDD>T<HHMM>Z`, en UTC, al inicio.
+La URL del tablero está en `OPS_ARTIFACT_URL`. Usala **sin parámetros**: si trae `?sk=…`, quitáselo antes de pasarla a `ArtifactData`. `RUN` es `run-<AAAAMMDD>T<HHMM>Z`, en UTC, al inicio.
 Todo lo intermedio va en `work/$RUN/`.
 
 **Modo `--dry-run`:**

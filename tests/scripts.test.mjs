@@ -177,3 +177,12 @@ test('hook de solo lectura: permite lecturas y bloquea escrituras', () => {
     assert.ok(revisar(mal), mal);
   }
 });
+
+test('redacción: datos de pacientes (Colombia) — cédula, NIT y nombres etiquetados', () => {
+  const s = redactarTexto('Paciente: María Fernanda López Gómez con CC 1023456 no tiene derechos vigentes en EPS NIT 900.123.456-7; afiliado Juan Pérez');
+  for (const x of ['María', 'López', '1023456', '900.123.456-7', 'Juan', 'Pérez']) assert.ok(!s.includes(x), `${x} en: ${s}`);
+  assert.match(s, /Paciente: \[NOMBRE\]/);
+  assert.match(s, /CC \[DOCUMENTO\]/);
+  // No debe comerse texto técnico normal.
+  assert.equal(redactarTexto('Usuario o contraseña inválidos en el portal'), 'Usuario o contraseña inválidos en el portal');
+});

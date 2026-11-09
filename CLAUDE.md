@@ -8,7 +8,7 @@ controla los proyectos UiPath en producción. Lee tres fuentes:
 - La documentación de cada proyecto.
 
 Con eso clasifica lo que encuentra y lo escribe en el tablero compartido (artifact con base de
-datos, `OPS_ARTIFACT_URL`). El equipo de Momentum opera desde ese tablero.
+datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de Momentum opera desde ese tablero.
 
 ## Reglas que nunca se rompen
 

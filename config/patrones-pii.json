@@ -2,6 +2,22 @@
   "_nota": "Patrones de redacción aplicados a todo texto que venga de Orchestrator (logs, motivos de excepción) ANTES de escribir en el tablero. El orden importa: los más específicos primero. Agregar patrones propios de Momentum aquí.",
   "patrones": [
     {
+      "nombre": "nombre_etiquetado",
+      "regex": "\\b((?:[Pp]aciente|PACIENTE|[Aa]filiad[oa]|AFILIAD[OA]|[Bb]eneficiari[oa]|BENEFICIARI[OA]|[Tt]itular|TITULAR|[Nn]ombre|NOMBRE|[Cc]liente|CLIENTE))(\\s*[:=]\\s*|\\s+)([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\\s+(?:de\\s+|del\\s+)?[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})",
+      "reemplazo": "$1$2[NOMBRE]"
+    },
+    {
+      "nombre": "documento_etiquetado",
+      "regex": "\\b(c\\.?\\s?c\\.?|t\\.?\\s?i\\.?|c[eé]dula|documento|identificaci[oó]n|n[uú]mero de id|nro\\.? doc\\.?|pasaporte)(\\s*(?:no\\.?|n[°º]|#)?\\s*[:=]?\\s*)[A-Z]{0,2}\\d[\\d.\\-]{4,14}",
+      "flags": "gi",
+      "reemplazo": "$1$2[DOCUMENTO]"
+    },
+    {
+      "nombre": "nit",
+      "regex": "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-\\d\\b",
+      "reemplazo": "[ID-FISCAL]"
+    },
+    {
       "nombre": "email",
       "regex": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
       "reemplazo": "[EMAIL]"
