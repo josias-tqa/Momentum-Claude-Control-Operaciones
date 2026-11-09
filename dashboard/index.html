@@ -287,14 +287,17 @@ function proyectoDesdeForm(f) {
   if (!procs.length) return { error: 'Agregá al menos un proceso' };
   const usados = new Set(); const processes = [];
   for (const [i, x] of procs.entries()) {
-    const repo = parseRepo(x.repo);
-    if (!repo) return { error: `Proceso ${i + 1}: falta el repositorio (URL de Bitbucket o workspace/repo)` };
-    let id = x.id || slug(x.label || x.op || repo.slug) || `proceso-${i + 1}`;
+    // El repo es opcional: un proceso sin repo (p. ej. sin versionar en Bitbucket) se controla igual,
+    // pero el análisis previo no puede mirar su código.
+    const repo = x.repo.trim() ? parseRepo(x.repo) : null;
+    if (x.repo.trim() && !repo) return { error: `Proceso ${i + 1}: el repositorio tiene que ser la URL de Bitbucket o workspace/repo` };
+    if (!repo && !x.label.trim() && !x.op.trim()) return { error: `Proceso ${i + 1}: falta el nombre` };
+    let id = x.id || slug(x.label || x.op || (repo && repo.slug)) || `proceso-${i + 1}`;
     while (usados.has(id)) id = `${id}-${i + 1}`;
     usados.add(id);
     processes.push({ id, label: x.label.trim() || x.op.trim() || repo.slug, orchestratorProcess: x.op.trim() || null, role: x.role || 'other',
       folderPath: x.carpeta.trim() && x.carpeta.trim() !== f.carpeta.trim() ? x.carpeta.trim() : null,
-      repo: { ...repo, branch: x.rama.trim() || 'main' }, docs: { paths: listaDocs(x.docs) } });
+      repo: repo ? { ...repo, branch: x.rama.trim() || 'main' } : null, docs: { paths: listaDocs(x.docs) } });
   }
   return { data: { name: f.nombre.trim(), orchestrator: { folderPath: f.carpeta.trim() }, processes, docs: { paths: listaDocs(f.docs) }, triageCriteria: f.crit } };
 }
@@ -311,7 +314,7 @@ function formProyectoHtml(clave, f, { boton, botonExtra } = {}) {
         ${f.procesos.length > 1 ? `<button class="btn link" data-act="quitar-proceso" data-form="${esc(clave)}" data-i="${i}">Quitar</button>` : ''}</div>
       <div class="grid2"><label>Nombre${inp('label', i, x.label, 'Performer')}</label>
       <label>Nombre en Orchestrator (opcional: el alta lo detecta)${inp('op', i, x.op, 'p. ej. VD_Performer')}</label></div>
-      <label>Repositorio de Bitbucket (URL o workspace/repo)${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
+      <label>Repositorio de Bitbucket (URL o workspace/repo; vacío si no está versionado)${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
       <div class="grid2"><label>Rama${inp('rama', i, x.rama, 'main')}</label>
       <label>Documentación en el repo (opcional, separada por coma)${inp('docs', i, x.docs, 'docs/SDD.md')}</label></div>
       <label>Carpeta propia (solo si no usa la del proyecto)${inp('carpeta', i, x.carpeta, '')}</label>
@@ -664,7 +667,7 @@ function viewProyecto(id) {
   const procs = procesosDe(p);
   return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${procs.length} proceso(s) · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos')
     + `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
-      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span><span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo) || '—')}</span>${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Sin procesos configurados.</span>'}
+      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span><span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo) || 'sin repo (se controla, sin análisis de código)')}</span>${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Sin procesos configurados.</span>'}
       ${S.isAdmin ? `<div><button class="btn link" data-act="tab" data-t="config" style="padding-left:0">Editar configuración</button></div>` : ''}</div>`
     + (p.statusNote ? `<div class="banner info">${esc(p.statusNote)}</div>` : '')
     + (S.isAdmin && p.status === 'review' ? `<div><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')

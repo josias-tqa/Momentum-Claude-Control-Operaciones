@@ -10,7 +10,7 @@
 //     orchestratorProcess,                             nombre del proceso en Orchestrator (lo completa el alta si falta)
 //     role,                                            dispatcher | performer | reporter | other
 //     folderPath,                                      opcional: solo si difiere de la carpeta del proyecto
-//     repo: { workspace, slug, branch },
+//     repo: { workspace, slug, branch } | null,      null = no versionado: se controla, pero sin análisis de código
 //     docs: { paths: [] }                              opcional: documentación propia del proceso
 //   } ]
 //   docs: { paths }                                    documentación común del proyecto (si la hay)

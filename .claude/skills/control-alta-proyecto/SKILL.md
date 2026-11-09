@@ -33,6 +33,7 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    ```
    - Guardá cada salida JSON en el array `work/$RUN/alta/<id>/repos.json`.
    - Si un repo no se puede clonar (no existe, o el token no tiene acceso), anotalo y seguí con los demás. El proyecto termina en `error` solo si **ningún** repo se pudo leer.
+   - Un proceso puede no tener repo (`repo: null`) porque no está versionado. Se empareja por nombre o rol, se controla igual, y en la memoria queda dicho que no hay código para el análisis. No lo trates como error.
    - **Emparejá** cada proceso con su proceso de Orchestrator:
      ```bash
      node scripts/emparejar-procesos.mjs --proyecto work/$RUN/db/projects/<id>.json --inventario work/$RUN/alta/<id>/inventario.json --repos work/$RUN/alta/<id>/repos.json

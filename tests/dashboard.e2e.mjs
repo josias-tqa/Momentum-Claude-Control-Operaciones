@@ -120,13 +120,13 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.click('[data-act="agregar-proceso"]');
   await page.fill('#f-nuevo-2-label', 'Reporter');
   await page.selectOption('#f-nuevo-2-role', 'reporter');
-  await page.fill('#f-nuevo-2-repo', 'elementblue/cobranzas-reporter');
+  // El Reporter queda sin repo (no versionado): se permite.
   await page.click('[data-act="registrar"]');
   await page.waitForTimeout(150);
   const w2 = await page.evaluate(() => window.__WRITES__);
   const nuevo = w2.find((w) => w.path === 'projects/cobranzas');
   assert.ok(nuevo && nuevo.data.status === 'pending_analysis');
-  assert.deepEqual(nuevo.data.processes.map((x) => [x.id, x.role, x.repo.slug]), [['dispatcher', 'dispatcher', 'cobranzas-dispatcher'], ['performer', 'performer', 'cobranzas-performer'], ['reporter', 'reporter', 'cobranzas-reporter']]);
+  assert.deepEqual(nuevo.data.processes.map((x) => [x.id, x.role, x.repo && x.repo.slug]), [['dispatcher', 'dispatcher', 'cobranzas-dispatcher'], ['performer', 'performer', 'cobranzas-performer'], ['reporter', 'reporter', null]]);
   assert.equal(nuevo.data.processes[1].orchestratorProcess, 'COB_Performer');
   assert.equal(nuevo.data.orchestrator.folderPath, 'Produccion/Cobranzas');
   assert.ok(w2.some((w) => w.path.startsWith('requests/') && w.data.type === 'onboard_project'));
