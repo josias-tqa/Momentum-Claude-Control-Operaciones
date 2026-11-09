@@ -295,6 +295,9 @@ test('descubrimiento: agrupa procesos por carpeta, marca registrados y arma el p
   assert.equal(fin.registradoComo, 'facturacion', 'la carpeta ya registrada se reconoce');
   assert.deepEqual(fin.processes.map((p) => p.role).sort(), ['dispatcher', 'performer']);
   assert.ok(otro.activo, 'tiene jobs en la ventana');
+  // Los jobs se atribuyen por Key aunque Orchestrator devuelva mayúsculas en el proceso y minúsculas en el job.
+  assert.equal(fin.processes.find((p) => p.role === 'performer')._info.jobs, 6);
+  assert.equal(otro.jobs, 1);
   const plan = planDescubrimiento(c, { ahora: '2026-11-09T21:00:00Z' });
   assert.deepEqual(plan.creados.map((x) => x.folderPath), ['Produccion/Otro']);
   assert.ok(plan.writes.some((w) => w.collection === 'requests' && w.data.type === 'onboard_project'));

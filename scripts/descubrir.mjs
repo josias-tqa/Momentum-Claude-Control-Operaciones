@@ -62,7 +62,9 @@ for (const carpeta of carpetas) {
   const jobs = intentar(`jobs [${carpeta}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--created-after', desde], { maximo: 10000 }));
   jobsAnalizados += jobs.length;
   for (const j of jobs) {
-    const k = j.ReleaseKey || j.ProcessName;
+    // Orchestrator devuelve el Key del proceso en MAYÚSCULAS y el ReleaseKey del job en minúsculas:
+    // se compara siempre en minúsculas.
+    const k = String(j.ReleaseKey || j.ProcessName || '').toLowerCase();
     if (!k) continue;
     const a = (actividad[k] ||= { jobs: 0, faulted: 0, ultimo: null });
     a.jobs += 1;
@@ -71,7 +73,7 @@ for (const carpeta of carpetas) {
     if (t && (!a.ultimo || t > a.ultimo)) a.ultimo = t;
   }
 }
-const actDe = (p) => actividad[p.key] || actividad[p.name] || { jobs: 0, faulted: 0, ultimo: null };
+const actDe = (p) => actividad[String(p.key || '').toLowerCase()] || actividad[String(p.name || '').toLowerCase()] || { jobs: 0, faulted: 0, ultimo: null };
 
 const registrados = registradosPrevios;
 const carpetaRegistrada = (fp) => registrados.find((r) => (r.orchestrator && r.orchestrator.folderPath) === fp || r.processes.some((x) => x.folderPath === fp));

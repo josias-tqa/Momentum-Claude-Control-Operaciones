@@ -7,7 +7,7 @@
     {
      "Name": "FIN_Facturacion_Performer",
      "ProcessVersion": "1.4.0",
-     "Key": "rel-p",
+     "Key": "REL-FIN_FACTURACION_PERFORMER",
      "ProcessKey": "FIN_Facturacion_Performer",
      "IsLatestVersion": true,
      "FolderPath": "Produccion/Finanzas"
@@ -15,7 +15,7 @@
     {
      "Name": "FIN_Facturacion_Dispatcher",
      "ProcessVersion": "1.3.2",
-     "Key": "rel-d",
+     "Key": "REL-FIN_FACTURACION_DISPATCHER",
      "ProcessKey": "FIN_Facturacion_Dispatcher",
      "IsLatestVersion": true,
      "FolderPath": "Produccion/Finanzas"
@@ -29,7 +29,7 @@
     {
      "Name": "OTRO_Proyecto_Performer",
      "ProcessVersion": "2.0.0",
-     "Key": "rel-x",
+     "Key": "REL-OTRO_PROYECTO_PERFORMER",
      "ProcessKey": "OTRO_Proyecto_Performer",
      "IsLatestVersion": true,
      "FolderPath": "Produccion/Otro"
