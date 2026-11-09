@@ -20,9 +20,19 @@ const ORDEN_SEV = { P1: 1, P2: 2, P3: 3, P4: 4 };
 const masGrave = (a, b) => (ORDEN_SEV[a] <= ORDEN_SEV[b] ? a : b);
 const DIAS_REAPERTURA = 30;
 
+// Lee una colección exportada con ArtifactData (out_dir). Los archivos traen solo el cuerpo del
+// documento; la versión (necesaria para if_version) la registra el agente en <db>/_versiones.json
+// como { "coleccion/docId": version }, copiándola del resultado del list/query.
 export function leerColeccion(dir) {
   if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => desenvolver(leerJson(join(dir, f)), f.replace(/\.json$/, '')));
+  const coleccion = dir.split('/').filter(Boolean).pop();
+  const versiones = leerJson(join(dir, '..', '_versiones.json'), {});
+  return readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => {
+    const id = f.replace(/\.json$/, '');
+    const doc = desenvolver(leerJson(join(dir, f)), id);
+    if (!doc.__version && versiones[`${coleccion}/${id}`]) doc.__version = versiones[`${coleccion}/${id}`];
+    return doc;
+  });
 }
 
 function decisionPorDefecto(h) {

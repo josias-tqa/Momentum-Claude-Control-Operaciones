@@ -166,3 +166,14 @@ test('fixtures: copiar el escenario no requiere red', () => {
   cpSync(join(FIX, 'db'), join(dir, 'db'), { recursive: true });
   assert.ok(readFileSync(join(dir, 'db/projects/facturacion.json'), 'utf8').includes('Produccion/Finanzas'));
 });
+
+import { revisar } from '../scripts/lib/guard.mjs';
+
+test('hook de solo lectura: permite lecturas y bloquea escrituras', () => {
+  for (const ok of ['uip --version', 'uip login --client-id env.A --client-secret env.B -t T -s "OR.Jobs.Read"', 'uip login status', 'UIPATH_TELEMETRY_DISABLED=true uip or jobs list --folder-path "Prod/Fin" --output json', 'uip or jobs logs abc --level Error', 'node scripts/collect.mjs --proyecto x', 'git clone --depth 1 https://bitbucket.org/ws/repo.git work/r/clon', 'git -C work/r/clon log -1']) {
+    assert.equal(revisar(ok), null, ok);
+  }
+  for (const mal of ['uip or jobs start --process X', 'uip or assets get-asset-value k', 'uip or queues delete k', 'uip solution deploy run', 'echo hola && uip or processes rollback k', 'uip or jobs logs k --export -d x.csv', 'git -C work/r/clon push origin main', 'curl -X POST https://cloud.uipath.com/org/t/orchestrator_/odata/Jobs', 'uipcli package deploy']) {
+    assert.ok(revisar(mal), mal);
+  }
+});

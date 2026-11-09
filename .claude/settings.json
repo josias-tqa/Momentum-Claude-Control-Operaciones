@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/*)",
+      "Bash(node --test *)",
+      "Bash(npm test)",
+      "Bash(uip --version)",
+      "Bash(uip login *)",
+      "Bash(uip or *)",
+      "Bash(git clone *)",
+      "Bash(git -C work/*)",
+      "Bash(bash scripts/setup-entorno.sh)",
+      "Bash(pandoc *)",
+      "ArtifactData"
+    ],
+    "deny": [
+      "Bash(uip or assets get-asset-value*)",
+      "Bash(uip solution *)",
+      "Bash(uip rpa *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-solo-lectura.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

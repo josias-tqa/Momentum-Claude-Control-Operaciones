@@ -1,0 +1,8 @@
+{
+  "triageCriteria": "Criterios globales de Grupo Momentum (editables por un Admin desde Ajustes):\n- Escalar siempre: errores de login/credenciales, procesos que no corrieron cuando debían, fallas silenciosas (job Successful con Fatal), errores de sistema que afectan a todos los items de un lote.\n- Avisar (notify): errores de sistema aislados, items abandonados, triggers deshabilitados.\n- No reportar (monitor/known): deploys detectados, excepciones de negocio dentro del rango normal, todo lo que la memoria de producción explica como esperado.\n- Ante la duda entre escalar o no, escalar con confianza 'baja' y decir por qué.",
+  "severityMatrix": "P1: proceso crítico detenido o SLA incumplido hoy.\nP2: proceso degradado (errores repetidos, login, no corrió) con riesgo de SLA.\nP3: errores aislados o anomalías que no comprometen el SLA.\nP4: informativo.",
+  "retention": { "runsDays": 60, "closedIncidentsDays": 180 },
+  "intervalMinutes": 60,
+  "pendingMaxMinutes": 30,
+  "timezone": "America/Argentina/Buenos_Aires"
+}
