@@ -86,6 +86,7 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    - `processes` (de `emparejar-procesos`), y `repo: null` si venía del formato anterior;
    - `inventory` (de `inventario.json`);
    - `baseline`;
+   - `watermarks.lastJobByProcess` = `ultimoJobPorProceso` de `inventario.json`, solo si no existe ya;
    - `status`: `"review"`, o `"active"` si era un re-análisis de un proyecto activo;
    - `statusNote`, con un resumen de 2 o 3 líneas de lo encontrado y las discrepancias.
 8. **Reglas iniciales propuestas.** 3 a 6 documentos `rules/<id>-<slug>` con:

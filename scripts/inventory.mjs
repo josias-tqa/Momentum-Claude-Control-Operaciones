@@ -94,6 +94,8 @@ const resultado = {
   estadisticas,
   firmasFrecuentes: Object.values(firmas).sort((a, b) => b.cantidad - a.cantidad).slice(0, 15),
   baseline: { expectedMaxGapHours, businessExceptionsPerDay },
+  // Último job por proceso: semilla de watermarks.lastJobByProcess (las reglas de "no corrió en N horas" lo usan).
+  ultimoJobPorProceso: Object.fromEntries(Object.entries(porProceso).map(([proc, js]) => [proc, js.map((j) => j.creado).filter(Boolean).sort().slice(-1)[0] || null])),
   errores,
 };
 mkdirSync(dirname(salida), { recursive: true });

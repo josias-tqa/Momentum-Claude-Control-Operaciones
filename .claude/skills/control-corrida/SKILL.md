@@ -53,6 +53,9 @@ Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natura
   "severity": "P1|P2|P3|P4", "action": "alert|escalate|known|ignore", "category": "login|selector|…", "title": "texto corto" }
 ```
 
+- `category` tiene que ser una de: `business`, `application`, `login`, `selector`, `app_down`, `data`, `infrastructure`, `configuration`, `scheduling`, `sla`, `regression`, `silent_failure`, `monitoring`, `deploy`, `other`. "No corrió" es `scheduling`.
+- `absence` ("no corrió en N horas"): `windowMinutes` es la brecha máxima tolerada. Se evalúa contra el último job conocido del proceso (`watermarks.lastJobByProcess`), no solo contra la ventana colectada.
+- `rate`: el denominador son los registros del mismo alcance (`process`/`queue`), y la condición (`state`, `level`, `messageRegex`) define el numerador. Con menos de `minSample` registros (3 por defecto) no alerta.
 - Si la regla no se puede expresar así, usá `{"mode":"llm", "severity", "action"}`. La evaluás vos en el paso 6.
 - Escribí `compileNote` con una frase en español que diga cómo se entendió la regla. El tablero la muestra.
 - Pasá la regla a `status: "active"`. Las reglas `proposed` no se tocan: las aprueba un Admin.

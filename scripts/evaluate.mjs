@@ -67,7 +67,29 @@ function comparar(valor, comparador, umbral) {
   }
 }
 
-export function evaluarRegla(regla, senales) {
+// Categorías válidas de un incidente (schemas/incidents.schema.json). Una regla compilada con otra
+// palabra ("no-ejecuto", "fallas-masivas"...) se traduce aquí para no romper la validación.
+export const CATEGORIAS_VALIDAS = ['business', 'application', 'login', 'selector', 'app_down', 'data', 'infrastructure', 'configuration', 'scheduling', 'sla', 'regression', 'silent_failure', 'monitoring', 'deploy', 'other'];
+export function normalizarCategoria(cat, textoAlternativo) {
+  if (CATEGORIAS_VALIDAS.includes(cat)) return cat;
+  const t = String(cat || '').toLowerCase();
+  if (/ejecut|corri|run|ausen|schedul|trigger|program|pending/.test(t)) return 'scheduling';
+  if (/login|credencial|auth/.test(t)) return 'login';
+  if (/sla/.test(t)) return 'sla';
+  if (/negocio|business/.test(t)) return 'business';
+  if (/infra|robot|maquina|machine|licen/.test(t)) return 'infrastructure';
+  if (/config|asset/.test(t)) return 'configuration';
+  if (/selector|ui/.test(t)) return 'selector';
+  if (/ca[ií]da|down|timeout/.test(t)) return 'app_down';
+  return categorizar(textoAlternativo || t);
+}
+
+// Campos del filtro que definen el ALCANCE (sobre qué conjunto se calcula una tasa) frente a los que
+// definen la CONDICIÓN (qué cuenta como "malo").
+const ALCANCE = ['process', 'queue'];
+const soloAlcance = (f = {}) => Object.fromEntries(Object.entries(f).filter(([k]) => ALCANCE.includes(k)));
+
+export function evaluarRegla(regla, senales, proyecto = {}) {
   const c = regla.compiled || {};
   if (!c.signal || c.mode === 'llm') return { resultado: 'omitido', observado: null, motivo: 'regla en lenguaje natural: la evalúa Claude' };
   const todos = registrosDe(senales, c.signal).sort((a, b) => String(a._t).localeCompare(String(b._t)));
@@ -85,12 +107,27 @@ export function evaluarRegla(regla, senales) {
       }
       break;
     }
-    case 'rate':
-      observado = enVentana.length ? Math.round((match.length / enVentana.length) * 1000) / 1000 : 0;
+    case 'rate': {
+      // Denominador: solo los registros del mismo alcance (p. ej. los jobs del Performer), no todos.
+      const base = enVentana.filter((r) => coincide(r, soloAlcance(c.filter)));
+      observado = base.length ? Math.round((match.length / base.length) * 1000) / 1000 : 0;
+      if (base.length < Number(c.minSample || 3)) return { resultado: 'ok', observado, umbral: c.threshold ?? null, registros: [], motivo: 'muestra insuficiente' };
       break;
-    case 'absence':
-      observado = match.length;
-      return { resultado: match.length === 0 ? 'alerta' : 'ok', observado, umbral: 0, registros: [] };
+    }
+    case 'absence': {
+      // La colecta trae solo la última ventana (~1 h). Para "no corrió en N horas" se usa además el
+      // último job conocido por proceso, que la consolidación guarda en watermarks.lastJobByProcess.
+      const ultimoVisto = match.map((r) => r._t).filter(Boolean).sort().slice(-1)[0] || null;
+      const proc = c.filter && c.filter.process;
+      const guardado = proc && proyecto.watermarks && proyecto.watermarks.lastJobByProcess
+        ? Object.entries(proyecto.watermarks.lastJobByProcess).filter(([n]) => n.toLowerCase().includes(String(proc).toLowerCase())).map(([, t]) => t).sort().slice(-1)[0]
+        : null;
+      const ultimo = [ultimoVisto, guardado].filter(Boolean).sort().slice(-1)[0] || null;
+      if (!ultimo) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: 'sin historial del proceso todavía' };
+      const minutos = Math.round((Date.parse(senales.ventana.hasta) - Date.parse(ultimo)) / 60000);
+      const limite = Number(c.windowMinutes || 60);
+      return { resultado: minutos > limite ? 'alerta' : 'ok', observado: minutos, umbral: limite, registros: [], ultimo };
+    }
     case 'count':
     default:
       observado = match.length;
@@ -268,12 +305,12 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   const activas = reglas.filter((r) => r.status === 'active' && (r.projectId === projectId || r.projectId === '*'));
   for (const r of activas) {
     const c = r.compiled || {};
-    const ev = evaluarRegla(r, senales);
+    const ev = evaluarRegla(r, senales, proyecto);
     check(`rule:${r.id}`, `Regla: ${r.text}`, ev.resultado, ev.observado, ev.umbral);
     if (ev.resultado !== 'alerta' || ['known', 'ignore'].includes(c.action)) continue;
     const muestra = ev.registros.slice(-5);
     const texto = muestra.map((x) => x._texto).find(Boolean) || r.text;
-    const categoriaRegla = c.category || categorizar(texto);
+    const categoriaRegla = normalizarCategoria(c.category, texto);
     const procesoRegla = (c.filter && c.filter.process) || (muestra[0] && muestra[0]._proceso) || null;
     // Mismo tema que un hallazgo base (misma categoría y proceso/cola): se suma a esa tarjeta en vez de crear otra.
     const mismoTema = hallazgos.find((x) => x.categoria === categoriaRegla && (x.proceso || null) === procesoRegla && (!c.filter || !c.filter.queue || x.cola === c.filter.queue));
@@ -285,7 +322,7 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
       mismoTema.evidencia = { ...mismoTema.evidencia, regla: { id: r.id, texto: r.text, observado: ev.observado, umbral: ev.umbral } };
       continue;
     }
-    hallazgo({ checkId: `rule:${r.id}`, ruleId: r.id, categoria: c.category || categorizar(texto), proceso: (c.filter && c.filter.process) || (muestra[0] && muestra[0]._proceso) || null,
+    hallazgo({ checkId: `rule:${r.id}`, ruleId: r.id, categoria: categoriaRegla, proceso: (c.filter && c.filter.process) || (muestra[0] && muestra[0]._proceso) || null,
       cola: (c.filter && c.filter.queue) || null, firma: `regla ${r.id}`, titulo: c.title || `Se cumplió la regla: ${r.text}`, severidadSugerida: c.severity || 'P3',
       decisionSugerida: c.action === 'escalate' ? 'escalate' : 'notify', conteo: ev.observado, primera: minimo(muestra.map((x) => x._t)), ultima: maximo(muestra.map((x) => x._t)),
       evidencia: { observado: ev.observado, umbral: ev.umbral, muestra: muestra.map(({ _t, _texto, _proceso, _cola, ...resto }) => resto) } });

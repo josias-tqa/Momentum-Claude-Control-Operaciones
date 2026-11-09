@@ -238,3 +238,29 @@ test('emparejar procesos: por paquete, por rol, y sin adivinar ante ambigüedad'
   assert.equal(m.otro, null);
   assert.deepEqual(r.sinDeclarar, ['VD_Reporter']);
 });
+
+import { normalizarCategoria } from '../scripts/evaluate.mjs';
+
+test('reglas: "no corrió en N horas" usa el último job conocido, no solo la ventana colectada', () => {
+  const s = { ventana: { desde: '2026-11-09T19:00:00Z', hasta: '2026-11-09T20:00:00Z' }, jobs: [], queueItems: [], logs: [] };
+  const regla = { compiled: { signal: 'jobs', aggregate: 'absence', filter: { process: 'VD_Dispatcher' }, windowMinutes: 540 } };
+  assert.equal(evaluarRegla(regla, s, { watermarks: { lastJobByProcess: { VD_Dispatcher: '2026-11-09T18:00:00Z' } } }).resultado, 'ok', '2 h < 9 h');
+  assert.equal(evaluarRegla(regla, s, { watermarks: { lastJobByProcess: { VD_Dispatcher: '2026-11-09T08:00:00Z' } } }).resultado, 'alerta', '12 h > 9 h');
+  assert.equal(evaluarRegla(regla, s, {}).resultado, 'omitido', 'sin historial no alerta');
+});
+
+test('reglas: la tasa se calcula sobre los jobs del mismo proceso', () => {
+  const j = (p, e, i) => ({ proceso: p, estado: e, creado: `2026-11-09T19:${String(i).padStart(2, '0')}:00Z` });
+  const s = { ventana: { desde: '2026-11-09T19:00:00Z', hasta: '2026-11-09T20:00:00Z' }, queueItems: [], logs: [],
+    jobs: [j('VD_Performer', 'Faulted', 1), j('VD_Performer', 'Faulted', 2), j('VD_Performer', 'Successful', 3), ...Array.from({ length: 10 }, (_, i) => j('VD_Dispatcher', 'Successful', 10 + i))] };
+  const r = evaluarRegla({ compiled: { signal: 'jobs', aggregate: 'rate', filter: { process: 'VD_Performer', state: ['Faulted'] }, threshold: 0.6, comparator: '>' } }, s);
+  assert.equal(r.observado, 0.667);
+  assert.equal(r.resultado, 'alerta');
+});
+
+test('reglas: categorías inventadas se traducen a las válidas', () => {
+  assert.equal(normalizarCategoria('no-ejecuto'), 'scheduling');
+  assert.equal(normalizarCategoria('login'), 'login');
+  assert.equal(normalizarCategoria('fallas-masivas', 'Login failed for user'), 'login');
+  assert.equal(normalizarCategoria('fallas-masivas', 'error inesperado'), 'application');
+});
