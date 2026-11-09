@@ -201,16 +201,20 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
       evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, estado: j.estado, fin: j.fin })) } });
   }
 
-  // 3) Jobs Pending demasiado tiempo.
+  // 3) Jobs que esperan (o esperaron) robot demasiado tiempo: siguen en Pending, o arrancaron en esta
+  //    ventana después de estar más de N minutos en cola.
   const minutosDesde = (iso) => (Date.parse(hasta) - Date.parse(iso)) / 60000;
-  const colgados = senales.jobs.filter((j) => j.estado === 'Pending' && j.creado && minutosDesde(j.creado) > pendMax);
-  check('jobs_pending_long', `Jobs en Pending más de ${pendMax} min`, colgados.length ? 'alerta' : 'ok', colgados.length, 0);
+  const espera = (j) => (j.estado === 'Pending' ? minutosDesde(j.creado) : (j.inicio && j.creado ? (Date.parse(j.inicio) - Date.parse(j.creado)) / 60000 : 0));
+  const colgados = senales.jobs.filter((j) => j.creado && (j.estado === 'Pending' || (j.inicio && j.inicio >= senales.ventana.desde)) && espera(j) > pendMax);
+  check('jobs_pending_long', `Jobs que esperaron robot más de ${pendMax} min`, colgados.length ? 'alerta' : 'ok', colgados.length, 0);
   for (const [proc, grupo] of agrupar(colgados, (j) => j.proceso)) {
-    const peor = Math.max(...grupo.map((j) => minutosDesde(j.creado)));
+    const peor = Math.max(...grupo.map(espera));
+    const siguen = grupo.filter((j) => j.estado === 'Pending').length;
     hallazgo({ checkId: 'jobs_pending_long', categoria: 'scheduling', proceso: proc, firma: 'job pending demasiado tiempo',
-      titulo: `${proc}: ${grupo.length} job(s) esperando robot hace más de ${pendMax} min`, severidadSugerida: peor > pendMax * 3 ? 'P2' : 'P3',
-      conteo: grupo.length, primera: minimo(grupo.map((j) => j.creado)), ultima: maximo(grupo.map((j) => j.creado)),
-      evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, creado: j.creado })), minutosMaximo: Math.round(peor) } });
+      titulo: siguen ? `${proc}: ${siguen} job(s) esperando robot hace más de ${pendMax} min` : `${proc}: ${grupo.length} job(s) esperaron ${Math.round(peor / 60 * 10) / 10} h antes de arrancar`,
+      severidadSugerida: peor > pendMax * 3 ? 'P2' : 'P3',
+      conteo: grupo.length, primera: minimo(grupo.map((j) => j.creado)), ultima: maximo(grupo.map((j) => j.inicio || j.creado)),
+      evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, creado: j.creado, inicio: j.inicio || null, estado: j.estado })), minutosMaximo: Math.round(peor) } });
   }
 
   // 4) Falla silenciosa: job Successful con logs Fatal (quirk del framework TQA: GetTransactionData
@@ -272,9 +276,13 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   const brechas = (proyecto.baseline && proyecto.baseline.expectedMaxGapHours) || {};
   let sinCorrer = 0;
   for (const [proc, horas] of Object.entries(brechas)) {
-    const ultimos = senales.jobs.filter((j) => j.proceso === proc).map((j) => j.creado).sort();
-    const ultimo = ultimos.slice(-1)[0] || (proyecto.watermarks && proyecto.watermarks.lastJobByProcess && proyecto.watermarks.lastJobByProcess[proc]);
-    const horasSin = ultimo ? (Date.parse(hasta) - Date.parse(ultimo)) / 3600000 : Infinity;
+    // Última actividad conocida: lo más reciente entre creación, inicio y fin de los jobs colectados y el
+    // último job guardado de corridas anteriores. Sin ningún dato todavía no se alerta (primera corrida).
+    const actividad = senales.jobs.filter((j) => j.proceso === proc).flatMap((j) => [j.creado, j.inicio, j.fin]);
+    const guardado = proyecto.watermarks && proyecto.watermarks.lastJobByProcess && proyecto.watermarks.lastJobByProcess[proc];
+    const ultimo = [...actividad, guardado].filter(Boolean).sort().slice(-1)[0] || null;
+    if (!ultimo) continue;
+    const horasSin = (Date.parse(hasta) - Date.parse(ultimo)) / 3600000;
     if (horasSin > horas) {
       sinCorrer += 1;
       hallazgo({ checkId: 'process_no_runs', categoria: 'scheduling', proceso: proc, firma: 'proceso sin ejecuciones', titulo: `${proc}: sin ejecuciones hace ${Number.isFinite(horasSin) ? Math.round(horasSin) + ' h' : 'mucho tiempo'}`,

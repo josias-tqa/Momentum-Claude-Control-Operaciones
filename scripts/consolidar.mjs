@@ -158,7 +158,10 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
     const proyecto = proyectos.find((p) => p.id === projectId);
     if (proyecto) {
       const ultimoPorProceso = { ...((proyecto.watermarks || {}).lastJobByProcess || {}) };
-      for (const j of senales.jobs || []) if (j.proceso && j.creado && (!ultimoPorProceso[j.proceso] || j.creado > ultimoPorProceso[j.proceso])) ultimoPorProceso[j.proceso] = j.creado;
+      for (const j of senales.jobs || []) {
+        const t = [j.creado, j.inicio, j.fin].filter(Boolean).sort().slice(-1)[0];
+        if (j.proceso && t && (!ultimoPorProceso[j.proceso] || t > ultimoPorProceso[j.proceso])) ultimoPorProceso[j.proceso] = t;
+      }
       const colectaOk = !(senales.errores || []).some((e) => /^login/.test(e));
       writes.push({
         op: 'update', collection: 'projects', doc_id: projectId, if_version: proyecto.__version ?? undefined,
@@ -187,6 +190,15 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
       incidentsUpdated: actualizados,
       errors: (senales.errores || []).slice(0, 50),
     });
+  }
+
+  // Auto-cierre: lo que nunca se reportó (monitor/known) y no volvió a aparecer en 24 h se cierra solo.
+  // Lo reportado (escalate/notify) no se cierra solo: lo cierra una respuesta humana.
+  const proyectosCorridos = new Set(porProyecto.map((x) => x.projectId));
+  for (const inc of abiertos) {
+    if (tocados.has(inc.id) || !proyectosCorridos.has(inc.projectId) || esReportable(inc.decision)) continue;
+    if (!inc.lastSeenAt || (Date.parse(ahora) - Date.parse(inc.lastSeenAt)) / 3600000 < 24) continue;
+    tocados.set(inc.id, { ...inc, status: 'closed', closedAt: ahora, closedReason: 'Sin recurrencia en 24 h (no reportado)' });
   }
 
   // Incidentes tocados -> escrituras (set completo, fijado a la versión leída).

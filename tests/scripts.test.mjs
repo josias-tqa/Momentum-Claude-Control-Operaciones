@@ -264,3 +264,22 @@ test('reglas: categorías inventadas se traducen a las válidas', () => {
   assert.equal(normalizarCategoria('fallas-masivas', 'Login failed for user'), 'login');
   assert.equal(normalizarCategoria('fallas-masivas', 'error inesperado'), 'application');
 });
+
+test('colecta: un job creado antes de la ventana que corrió dentro de ella cuenta como actividad', () => {
+  const s = { ventana: { desde: '2026-11-09T20:00:00Z', hasta: '2026-11-09T21:00:00Z' }, queueItems: [], logs: [], triggers: [], procesos: [], errores: [], conteos: {},
+    jobs: [{ key: 'j1', proceso: 'VD_Dispatcher', estado: 'Successful', creado: '2026-11-09T15:00:00Z', inicio: '2026-11-09T20:34:00Z', fin: '2026-11-09T20:35:00Z' }] };
+  const r = evaluar({ senales: { ...s, projectId: 'p' }, proyecto: { baseline: { expectedMaxGapHours: { VD_Dispatcher: 9, VD_Reporter: 9 } } } });
+  assert.ok(!r.hallazgos.some((h) => h.checkId === 'process_no_runs'), 'ni el Dispatcher (corrió) ni el Reporter (sin datos aún) alertan');
+  const espera = r.hallazgos.find((h) => h.checkId === 'jobs_pending_long');
+  assert.ok(espera, 'detecta que el job esperó 5,5 h antes de arrancar');
+  assert.match(espera.titulo, /esperaron 5\.6 h/);
+});
+
+test('consolidación: lo no reportado que no se repite en 24 h se cierra solo', () => {
+  const viejo = { id: 'inc-x', projectId: 'facturacion', status: 'open', decision: 'monitor', severity: 'P4', fingerprints: ['zzz'], lastSeenAt: '2026-11-07T00:00:00Z', triage: {} };
+  const escalado = { ...viejo, id: 'inc-y', decision: 'escalate', fingerprints: ['yyy'] };
+  const plan = correr([viejo, escalado], [], 'run-9', '2026-11-09T11:00:00Z');
+  const w = plan.writes.find((x) => x.doc_id === 'inc-x');
+  assert.equal(w.data.status, 'closed');
+  assert.ok(!plan.writes.some((x) => x.doc_id === 'inc-y'), 'lo escalado no se cierra solo');
+});

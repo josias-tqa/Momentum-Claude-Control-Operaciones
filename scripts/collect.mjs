@@ -59,8 +59,10 @@ for (const carpeta of carpetas) {
   const jobsVentana = intentar(`jobs [${carpeta}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--created-after', desde, '--sort-by', 'CreationTime desc'], { maximo: 3000 }));
   const pendientes = intentar(`jobs pending [${carpeta}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--state', 'Pending'], { maximo: 500 }));
   const corriendo = intentar(`jobs running [${carpeta}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--state', 'Running'], { maximo: 500 }));
+  // Jobs creados ANTES de la ventana que terminaron dentro de ella (p. ej. esperaron horas en Pending).
+  const terminadosVentana = intentar(`jobs ended [${carpeta}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--ended-after', desde, '--sort-by', 'EndTime desc'], { maximo: 3000 }));
   const nuevos = [];
-  for (const j of [...jobsVentana, ...pendientes, ...corriendo]) {
+  for (const j of [...jobsVentana, ...terminadosVentana, ...pendientes, ...corriendo]) {
     if (!j || !j.Key || porKey.has(j.Key) || !delProyecto(j.ProcessName)) continue;
     porKey.set(j.Key, j);
     const s = { ...sanitizarJob(j), carpeta };
