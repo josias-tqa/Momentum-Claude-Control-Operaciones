@@ -17,13 +17,29 @@ producción.
 
 | Fase | Estado |
 |---|---|
-| 0.A — CLI `uip` en Linux cloud, sin credenciales | ✅ Completada ([detalle](docs/validacion-uip-cloud.md)) |
-| 0.B — Lecturas reales, Bitbucket y ArtifactData en el entorno de la rutina | ✅ GO (2026-11-09) |
-| 1 a 5 — Desarrollo del colector, el tablero, los skills de la rutina, el piloto y la entrega | Listas para empezar |
+| 0 — Validación de `uip` en Claude cloud y de los accesos | ✅ GO ([detalle](docs/validacion-uip-cloud.md)) |
+| 1 — Colector, evaluación, consolidación, lotes de escritura (con tests) | ✅ |
+| 2 — Tablero publicado (prueba TQA) | ✅ https://claude.ai/artifact/L6VEZqxytm8QYnFJovx93u |
+| 3 — Skills de la rutina | ✅ |
+| 4 — Rutina programada y piloto con un proyecto real | ⏳ |
+| 5 — Entrega a Momentum | Pendiente ([pasos](docs/entrega-momentum.md)) |
 
-## Contenido actual
+## Mapa
 
-- `docs/validacion-uip-cloud.md`: resultado de la Fase 0, accesos necesarios y comandos de lectura.
-- `scripts/setup-entorno.sh`: setup script del entorno cloud.
-- `scripts/verificar-entorno.mjs` y el skill `/verificar-entorno`: verificación de la Fase 0.B, reutilizable.
-- `config/versiones.json`: versiones fijadas del CLI, el tool de Orchestrator y las skills.
+| Qué | Dónde |
+|---|---|
+| Reglas de operación de la rutina | `CLAUDE.md` |
+| Skills | `.claude/skills/` (`control-corrida`, `control-alta-proyecto`, `control-analisis`, `control-aprendizaje`, `control-mantenimiento`, `verificar-entorno`) |
+| Scripts deterministas | `scripts/` |
+| Bloqueo de solo lectura | `.claude/hooks/guard-solo-lectura.mjs` |
+| Tablero | `dashboard/index.html` + `dashboard/capabilities.json` |
+| Modelo de datos | `docs/modelo-de-datos.md`, `schemas/` |
+| Entorno y rutina | `docs/configuracion-cloud.md` |
+| Guía para el equipo de Momentum | `docs/guia-operador.md` |
+
+## Tests
+
+```bash
+npm test          # scripts: redacción de PII, checks, reglas, dedupe, lotes, hook de solo lectura
+npm run test:ui   # tablero en Chromium con datos sintéticos (roles, acciones, filtros, teléfono)
+```

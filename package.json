@@ -2,9 +2,12 @@
   "name": "torre-control-operaciones",
   "private": true,
   "type": "module",
-  "description": "Torre de Control de Operaciones UiPath — Grupo Momentum",
-  "engines": { "node": ">=20" },
+  "description": "Torre de Control de Operaciones UiPath \u2014 Grupo Momentum",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:ui": "node tests/dashboard.e2e.mjs"
   }
 }

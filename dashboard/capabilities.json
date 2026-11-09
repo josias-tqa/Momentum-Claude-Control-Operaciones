@@ -1,0 +1,16 @@
+{
+  "_nota": "Capacidades con las que se publica dashboard/index.html (Artifact tool, parámetro capabilities). Roles: Lector=Viewer (view), Operador=Contributor (interact), Admin=Editor (admin), Rutina=Owner. Solo la rutina (owner) escribe corridas, incidentes y rollups.",
+  "db": {
+    "rules": [
+      { "path": "", "read": "view", "write": "admin" },
+      { "path": "runs", "write": "owner" },
+      { "path": "incidents", "write": "owner" },
+      { "path": "rollups", "write": "owner" },
+      { "path": "incidentWork", "write": "interact" },
+      { "path": "activity", "write": "interact" },
+      { "path": "requests", "write": "interact" },
+      { "path": "data/users/{self}", "write": "interact" }
+    ]
+  },
+  "user": { "scopes": ["profile"] }
+}
