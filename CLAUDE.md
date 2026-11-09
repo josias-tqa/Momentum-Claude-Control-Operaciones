@@ -38,6 +38,7 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 |---|---|
 | Corrida programada | skill `/control-corrida` |
 | Alta de un proyecto (análisis inicial, memoria de proceso) | skill `/control-alta-proyecto` |
+| Descubrir y registrar todos los proyectos de Orchestrator | skill `/control-descubrir` |
 | Análisis previo a escalar (código + docs) | skill `/control-analisis` |
 | Aprendizaje de respuestas humanas (memoria de producción, reglas propuestas) | skill `/control-aprendizaje` |
 | Retención, rollups, seed y export/import para la entrega | skill `/control-mantenimiento` |

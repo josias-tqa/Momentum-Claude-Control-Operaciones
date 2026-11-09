@@ -283,3 +283,22 @@ test('consolidación: lo no reportado que no se repite en 24 h se cierra solo', 
   assert.equal(w.data.status, 'closed');
   assert.ok(!plan.writes.some((x) => x.doc_id === 'inc-y'), 'lo escalado no se cierra solo');
 });
+
+import { planDescubrimiento } from '../scripts/plan-descubrimiento.mjs';
+
+test('descubrimiento: agrupa procesos por carpeta, marca registrados y arma el plan de alta', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'desc-'));
+  execFileSync('node', [join(RAIZ, 'scripts/descubrir.mjs'), '--salida', join(dir, 'c.json'), '--registrados', join(FIX, 'db/projects'), '--sin-bitbucket'], { env: { ...process.env, OPS_FIXTURES: join(FIX, 'uip') } });
+  const c = JSON.parse(readFileSync(join(dir, 'c.json'), 'utf8'));
+  const fin = c.candidatos.find((x) => x.folderPath === 'Produccion/Finanzas');
+  const otro = c.candidatos.find((x) => x.folderPath === 'Produccion/Otro');
+  assert.equal(fin.registradoComo, 'facturacion', 'la carpeta ya registrada se reconoce');
+  assert.deepEqual(fin.processes.map((p) => p.role).sort(), ['dispatcher', 'performer']);
+  assert.ok(otro.activo, 'tiene jobs en la ventana');
+  const plan = planDescubrimiento(c, { ahora: '2026-11-09T21:00:00Z' });
+  assert.deepEqual(plan.creados.map((x) => x.folderPath), ['Produccion/Otro']);
+  assert.ok(plan.writes.some((w) => w.collection === 'requests' && w.data.type === 'onboard_project'));
+  assert.ok(!JSON.stringify(plan.writes).includes('_info'));
+  const { errores } = prepararLotes(plan.writes);
+  assert.deepEqual(errores, []);
+});

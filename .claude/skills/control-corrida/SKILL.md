@@ -42,6 +42,8 @@ Por cada `requests` pendiente:
 
 Al terminar, `update` de la solicitud con `{status: "done"|"error", resultNote, processedAt}` y su `if_version`.
 
+**Máximo 3 altas (`onboard_project` / `reanalyze_project`) por corrida**, las más antiguas primero. Cada alta tarda varios minutos y el lock dura 50. Las demás quedan `pending` para la corrida siguiente; decilo en el resumen.
+
 ## 4. Compilar reglas
 
 Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natural) a `compiled`:
