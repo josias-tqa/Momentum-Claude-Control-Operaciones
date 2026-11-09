@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "required": [
+    "projectId",
+    "text",
+    "status",
+    "origin"
+  ],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_compile",
+        "proposed",
+        "active",
+        "disabled",
+        "rejected"
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "onboarding",
+        "learned"
+      ]
+    },
+    "sourceIncidentId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "compiled": {
+      "type": "object"
+    },
+    "compileNote": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "createdBy": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "createdAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "approvedBy": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "approvedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "lastTriggeredAt": {
+      "type": "string",
+      "maxLength": 40
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rules"
+}

@@ -1,0 +1,267 @@
+{
+ "__porArgumento": {
+  "Failed": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Id": 1001,
+     "Key": "qi-1",
+     "Status": "Failed",
+     "ProcessingExceptionType": "ApplicationException",
+     "ProcessingException": {
+      "Reason": "Could not find the UI element 'Guardar' in SAP GUI",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "ApplicationException"
+     },
+     "Reference": "FAC-0001",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:31:00Z",
+     "StartProcessing": "2026-11-09T10:31:00Z",
+     "EndProcessing": "2026-11-09T10:31:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1002,
+     "Key": "qi-2",
+     "Status": "Failed",
+     "ProcessingExceptionType": "ApplicationException",
+     "ProcessingException": {
+      "Reason": "Could not find the UI element 'Guardar' in SAP GUI",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "ApplicationException"
+     },
+     "Reference": "FAC-0002",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:32:00Z",
+     "StartProcessing": "2026-11-09T10:32:00Z",
+     "EndProcessing": "2026-11-09T10:32:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1003,
+     "Key": "qi-3",
+     "Status": "Failed",
+     "ProcessingExceptionType": "ApplicationException",
+     "ProcessingException": {
+      "Reason": "Could not find the UI element 'Guardar' in SAP GUI",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "ApplicationException"
+     },
+     "Reference": "FAC-0003",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:33:00Z",
+     "StartProcessing": "2026-11-09T10:33:00Z",
+     "EndProcessing": "2026-11-09T10:33:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1004,
+     "Key": "qi-4",
+     "Status": "Failed",
+     "ProcessingExceptionType": "BusinessException",
+     "ProcessingException": {
+      "Reason": "Factura duplicada para el cliente 20-12345674-9",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "BusinessException"
+     },
+     "Reference": "FAC-0004",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:40:00Z",
+     "StartProcessing": "2026-11-09T10:40:00Z",
+     "EndProcessing": "2026-11-09T10:40:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1005,
+     "Key": "qi-5",
+     "Status": "Failed",
+     "ProcessingExceptionType": "BusinessException",
+     "ProcessingException": {
+      "Reason": "Factura duplicada para el cliente 20-12345675-9",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "BusinessException"
+     },
+     "Reference": "FAC-0005",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:41:00Z",
+     "StartProcessing": "2026-11-09T10:41:00Z",
+     "EndProcessing": "2026-11-09T10:41:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1006,
+     "Key": "qi-6",
+     "Status": "Failed",
+     "ProcessingExceptionType": "BusinessException",
+     "ProcessingException": {
+      "Reason": "Factura duplicada para el cliente 20-12345676-9",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "BusinessException"
+     },
+     "Reference": "FAC-0006",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:42:00Z",
+     "StartProcessing": "2026-11-09T10:42:00Z",
+     "EndProcessing": "2026-11-09T10:42:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1007,
+     "Key": "qi-7",
+     "Status": "Failed",
+     "ProcessingExceptionType": "BusinessException",
+     "ProcessingException": {
+      "Reason": "Factura duplicada para el cliente 20-12345677-9",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "BusinessException"
+     },
+     "Reference": "FAC-0007",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:43:00Z",
+     "StartProcessing": "2026-11-09T10:43:00Z",
+     "EndProcessing": "2026-11-09T10:43:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1008,
+     "Key": "qi-8",
+     "Status": "Failed",
+     "ProcessingExceptionType": "BusinessException",
+     "ProcessingException": {
+      "Reason": "Factura duplicada para el cliente 20-12345678-9",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "BusinessException"
+     },
+     "Reference": "FAC-0008",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:44:00Z",
+     "StartProcessing": "2026-11-09T10:44:00Z",
+     "EndProcessing": "2026-11-09T10:44:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    },
+    {
+     "Id": 1009,
+     "Key": "qi-9",
+     "Status": "Failed",
+     "ProcessingExceptionType": "BusinessException",
+     "ProcessingException": {
+      "Reason": "Factura duplicada para el cliente 20-12345679-9",
+      "Details": "Screenshot: C:\\Users\\robot01\\Screens\\err.png",
+      "Type": "BusinessException"
+     },
+     "Reference": "FAC-0009",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:45:00Z",
+     "StartProcessing": "2026-11-09T10:45:00Z",
+     "EndProcessing": "2026-11-09T10:45:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    }
+   ]
+  },
+  "Abandoned": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Id": 1020,
+     "Key": "qi-20",
+     "Status": "Abandoned",
+     "ProcessingExceptionType": null,
+     "ProcessingException": null,
+     "Reference": "FAC-0020",
+     "RetryNumber": 0,
+     "CreationTime": "2026-11-09T10:50:00Z",
+     "StartProcessing": "2026-11-09T10:50:00Z",
+     "EndProcessing": "2026-11-09T10:50:00Z",
+     "ExecutorJobKey": "job-04",
+     "SpecificContent": {
+      "Cliente": "Juan P\u00e9rez",
+      "CUIT": "20-12345678-9",
+      "Importe": "1500.00"
+     },
+     "QueueDefinition": {
+      "Name": "FIN_FAC_Facturas"
+     }
+    }
+   ]
+  }
+ },
+ "__defecto": {
+  "Result": "Success",
+  "Code": "Fixture",
+  "Data": []
+ }
+}

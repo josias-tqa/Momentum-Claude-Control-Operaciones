@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "required": [],
+  "properties": {
+    "lastRunId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "lastRunAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "lastOkAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "consecutiveFailures": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "dbDocs": {
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config-health"
+}

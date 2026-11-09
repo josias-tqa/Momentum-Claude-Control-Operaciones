@@ -1,0 +1,27 @@
+{
+ "id": "regla-login",
+ "version": 2,
+ "data": {
+  "projectId": "facturacion",
+  "text": "Si se ven m\u00e1s de 10 errores de login seguidos, alertar",
+  "status": "active",
+  "origin": "manual",
+  "compiled": {
+   "signal": "logs",
+   "filter": {
+    "level": [
+     "Error",
+     "Fatal"
+    ],
+    "messageRegex": "login|credencial|credential|authentication"
+   },
+   "aggregate": "consecutive",
+   "threshold": 10,
+   "comparator": ">",
+   "severity": "P2",
+   "action": "escalate",
+   "category": "login",
+   "title": "M\u00e1s de 10 errores de login seguidos"
+  }
+ }
+}

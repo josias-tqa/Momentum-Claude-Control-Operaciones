@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "required": [
+    "type",
+    "status"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "onboard_project",
+        "reanalyze_project",
+        "recompile_rule"
+      ]
+    },
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "requestedBy": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "requestedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "done",
+        "error"
+      ]
+    },
+    "resultNote": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "processedAt": {
+      "type": "string",
+      "maxLength": 40
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "requests"
+}

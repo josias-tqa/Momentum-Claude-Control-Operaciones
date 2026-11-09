@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "required": [
+    "state"
+  ],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "open",
+        "delegated",
+        "snoozed",
+        "dismissed",
+        "responded"
+      ]
+    },
+    "assignee": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "snoozeUntil": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "dismissReason": {
+      "type": "string",
+      "enum": [
+        "expected",
+        "false_positive",
+        "business_data",
+        "external_system"
+      ]
+    },
+    "response": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "fix_required",
+            "expected_behavior",
+            "data_issue",
+            "external_system",
+            "false_positive",
+            "recheck",
+            "escalate_dev"
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "ticket": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "recheckAt": {
+          "type": "string",
+          "maxLength": 40
+        }
+      }
+    },
+    "updatedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "updatedBy": {
+      "type": "string",
+      "maxLength": 200
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "incidentWork"
+}

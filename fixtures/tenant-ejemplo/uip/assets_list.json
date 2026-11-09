@@ -1,0 +1,18 @@
+{
+ "Result": "Success",
+ "Code": "Fixture",
+ "Data": [
+  {
+   "Name": "FIN_FAC_SapUrl",
+   "ValueType": "Text",
+   "Value": "https://sap.cliente.local/login?user=jperez",
+   "ValueScope": "Global"
+  },
+  {
+   "Name": "C_180_FIN_FAC_SapCredentials",
+   "ValueType": "Credential",
+   "Value": "",
+   "ValueScope": "Global"
+  }
+ ]
+}

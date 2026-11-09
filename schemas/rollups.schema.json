@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "required": [
+    "projectId",
+    "month"
+  ],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "month": {
+      "type": "string",
+      "maxLength": 7
+    },
+    "counts": {
+      "type": "object"
+    },
+    "incidents": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "maxItems": 500
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rollups"
+}

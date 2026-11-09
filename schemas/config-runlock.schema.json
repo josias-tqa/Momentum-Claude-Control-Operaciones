@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "required": [
+    "holder",
+    "expiresAt"
+  ],
+  "properties": {
+    "holder": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "startedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "expiresAt": {
+      "type": "string",
+      "maxLength": 40
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config-runlock"
+}

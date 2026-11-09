@@ -1,0 +1,113 @@
+{
+ "__porArgumento": {
+  "job-01": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:01:20Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:01:25Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:01:30Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:01:35Z"
+    },
+    {
+     "Level": "Fatal",
+     "Message": "System exception at initialization: Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:04:50Z"
+    }
+   ]
+  },
+  "job-02": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:11:20Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:11:25Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:11:30Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:11:35Z"
+    },
+    {
+     "Level": "Fatal",
+     "Message": "System exception at initialization: Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:14:50Z"
+    }
+   ]
+  },
+  "job-03": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:21:20Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:21:25Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:21:30Z"
+    },
+    {
+     "Level": "Error",
+     "Message": "Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:21:35Z"
+    },
+    {
+     "Level": "Fatal",
+     "Message": "System exception at initialization: Login failed for user ACME\\jperez (jperez@cliente.com): invalid credentials on SAP",
+     "TimeStamp": "2026-11-09T10:24:50Z"
+    }
+   ]
+  },
+  "job-04": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Level": "Fatal",
+     "Message": "Failed to get transaction data after 3 retries: The remote server returned an error: (503) Server Unavailable.",
+     "TimeStamp": "2026-11-09T10:39:00Z"
+    }
+   ]
+  }
+ },
+ "__defecto": {
+  "Result": "Success",
+  "Code": "Fixture",
+  "Data": []
+ }
+}

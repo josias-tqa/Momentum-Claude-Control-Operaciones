@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "required": [
+    "projectId"
+  ],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "process": {
+      "type": "string",
+      "maxLength": 60000
+    },
+    "productionSummary": {
+      "type": "string",
+      "maxLength": 30000
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "maxItems": 50
+    },
+    "updatedAt": {
+      "type": "string",
+      "maxLength": 40
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory"
+}

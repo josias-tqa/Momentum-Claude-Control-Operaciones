@@ -1,0 +1,135 @@
+{
+  "type": "object",
+  "required": [
+    "name",
+    "status",
+    "orchestrator",
+    "repo"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_analysis",
+        "analyzing",
+        "review",
+        "active",
+        "paused",
+        "error"
+      ]
+    },
+    "statusNote": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "orchestrator": {
+      "type": "object",
+      "required": [
+        "folderPath"
+      ],
+      "properties": {
+        "folderPath": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "repo": {
+      "type": "object",
+      "required": [
+        "workspace",
+        "slug"
+      ],
+      "properties": {
+        "workspace": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "branch": {
+          "type": "string",
+          "maxLength": 120
+        }
+      }
+    },
+    "docs": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "maxItems": 20
+        }
+      }
+    },
+    "triageCriteria": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "owners": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 20
+    },
+    "watermarks": {
+      "type": "object"
+    },
+    "health": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "warn",
+            "critical",
+            "unknown"
+          ]
+        },
+        "lastRunId": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "lastCheckedAt": {
+          "type": "string",
+          "maxLength": 40
+        }
+      }
+    },
+    "inventory": {
+      "type": "object"
+    },
+    "baseline": {
+      "type": "object"
+    },
+    "createdBy": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "createdAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "updatedAt": {
+      "type": "string",
+      "maxLength": 40
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "projects"
+}

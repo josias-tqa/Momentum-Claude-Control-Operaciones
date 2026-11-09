@@ -1,0 +1,215 @@
+{
+  "type": "object",
+  "required": [
+    "projectId",
+    "status",
+    "fingerprints",
+    "title",
+    "category",
+    "severity",
+    "decision",
+    "firstSeenAt",
+    "lastSeenAt",
+    "occurrences",
+    "triage"
+  ],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed"
+      ]
+    },
+    "fingerprints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 40
+      },
+      "maxItems": 50
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "business",
+        "application",
+        "login",
+        "selector",
+        "app_down",
+        "data",
+        "infrastructure",
+        "configuration",
+        "scheduling",
+        "sla",
+        "regression",
+        "silent_failure",
+        "monitoring",
+        "deploy",
+        "other"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "escalate",
+        "notify",
+        "monitor",
+        "known"
+      ]
+    },
+    "process": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "queue": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "firstSeenAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "lastSeenAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "occurrences": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "recurrences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "runId": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "at": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "maxItems": 50
+    },
+    "evidence": {
+      "type": "object"
+    },
+    "triage": {
+      "type": "object",
+      "required": [
+        "category",
+        "severity",
+        "decision",
+        "rationale"
+      ],
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "business",
+            "application",
+            "login",
+            "selector",
+            "app_down",
+            "data",
+            "infrastructure",
+            "configuration",
+            "scheduling",
+            "sla",
+            "regression",
+            "silent_failure",
+            "monitoring",
+            "deploy",
+            "other"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "P1",
+            "P2",
+            "P3",
+            "P4"
+          ]
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "escalate",
+            "notify",
+            "monitor",
+            "known"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "alta",
+            "media",
+            "baja"
+          ]
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "done",
+            "skipped"
+          ]
+        }
+      }
+    },
+    "learning": {
+      "type": "object"
+    },
+    "reopenCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "triageHistory": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "maxItems": 10
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "incidents"
+}

@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "required": [
+    "triageCriteria",
+    "retention"
+  ],
+  "properties": {
+    "triageCriteria": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "severityMatrix": {
+      "type": "string",
+      "maxLength": 8000
+    },
+    "retention": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "runsDays": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closedIncidentsDays": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "intervalMinutes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pendingMaxMinutes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timezone": {
+      "type": "string",
+      "maxLength": 60
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config-settings"
+}

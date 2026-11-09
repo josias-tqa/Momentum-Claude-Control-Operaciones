@@ -1,0 +1,53 @@
+{
+ "id": "facturacion",
+ "version": 7,
+ "data": {
+  "name": "Facturaci\u00f3n (ejemplo)",
+  "status": "active",
+  "orchestrator": {
+   "folderPath": "Produccion/Finanzas"
+  },
+  "repo": {
+   "workspace": "ejemplo",
+   "slug": "fin-facturacion",
+   "branch": "main"
+  },
+  "docs": {
+   "paths": [
+    "docs/SDD.md"
+   ]
+  },
+  "triageCriteria": "Errores de login en SAP: escalar siempre (bloquean todo el lote).",
+  "inventory": {
+   "processes": [
+    {
+     "name": "FIN_Facturacion_Performer",
+     "version": "1.3.2",
+     "key": "rel-p"
+    },
+    {
+     "name": "FIN_Facturacion_Dispatcher",
+     "version": "1.3.2",
+     "key": "rel-d"
+    }
+   ],
+   "triggers": [
+    {
+     "name": "FIN - Facturacion - Performer (queue)",
+     "type": "queue",
+     "enabled": true,
+     "process": "FIN_Facturacion_Performer"
+    }
+   ]
+  },
+  "baseline": {
+   "businessExceptionsPerDay": {
+    "FIN_FAC_Facturas": 24
+   },
+   "expectedMaxGapHours": {
+    "FIN_Facturacion_Dispatcher": 2
+   }
+  },
+  "watermarks": {}
+ }
+}

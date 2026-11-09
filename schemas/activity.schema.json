@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "required": [
+    "incidentId",
+    "type",
+    "at"
+  ],
+  "properties": {
+    "incidentId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "comment",
+        "delegate",
+        "snooze",
+        "dismiss",
+        "respond",
+        "reopen",
+        "system"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "by": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "at": {
+      "type": "string",
+      "maxLength": 40
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "activity"
+}

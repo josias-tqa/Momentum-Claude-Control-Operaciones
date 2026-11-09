@@ -1,0 +1,28 @@
+{
+ "__porArgumento": {
+  "time": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Name": "FIN - Facturacion - Dispatcher (time)",
+     "Enabled": true,
+     "ReleaseName": "FIN_Facturacion_Dispatcher",
+     "StartProcessCron": "0 0 * ? * * *",
+     "TimeZoneId": "UTC"
+    }
+   ]
+  },
+  "queue": {
+   "Result": "Success",
+   "Code": "Fixture",
+   "Data": [
+    {
+     "Name": "FIN - Facturacion - Performer (queue)",
+     "Enabled": false,
+     "ReleaseName": "FIN_Facturacion_Performer"
+    }
+   ]
+  }
+ }
+}
