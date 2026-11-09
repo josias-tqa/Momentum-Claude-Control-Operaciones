@@ -1,0 +1,5 @@
+# Datos de trabajo de la rutina (señales crudas, clones, reportes): nunca se versionan.
+work/
+.local/
+node_modules/
+*.log

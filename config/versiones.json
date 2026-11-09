@@ -1,0 +1,7 @@
+{
+  "_nota": "Versiones fijadas para el entorno cloud. El CLI se auto-actualiza si no se fija con 'uip config set version'. Validado en Fase 0.A (2026-11-09).",
+  "uipCli": "1.205.0",
+  "orchestratorTool": "1.205.0",
+  "uipathSkills": "1.205.0",
+  "skillsOficialesIncluidas": ["uipath-troubleshoot", "uipath-platform", "uipath-rpa"]
+}
