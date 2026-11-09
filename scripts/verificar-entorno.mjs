@@ -35,7 +35,13 @@ function arg(nombre) {
   return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : undefined;
 }
 const carpeta = arg('--carpeta') || process.env.UIPATH_CARPETA_PRUEBA || '';
-const repoPrueba = arg('--repo') || process.env.BITBUCKET_REPO_PRUEBA || '';
+// Acepta "workspace/repo" o una URL de Bitbucket pegada desde el navegador
+// (p. ej. https://bitbucket.org/workspace/repo/src/main/) y la normaliza a "workspace/repo".
+function normalizarRepo(v) {
+  const m = String(v || '').trim().replace(/^https?:\/\/(www\.)?bitbucket\.org\//i, '').replace(/\.git$/i, '').match(/^([^/\s]+)\/([^/\s]+)/);
+  return m ? `${m[1]}/${m[2].replace(/\.git$/i, '')}` : '';
+}
+const repoPrueba = normalizarRepo(arg('--repo') || process.env.BITBUCKET_REPO_PRUEBA);
 
 const marca = new Date().toISOString().replace(/[:.]/g, '-');
 const DIR_SALIDA = join(RAIZ, 'work', 'verificacion', marca);
