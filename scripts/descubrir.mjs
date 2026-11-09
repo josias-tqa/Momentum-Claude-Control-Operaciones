@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Descubrimiento automático de proyectos (solo lectura).
 //
-// 1) Orchestrator: todos los procesos que la External App puede ver (--all-folders), con su carpeta,
+// 1) Orchestrator: todas las carpetas que la External App puede ver, y en cada una sus procesos, con su carpeta,
 //    paquete y versión, y su actividad de los últimos N días.
 // 2) Agrupa por carpeta: cada carpeta con procesos es un proyecto candidato (Dispatcher, Performer,
 //    Reporter...). La carpeta es la unidad habitual de despliegue de un proyecto.
@@ -11,7 +11,7 @@
 //
 // Uso:
 //   node scripts/descubrir.mjs --salida work/descubrimiento/candidatos.json
-//        [--registrados work/<run>/db/projects] [--workspaces itmz,otro] [--dias 30] [--sin-bitbucket]
+//        [--registrados work/<run>/db/projects] [--carpetas "A/B,C/D"] [--workspaces itmz,otro] [--dias 30] [--sin-bitbucket]
 // La salida no contiene PII: nombres de carpetas, procesos, paquetes, repos y conteos.
 
 import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
@@ -30,26 +30,50 @@ const intentar = (n, fn, d = []) => { try { return fn(); } catch (e) { errores.p
 
 try { login(); } catch (e) { errores.push(`login: ${e.message}`); }
 
+// ---------- registrados (se leen primero: sus carpetas siempre se consultan) ----------
+const registradosPrevios = dirRegistrados && existsSync(dirRegistrados)
+  ? readdirSync(dirRegistrados).filter((f) => f.endsWith('.json')).map((f) => normalizarProyecto(desenvolver(leerJson(join(dirRegistrados, f)), f.replace(/\.json$/, ''))))
+  : [];
+
 // ---------- Orchestrator ----------
-const procesos = intentar('processes --all-folders', () => uipTodo(['or', 'processes', 'list', '--all-folders'], { maximo: 5000 }))
-  .map((p) => ({ name: p.Name, key: p.Key, package: p.ProcessKey, version: p.ProcessVersion, folderPath: p.FolderPath || null }));
-const jobs = intentar('jobs --all-folders', () => uipTodo(['or', 'jobs', 'list', '--all-folders', '--created-after', desde], { maximo: 20000 }));
+// Con una External App (client credentials) Orchestrator NO acepta consultas "--all-folders"
+// ("A folder is required for this action", validado 2026-11-09): hay que enumerar carpetas y
+// consultar cada una. La lista de carpetas sale de: `folders list --all` (requiere permiso de
+// ver carpetas a nivel tenant), `folders list`, las carpetas indicadas con --carpetas, y las de
+// los proyectos ya registrados.
+const rutaDe = (f) => f.FullyQualifiedName || f.FullyQualifiedNameOrderable || f.Path || f.FolderPath || f.DisplayName || null;
+const carpetasListadas = [
+  ...intentar('folders list --all', () => uipTodo(['or', 'folders', 'list', '--all'], { maximo: 5000 })),
+  ...intentar('folders list', () => uipTodo(['or', 'folders', 'list'], { maximo: 5000 })),
+].map(rutaDe).filter(Boolean);
+const carpetasManual = (arg('--carpetas') || process.env.OPS_CARPETAS || '').split(',').map((x) => x.trim()).filter(Boolean);
+const carpetasRegistradas = registradosPrevios.flatMap((r) => [r.orchestrator && r.orchestrator.folderPath, ...r.processes.map((x) => x.folderPath)]).filter(Boolean);
+const carpetas = [...new Set([...carpetasListadas, ...carpetasManual, ...carpetasRegistradas])];
+const fuenteCarpetas = { listadas: carpetasListadas.length, manuales: carpetasManual.length, registradas: carpetasRegistradas.length };
+
+const procesos = [];
 const actividad = {};
-for (const j of jobs) {
-  const k = j.ReleaseKey || j.ProcessName;
-  if (!k) continue;
-  const a = (actividad[k] ||= { jobs: 0, faulted: 0, ultimo: null });
-  a.jobs += 1;
-  if (j.State === 'Faulted') a.faulted += 1;
-  const t = j.EndTime || j.StartTime || j.CreationTime;
-  if (t && (!a.ultimo || t > a.ultimo)) a.ultimo = t;
+let jobsAnalizados = 0;
+for (const carpeta of carpetas) {
+  const F = ['--folder-path', carpeta];
+  const ps = intentar(`processes [${carpeta}]`, () => uipTodo(['or', 'processes', 'list', ...F], { maximo: 500 }));
+  if (!ps.length) continue; // carpeta contenedora (sin procesos propios) o sin acceso
+  procesos.push(...ps.map((p) => ({ name: p.Name, key: p.Key, package: p.ProcessKey, version: p.ProcessVersion, folderPath: carpeta })));
+  const jobs = intentar(`jobs [${carpeta}]`, () => uipTodo(['or', 'jobs', 'list', ...F, '--created-after', desde], { maximo: 10000 }));
+  jobsAnalizados += jobs.length;
+  for (const j of jobs) {
+    const k = j.ReleaseKey || j.ProcessName;
+    if (!k) continue;
+    const a = (actividad[k] ||= { jobs: 0, faulted: 0, ultimo: null });
+    a.jobs += 1;
+    if (j.State === 'Faulted') a.faulted += 1;
+    const t = j.EndTime || j.StartTime || j.CreationTime;
+    if (t && (!a.ultimo || t > a.ultimo)) a.ultimo = t;
+  }
 }
 const actDe = (p) => actividad[p.key] || actividad[p.name] || { jobs: 0, faulted: 0, ultimo: null };
 
-// ---------- registrados ----------
-const registrados = dirRegistrados && existsSync(dirRegistrados)
-  ? readdirSync(dirRegistrados).filter((f) => f.endsWith('.json')).map((f) => normalizarProyecto(desenvolver(leerJson(join(dirRegistrados, f)), f.replace(/\.json$/, ''))))
-  : [];
+const registrados = registradosPrevios;
 const carpetaRegistrada = (fp) => registrados.find((r) => (r.orchestrator && r.orchestrator.folderPath) === fp || r.processes.some((x) => x.folderPath === fp));
 
 // ---------- Bitbucket ----------
@@ -120,7 +144,7 @@ const candidatos = Object.entries(porCarpeta).map(([folderPath, ps]) => {
 const resultado = {
   generadoEn: new Date().toISOString(),
   dias,
-  orchestrator: { procesos: procesos.length, carpetas: candidatos.length, jobsAnalizados: jobs.length, sinCarpeta: procesos.filter((p) => !p.folderPath).length },
+  orchestrator: { carpetasConsultadas: carpetas.length, fuenteCarpetas, carpetasConProcesos: candidatos.length, procesos: procesos.length, jobsAnalizados },
   bitbucket,
   resumen: {
     nuevos: candidatos.filter((c) => c.activo && !c.registradoComo).length,

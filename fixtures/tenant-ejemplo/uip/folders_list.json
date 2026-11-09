@@ -1,0 +1,18 @@
+{
+ "Result": "Success",
+ "Code": "Fixture",
+ "Data": [
+  {
+   "DisplayName": "Produccion",
+   "FullyQualifiedName": "Produccion"
+  },
+  {
+   "DisplayName": "Finanzas",
+   "FullyQualifiedName": "Produccion/Finanzas"
+  },
+  {
+   "DisplayName": "Otro",
+   "FullyQualifiedName": "Produccion/Otro"
+  }
+ ]
+}

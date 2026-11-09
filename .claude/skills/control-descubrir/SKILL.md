@@ -9,9 +9,13 @@ Solo lectura en Orchestrator y Bitbucket. La única escritura es en el tablero, 
 
 ## Requisito
 
-La External App solo ve las carpetas a las que está asignada.
-- Para descubrir todo, tiene que estar asignada, con el rol de solo lectura, a la **carpeta principal** (o a cada carpeta de producción).
-- Si `orchestrator.carpetas` sale bajo, decilo: probablemente falta esa asignación.
+La External App solo ve las carpetas a las que está asignada. Con client credentials, Orchestrator **no acepta consultas a todas las carpetas a la vez**: hay que enumerar las carpetas y consultar cada una. El script toma la lista de carpetas de tres fuentes:
+
+1. `folders list --all`. Necesita que la External App tenga un **rol de tenant con permiso de ver carpetas** (Folders → View).
+2. `--carpetas "A/B,C/D"` o la variable `OPS_CARPETAS`, con la lista manual de carpetas de producción.
+3. Las carpetas de los proyectos ya registrados.
+
+Si `orchestrator.fuenteCarpetas.listadas` es 0, decilo: falta ese permiso de tenant, o hay que pasar las carpetas a mano.
 
 ## Pasos
 
