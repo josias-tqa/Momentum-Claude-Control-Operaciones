@@ -39,7 +39,7 @@
       get: async () => snapDoc(path),
       set: async (data) => { if (!canWrite(path)) return deny(); store.set(path, data); window.__WRITES__.push({ op: 'set', path, data }); notify(); },
       update: async (data) => { if (!canWrite(path)) return deny(); if (!store.has(path)) return deny(); store.set(path, { ...store.get(path), ...data }); window.__WRITES__.push({ op: 'update', path, data }); notify(); },
-      delete: async () => { store.delete(path); notify(); },
+      delete: async () => { if (!canWrite(path)) return deny(); store.delete(path); window.__WRITES__.push({ op: 'delete', path }); notify(); },
       onSnapshot(next) { const l = () => next(snapDoc(path)); listeners.add(l); setTimeout(l, 30); return () => listeners.delete(l); },
       collection: (c) => query(`${path}/${c}`),
     };

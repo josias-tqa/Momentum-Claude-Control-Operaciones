@@ -63,6 +63,24 @@ Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natura
 - Escribí `compileNote` con una frase en español que diga cómo se entendió la regla. El tablero la muestra.
 - Pasá la regla a `status: "active"`. Las reglas `proposed` no se tocan: las aprueba un Admin.
 
+**Reglas editadas desde el tablero.** Un Admin puede cambiar el texto, la severidad o las excepciones de una regla desde la tarjeta de un incidente o desde la lista de reglas. Si cambió el texto o las excepciones, la regla vuelve a `pending_compile` y trae su `compiled` anterior:
+- Volvé a traducir `text`, pero **conservá `compiled.severity`** (la eligió una persona) salvo que el texto nuevo diga otra severidad. Conservá también `action`, `category` y `title` si el texto no los cambia.
+- Si la regla ya no existe (la eliminaron), no hay nada que hacer: no la vuelvas a crear.
+
+**Excepciones.** `rules/<id>.exceptions` es una lista `[{text, by, at, incidentId}]` escrita por personas: "la regla está bien, pero no aplica cuando…". Traducí **cada una** a `compiled.exceptions`, en el mismo orden:
+
+```json
+"exceptions": [ { "text": "es lunes antes de las 9 (mantenimiento de SAP)", "filter": { "days": ["mon"], "hourTo": 9 } },
+                { "text": "es el cierre de mes", "mode": "llm" } ]
+```
+
+- `filter` usa los mismos campos que el filtro de la regla (`process`, `queue`, `level`, `state`, `status`, `exceptionType`, `messageRegex`) más la condición de horario: `days` (`mon`…`sun`), `hourFrom` y `hourTo` (hora local de `config/settings.timezone`, de 0 a 24; si `hourFrom` es mayor que `hourTo`, el rango cruza la medianoche).
+- `evaluate.mjs` deja afuera los registros que coinciden con una excepción antes de contar. En una regla `absence` la excepción se evalúa contra el momento del control. En una regla `known`, el hallazgo que cae en la excepción se vuelve a reportar.
+- Si una excepción no se puede expresar con esos campos, dejala como `{"text", "mode": "llm"}`: la aplicás vos en el triage (paso 6).
+- `compiled.exceptions` se **reemplaza entera** con lo que haya en `exceptions`: si quitaron una, desaparece.
+- Mencioná las excepciones en `compileNote` ("…; no cuenta los lunes antes de las 9").
+- No escribas ni borres `exceptions`: es del lado humano.
+
 ## 5. Colecta y evaluación por proyecto
 
 Para cada proyecto con `status: "active"`:
@@ -75,7 +93,7 @@ node scripts/evaluate.mjs --senales work/$RUN/<id>/senales.json --proyecto work/
   --reglas work/$RUN/reglas.json --ajustes work/$RUN/db/config/settings.json --salida work/$RUN/<id>/hallazgos.json
 ```
 
-- `indexar-codigo` solo baja paquetes de procesos con versión nueva (normalmente ninguno): no usa modelo y suele tardar segundos.
+- `indexar-codigo` solo baja paquetes de procesos con versión nueva (normalmente ninguno): no usa modelo y suele tardar segundos. También detecta los **sistemas** de cada proceso (portales `web:<host>` y aplicaciones `app:<exe>` del código y de sus librerías), que quedan en `inventory.processes[].systems` y usa `/control-reglas` para la similitud.
 - `reglas.json` es un array con las reglas activas: `{id, ...cuerpo}` leídas de `work/$RUN/db/rules`.
 - La colecta cubre todas las carpetas del proyecto: la del proyecto más las propias de algún proceso.
   - Si todos los procesos tienen `orchestratorProcess`, se limita a ellos: la carpeta puede compartirse con otros proyectos.
@@ -92,6 +110,7 @@ Por cada hallazgo de `hallazgos.json` decidí la clasificación y escribila en `
 - la memoria de proceso y la de producción (`memory/<id>`);
 - los incidentes abiertos y su trabajo humano (`incidentWork`);
 - las reglas `mode: "llm"`;
+- las excepciones `mode: "llm"` de la regla que disparó el hallazgo (`hallazgo.ruleId` / `hallazgo.reglas`): si la excepción aplica, la decisión es `known` y el porqué cita la excepción;
 - `referencias/taxonomia-triage.md`.
 
 ```json
@@ -103,7 +122,7 @@ Por cada hallazgo de `hallazgos.json` decidí la clasificación y escribila en `
 **Decisiones:**
 - `escalate`: requiere intervención humana. Pasa por el análisis previo del paso 8.
 - `notify`: se muestra como aviso de baja prioridad.
-- `monitor` / `known`: no se reportan; quedan en "No reportados" del tablero con su porqué.
+- `monitor` / `known`: no se reportan; quedan en "Fuera de bandeja" del tablero con su porqué.
 
 **Reglas:**
 - Si la memoria de producción dice que algo es esperado (por ejemplo, "abandonados los lunes por mantenimiento de SAP"), `known`, y citá la entrada.
@@ -139,9 +158,11 @@ Si un lote falla por versión (otro escribió el documento):
 
 Ejecutá `/control-aprendizaje`. Procesa las respuestas humanas nuevas y los re-controles vencidos.
 
+Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos cuando una regla se aprobó o editó, y una vez por día revisa las reglas con los últimos 30 días. Su primer paso es un script: si no hay candidatos termina en segundos.
+
 ## 11. Salud y cierre
 
-1. `set` de `config/health` con `{lastRunId, lastRunAt, lastOkAt (si la corrida fue ok), consecutiveFailures, dbDocs}`.
+1. `update` de `config/health` con `{lastRunId, lastRunAt, lastOkAt (si la corrida fue ok), consecutiveFailures, dbDocs}`. Usá `update`, no `set`: el documento también guarda `rulesReview` (de `/control-reglas`) y `warning`.
 2. Si es la primera corrida del día en UTC, ejecutá `/control-mantenimiento retencion`.
 3. `delete` de `config/runlock` con su `if_version`.
 

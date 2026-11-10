@@ -24,6 +24,8 @@ Los términos que aparecen en el tablero, en orden alfabético.
 
 <Termino id="evidencia" nombre="Evidencia (redactada)">Los logs, queue items, jobs y valores de reglas que respaldan una tarjeta, después de quitarles los datos personales. Las referencias de los casos se muestran como un código corto, nunca el dato original.</Termino>
 
+<Termino id="excepcion" nombre="Excepción de regla">Una condición en la que una regla que está bien no aplica, por ejemplo: es lunes antes de las 9. Se agrega desde el editor de reglas y vale desde la próxima corrida.</Termino>
+
 <Termino id="incidente" nombre="Incidente o tarjeta">Un problema detectado, con toda su historia: cuándo se vio por primera y por última vez, cuántas veces ocurrió, su triage, su análisis y la actividad del equipo.</Termino>
 
 <Termino id="inventario" nombre="Inventario">Lo que tiene la carpeta de Orchestrator de un proyecto: procesos con su versión, colas, triggers y assets. De los assets se guarda solo el nombre y el tipo, nunca el valor.</Termino>
@@ -38,7 +40,7 @@ Los términos que aparecen en el tablero, en orden alfabético.
 
 <Termino id="proyecto" nombre="Proyecto">Una carpeta de Orchestrator con sus procesos, por ejemplo Dispatcher, Performer y Reporter. Es la unidad que se registra, se analiza y se controla.</Termino>
 
-<Termino id="pulso" nombre="Pulso de la rutina">Arriba a la derecha: cuándo fue el último control. Verde si salió bien, ámbar si tuvo errores de colecta, y rojo si la rutina dejó de correr.</Termino>
+<Termino id="pulso" nombre="Pulso de la rutina">Abajo del menú (en el teléfono, arriba): cuándo fue el último control. Verde si salió bien, ámbar si tuvo errores de colecta, y rojo si la rutina dejó de correr; en ese caso la bandeja también lo avisa.</Termino>
 
 <Termino id="punto-de-control" nombre="Punto de control">Cada cosa que se revisa en una corrida, por ejemplo jobs fallidos, items abandonados o una regla. Su resultado es alerta, ok u omitido.</Termino>
 
@@ -56,7 +58,11 @@ Los términos que aparecen en el tablero, en orden alfabético.
 
 <Termino id="severidad" nombre="Severidad (P1 a P4)">P1: un proceso crítico se detuvo o se incumplió el SLA hoy. P2: proceso degradado con riesgo de SLA. P3: errores aislados. P4: informativo.</Termino>
 
+<Termino id="similitud" nombre="Propuesta por similitud">Cuando un Admin aprueba o edita una regla, la rutina propone la regla equivalente a otros procesos que usan el mismo portal, la misma aplicación o la misma librería. Llega como propuesta: nunca se activa sola.</Termino>
+
 <Termino id="solicitud" nombre="Solicitud">Un pedido del equipo a la rutina, por ejemplo analizar un proyecto nuevo o volver a analizar una tarjeta. Se atiende en la próxima corrida.</Termino>
+
+<Termino id="sugerencia" nombre="Sugerencia de la rutina">Un cambio en una regla que propone la revisión diaria de los últimos 30 días: una excepción o un umbral si casi siempre se descarta, una severidad más baja si sus temas se posponen, o desactivarla si no dispara hace 60 días. Se ve como Cambio sugerido.</Termino>
 
 <Termino id="tema" nombre="Tema">Lo que identifica a un problema, sin importar cuántas veces ocurra: el mismo error en el mismo lugar. Un tema tiene una sola tarjeta.</Termino>
 

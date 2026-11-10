@@ -183,8 +183,8 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
       const procesosInv = (senales.procesos || []).map((p) => {
         const i = idx.find((x) => x.name === p.nombre);
         const prev = invPrevio.find((x) => x.name === p.nombre) || {};
-        const conservado = prev.indexedVersion === p.version ? { libraries: prev.libraries, indexedVersion: prev.indexedVersion, hasSources: prev.hasSources, docs: prev.docs, hygiene: prev.hygiene } : {};
-        return { name: p.nombre, version: p.version, key: p.key, package: p.paquete || prev.package || null, ...conservado, ...(i ? { libraries: i.libraries, indexedVersion: i.indexedVersion, hasSources: i.hasSources, docs: i.docs, hygiene: i.hygiene } : {}) };
+        const conservado = prev.indexedVersion === p.version ? { libraries: prev.libraries, systems: prev.systems, indexedVersion: prev.indexedVersion, hasSources: prev.hasSources, docs: prev.docs, hygiene: prev.hygiene } : {};
+        return { name: p.nombre, version: p.version, key: p.key, package: p.paquete || prev.package || null, ...conservado, ...(i ? { libraries: i.libraries, systems: i.systems, indexedVersion: i.indexedVersion, hasSources: i.hasSources, docs: i.docs, hygiene: i.hygiene } : {}) };
       });
       // Procesos nuevos de la carpeta: se suman solos al proyecto (salvo includeAllProcesses: false).
       const declarados = new Set((proyecto.processes || []).map((x) => x.orchestratorProcess).filter(Boolean));

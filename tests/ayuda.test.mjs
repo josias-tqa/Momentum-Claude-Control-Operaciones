@@ -20,8 +20,10 @@ test('ayuda: el bloque generado está al día con dashboard/ayuda/*.mdx', () => 
 });
 
 test('ayuda: cada ruta del tablero tiene su sección', () => {
-  const render = app.slice(app.indexOf('function render()'), app.indexOf('function topHtml()'));
-  const rutas = [...todos(/h === '([\w-]+)'/g, render), ...todos(/h\.startsWith\('([\w-]+)'\)/g, render)];
+  // Rutas: las de vista() (b === 'x' / b.startsWith('x-')) y el detalle de un tema, que abre render().
+  const vista = app.slice(app.indexOf('function vista('), app.indexOf('function renderShell('));
+  const render = app.slice(app.indexOf('function render()'), app.indexOf('function vista('));
+  const rutas = [...todos(/b === '([\w-]+)'/g, vista), ...todos(/b\.startsWith\('([\w-]+)'\)/g, vista), ...todos(/h\.startsWith\('([\w-]+)'\)/g, render)];
   assert.ok(rutas.length >= 10);
   const mapa = literal('AYUDA_RUTA');
   for (const r of rutas) {
@@ -39,9 +41,9 @@ test('ayuda: cada botón tiene tooltip y cada "?" apunta a una sección', () => 
     if (sin.includes(act) || ['panel', 'regla', 'tab'].includes(act)) continue;
     pedir(alias[act] || act, `data-act="${act}"`);
   }
-  for (const p of todos(/bt\('([\w-]+)'/g)) pedir(p, `panel ${p}`);
+  for (const p of todos(/bt\('([\w-]+)'/g)) pedir(alias['panel-' + p] || p, `panel ${p}`);
   for (const s of todos(/data-act="regla"[^>]*data-s="(\w+)"/g)) pedir('regla-' + s, `regla ${s}`);
-  const tabs = app.match(/const tabs = \[(.*?)\];/)[1];
+  const tabs = app.slice(app.indexOf('function viewProyecto(')).match(/const tabs = \[(.*?)\];/)[1];
   for (const [, t] of tabs.matchAll(/\['(\w+)'/g)) pedir('proyecto-' + t, `pestaña ${t}`);
   for (const t of todos(/data-tip="([\w-]+)"/g)) pedir(t, 'data-tip');
   assert.deepEqual(faltan, [], 'falta el tooltip (breve) en la ayuda');
@@ -54,5 +56,5 @@ test('ayuda: anclas únicas, links internos válidos y vistas conocidas', () => 
   assert.equal(ids.length, anclas.size, 'ids repetidos');
   for (const [, id] of bloque.html.matchAll(/href="#ayuda-([\w-]+)"/g)) assert.ok(anclas.has(id), `link roto a #ayuda-${id}`);
   const vistas = app.match(/const vistas = \{([\s\S]*?)\};/)[1];
-  for (const [, n] of bloque.html.matchAll(/<!--vista:([\w-]+):/g)) assert.ok(n === 'barra' || n === 'tarjeta' || new RegExp(`(^|[\\s{,'])${n}'?:`).test(vistas), `vista desconocida: ${n}`);
+  for (const [, n] of bloque.html.matchAll(/<!--vista:([\w-]+):/g)) assert.ok(n === 'selector' || n === 'tarjeta' || new RegExp(`(^|[\\s{,'])${n}'?:`).test(vistas), `vista desconocida: ${n}`);
 });

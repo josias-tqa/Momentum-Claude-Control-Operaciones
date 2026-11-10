@@ -90,6 +90,32 @@ export function actividadesDe(lista) {
     .map((e) => e.split('/').pop().replace(/\.(xaml|cs)$/i, '')))].sort();
 }
 
+// Sistemas que toca el código: portales web (host de las URLs) y aplicaciones de escritorio (app='x.exe' de
+// los selectores). Sirve para saber qué procesos comparten un sistema y pueden sufrir el mismo error.
+// Solo se guardan hosts y nombres de ejecutable: nunca rutas, parámetros ni credenciales.
+const HOSTS_IGNORADOS = /(^|\.)(microsoft\.com|uipath\.com|w3\.org|xmlsoap\.org|openxmlformats\.org|nuget\.org|github\.com|example\.(com|org)|localhost)$/i;
+const APPS_GENERICAS = /^(chrome|msedge|firefox|iexplore|explorer|excel|winword|outlook|notepad|cmd|powershell|uipath[a-z.]*)\.exe$/i;
+export function sistemasEnTexto(texto) {
+  const s = new Set();
+  for (const m of String(texto || '').matchAll(/https?:\/\/([a-z0-9][a-z0-9.-]*\.[a-z]{2,})(?=[:/?#"'&\s<]|$)/gi)) {
+    const h = m[1].toLowerCase().replace(/^www\./, '');
+    if (!HOSTS_IGNORADOS.test(h)) s.add(`web:${h}`);
+  }
+  for (const m of String(texto || '').matchAll(/\bapp=(?:'|"|&apos;|&quot;)([a-z0-9 _.-]{2,60}\.exe)/gi)) {
+    const a = m[1].toLowerCase();
+    if (!APPS_GENERICAS.test(a)) s.add(`app:${a}`);
+  }
+  return [...s].sort();
+}
+export function sistemasDe(nupkg, lista = listar(nupkg)) {
+  const real = entradaReal(lista, nupkg);
+  const s = new Set();
+  for (const e of lista.filter(permitido).filter((x) => /\.(xaml|cs|vb)$/i.test(x)).slice(0, 400)) {
+    for (const x of sistemasEnTexto(leerEntrada(nupkg, real(e)) || '')) s.add(x);
+  }
+  return [...s].sort().slice(0, 40);
+}
+
 // Cuántos archivos sensibles publica el paquete (para avisar al equipo de desarrollo).
 export function higiene(lista) {
   const c = (re) => lista.filter((e) => re.test(e)).length;
