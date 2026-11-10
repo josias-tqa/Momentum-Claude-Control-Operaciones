@@ -56,7 +56,7 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 | Modelo de datos del tablero | `docs/modelo-de-datos.md` y `schemas/` |
 | Scripts deterministas (colecta, evaluación, consolidación, lotes) | `scripts/` (tests: `npm test`) |
 | Tablero (fuente del artifact) | `dashboard/index.html` |
-| Ayuda del tablero (introducción, glosario, pantallas; MDX) | `dashboard/ayuda/*.mdx` → `npm run build:ayuda` |
+| Ayuda del tablero (introducción, configuración inicial, pantallas, glosario; MDX) | `dashboard/ayuda/*.mdx` → `npm run build:ayuda` |
 
 ## Estado de trabajo
 

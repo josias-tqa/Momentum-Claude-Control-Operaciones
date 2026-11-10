@@ -1,0 +1,228 @@
+{/* Ayuda del tablero · Configuración inicial (accesos, entorno, rutina y primeros pasos).
+    Los detalles técnicos viven en docs/validacion-uip-cloud.md y docs/configuracion-cloud.md: si cambian, se actualiza acá.
+    Después de editar: npm run build:ayuda */}
+
+<Seccion id="configuracion-inicial" titulo="Configuración inicial" breve="La puesta en marcha, una sola vez: accesos de UiPath y Bitbucket, entorno de Claude, rutina y primer escaneo.">
+
+Esto se hace una sola vez, antes de la primera corrida. Lo hace quien instala la Torre de Control, con un administrador de UiPath Automation Cloud y, si se usa, uno de Bitbucket. Si el tablero ya muestra corridas, está hecho: esta parte sirve entonces para [renovar una credencial](#ayuda-config-credenciales) o sumar carpetas.
+
+La Torre necesita dos accesos, los dos **de solo lectura**: uno a [Orchestrator](#ayuda-config-uipath), obligatorio, y uno a [Bitbucket](#ayuda-config-bitbucket), opcional. Los dos se cargan en el [entorno de Claude](#ayuda-config-entorno) donde corre la rutina.
+
+<table>
+<thead><tr><th>Paso</th><th>Dónde se hace</th><th>Quién</th></tr></thead>
+<tbody>
+<tr><td><a href="#ayuda-config-uipath">1. External App</a> y <a href="#ayuda-config-uipath-carpetas">acceso a las carpetas</a></td><td>UiPath Automation Cloud y Orchestrator</td><td>Administrador de la organización de UiPath</td></tr>
+<tr><td><a href="#ayuda-config-bitbucket">2. Token de Bitbucket</a> (opcional)</td><td>Bitbucket</td><td>Administrador del repositorio o del workspace</td></tr>
+<tr><td><a href="#ayuda-config-entorno">3. Entorno</a></td><td>Claude</td><td>Quien instala la Torre</td></tr>
+<tr><td><a href="#ayuda-config-verificar">4. Verificación</a></td><td>Una sesión de Claude en ese entorno</td><td>Quien instala la Torre</td></tr>
+<tr><td><a href="#ayuda-config-tablero">5. Tablero y rutina</a></td><td>Claude</td><td>La cuenta dueña del tablero</td></tr>
+<tr><td><a href="#ayuda-primeros-pasos">6. Primeros pasos</a></td><td>Este tablero</td><td>Un Admin del tablero</td></tr>
+</tbody>
+</table>
+
+<Nota titulo="Los secretos no se comparten">
+
+El secret de la External App y el token de Bitbucket se copian una sola vez, de la pantalla donde se crean a la configuración del entorno. No se pegan en un chat, en un mail ni en este tablero.
+
+</Nota>
+
+</Seccion>
+
+<Seccion id="config-uipath" nivel="2" titulo="1. External App en UiPath Cloud" breve="La identidad con la que la rutina lee Orchestrator: una aplicación confidencial con permisos de solo lectura.">
+
+La rutina no entra a UiPath como una persona. Entra como una **External Application** propia, que solo puede leer. Se crea así:
+
+1. Entrá a `cloud.uipath.com` con una cuenta administradora de la organización y abrí **Admin**.
+2. Elegí la organización en el panel de la izquierda y entrá a **External Applications**. Si hay pestañas, es la de **OAuth Applications**.
+3. Tocá **Add application** y completá:
+   - **Application name:** un nombre que la identifique, por ejemplo `Torre de Control Operaciones`.
+   - **Application type:** **Confidential application**.
+4. En **Resources** tocá **Add scopes**. Elegí el recurso **Orchestrator API Access** y pasá a la pestaña **Application scope(s)**, no a la de User scope(s). Marcá solo estos ocho:
+   - `OR.Folders.Read`
+   - `OR.Jobs.Read`
+   - `OR.Queues.Read`
+   - `OR.Assets.Read`
+   - `OR.Execution.Read`
+   - `OR.Monitoring.Read`
+   - `OR.Robots.Read`
+   - `OR.Machines.Read`
+5. Dejá **Redirect URL** vacío: nadie inicia sesión con esta aplicación.
+6. Tocá **Add**. UiPath muestra el **App Secret** una sola vez: copialo en ese momento. El **App ID** queda a la vista en la lista de aplicaciones.
+
+Los nombres de los menús pueden cambiar un poco según la versión de Automation Cloud.
+
+De esta pantalla salen cuatro datos para el [entorno](#ayuda-config-entorno):
+
+<table>
+<thead><tr><th>Dato</th><th>Dónde está</th><th>Variable</th></tr></thead>
+<tbody>
+<tr><td>App ID</td><td>La lista de External Applications</td><td><code>UIPATH_CLIENT_ID</code></td></tr>
+<tr><td>App Secret</td><td>Solo en el aviso que aparece al crear la aplicación</td><td><code>UIPATH_APP_SECRET</code></td></tr>
+<tr><td>Organización</td><td>La primera parte de la dirección después de <code>cloud.uipath.com/</code></td><td><code>UIPATH_ORG</code></td></tr>
+<tr><td>Tenant</td><td>El nombre del tenant de producción, como aparece en el selector de tenants</td><td><code>UIPATH_TENANT</code></td></tr>
+</tbody>
+</table>
+
+<Nota titulo="Solo scopes de lectura">
+
+No marques ningún scope que no termine en `.Read`. La rutina nunca escribe en Orchestrator, y sin scopes de escritura UiPath mismo se lo impide.
+
+</Nota>
+
+</Seccion>
+
+<Seccion id="config-uipath-carpetas" nivel="3" titulo="Acceso a las carpetas de producción" breve="La External App solo ve las carpetas de Orchestrator a las que se la asigna, con un rol de solo lectura.">
+
+Los scopes dicen qué tipo de dato puede leer la aplicación. Qué carpetas ve se define aparte, en Orchestrator. Sin este paso las lecturas vuelven vacías o con error 403.
+
+1. **Creá un rol de carpeta de solo lectura.** En Orchestrator, **Tenant → Manage Access → Roles**, agregá un rol de tipo **Folder**, por ejemplo `Monitor Operaciones`, con permiso **View** y ningún otro en Jobs, Logs, Queues, Transactions, Assets, Processes y Triggers.
+2. **Asigná la aplicación a cada carpeta de producción.** En **Tenant → Folders**, elegí la carpeta, tocá **Assign Account/Group/External App**, buscá la aplicación por su nombre y dale el rol del paso anterior. Las subcarpetas heredan el acceso de la carpeta que las contiene.
+3. **Para el escaneo, dale un rol de tenant.** En **Tenant → Manage Access → Assign roles → External app**, asignale un rol de tenant que tenga **View** en Folders. Con eso el [escaneo](#ayuda-descubrimiento) puede recorrer las subcarpetas. Sin eso solo lee la carpeta indicada en Ajustes, y el tablero lo avisa.
+
+Cuando se suma una carpeta de producción nueva, se repite el paso 2 para esa carpeta.
+
+</Seccion>
+
+<Seccion id="config-bitbucket" nivel="2" titulo="2. Token de Bitbucket (opcional)" breve="Un token de solo lectura para clonar el repositorio de un proyecto. Es un respaldo: el código sale de los paquetes publicados en Orchestrator.">
+
+La rutina lee el código y la documentación de los **paquetes publicados en Orchestrator**, en la versión desplegada. Bitbucket se usa solo cuando un paquete no trae las fuentes o la documentación y el proceso tiene un repositorio cargado en su [configuración](#ayuda-proyecto-config). Si no se carga un token, ese respaldo no existe y todo lo demás funciona igual.
+
+La Torre usa **un solo token**, así que tiene que alcanzar a todos los repositorios que se quieran leer. Hay dos formas de crearlo:
+
+**Access token del repositorio, del proyecto o del workspace (recomendado).** No depende de la cuenta de una persona.
+
+1. En Bitbucket, abrí el repositorio y entrá a **Repository settings → Security → Access tokens**.
+2. Tocá **Create Repository Access Token**.
+3. Ponele un nombre, por ejemplo `torre-control-lectura`, y marcá un solo permiso: **Repositories → Read**.
+4. Tocá **Create** y copiá el token: Bitbucket lo muestra una sola vez.
+
+Para cubrir varios repositorios con un token, se crea igual desde los ajustes del proyecto o del workspace (**Workspace settings → Security → Access tokens**). Esos dos niveles requieren un plan Premium de Bitbucket.
+
+**API token de una cuenta de Atlassian.** Sirve cuando no hay access tokens de workspace. Conviene una cuenta de servicio y no la de una persona.
+
+1. Con esa cuenta, entrá a `id.atlassian.com/manage-profile/security/api-tokens`.
+2. Tocá **Create API token with scopes**, elegí la aplicación **Bitbucket** y marcá solo el scope de lectura de repositorios (`read:repository:bitbucket`).
+3. Elegí el vencimiento, creá el token y copialo.
+
+<table>
+<thead><tr><th>Tipo de token</th><th><code>BITBUCKET_TOKEN</code></th><th><code>BITBUCKET_USER</code></th></tr></thead>
+<tbody>
+<tr><td>Access token</td><td>El token</td><td>Vacío</td></tr>
+<tr><td>API token de Atlassian</td><td>El token</td><td>El email de la cuenta que lo creó</td></tr>
+</tbody>
+</table>
+
+<Nota titulo="Solo lectura, también acá">
+
+No marques permisos de escritura, de pull requests ni de administración. La Torre nunca hace commit, push ni PR: si un problema requiere un fix, lo reporta para que lo tome una persona. Las App passwords de Bitbucket están en retiro: no las uses.
+
+</Nota>
+
+</Seccion>
+
+<Seccion id="config-entorno" nivel="2" titulo="3. Entorno en Claude" breve="El entorno cloud donde corre la rutina: red limitada, variables con las credenciales y el script que instala el CLI de UiPath.">
+
+La rutina corre en un entorno cloud de Claude Code, que en Momentum se llama `momentum-operaciones`. Se crea desde Claude Code en la web, en la configuración de entornos, con tres partes:
+
+**Red.** Acceso **Limited**, con **Allow package managers** marcado y estos dominios permitidos:
+
+- `cloud.uipath.com`
+- `bitbucket.org`
+- `api.bitbucket.org`
+
+**Variables.** Se cargan en la configuración del entorno.
+
+<table>
+<thead><tr><th>Variable</th><th>Valor</th><th>Secreto</th></tr></thead>
+<tbody>
+<tr><td><code>UIPATH_ORG</code></td><td>Organización de Automation Cloud</td><td>No</td></tr>
+<tr><td><code>UIPATH_TENANT</code></td><td>Tenant de producción</td><td>No</td></tr>
+<tr><td><code>UIPATH_CLIENT_ID</code></td><td>App ID de la External App</td><td>Sí</td></tr>
+<tr><td><code>UIPATH_APP_SECRET</code></td><td>App Secret de la External App</td><td>Sí</td></tr>
+<tr><td><code>BITBUCKET_TOKEN</code></td><td>Token de solo lectura. Opcional.</td><td>Sí</td></tr>
+<tr><td><code>BITBUCKET_USER</code></td><td>Solo con un API token de Atlassian</td><td>No</td></tr>
+<tr><td><code>OPS_ARTIFACT_URL</code></td><td>La dirección de este tablero</td><td>No</td></tr>
+<tr><td><code>UIPATH_TELEMETRY_DISABLED</code></td><td><code>true</code></td><td>No</td></tr>
+<tr><td><code>UIPATH_CLI_DISABLE_VERSION_SYNC</code></td><td><code>true</code></td><td>No</td></tr>
+<tr><td><code>UIPATH_CARPETA_PRUEBA</code></td><td>Una carpeta de producción con actividad en las últimas 24 horas. Solo para la verificación.</td><td>No</td></tr>
+<tr><td><code>BITBUCKET_REPO_PRUEBA</code></td><td>Un repositorio, como <code>workspace/repo</code> o su dirección. Solo para la verificación.</td><td>No</td></tr>
+</tbody>
+</table>
+
+**Setup script.** El contenido de `scripts/setup-entorno.sh`, del repositorio de la Torre. Instala el CLI de UiPath en una versión fija. No lee ningún secreto.
+
+Un cambio en las variables vale solo para las sesiones nuevas: las que ya están abiertas siguen con los valores anteriores.
+
+</Seccion>
+
+<Seccion id="config-verificar" nivel="2" titulo="4. Verificar los accesos" breve="Una prueba de solo lectura que confirma que el entorno llega a Orchestrator, a Bitbucket y al tablero.">
+
+Abrí una **sesión nueva** de Claude en el entorno, con el repositorio de la Torre, y pedile:
+
+`/verificar-entorno`
+
+La prueba inicia sesión con la External App, hace una lectura de cada tipo, clona el repositorio de prueba y escribe y borra un documento de prueba en el tablero. El reporte trae conteos y nombres de campos, nunca datos. Termina con un veredicto:
+
+- **GO:** el login y las lecturas funcionan con el CLI. Se puede seguir.
+- **GO CON FALLBACK:** el CLI falla pero la API de Orchestrator responde. La rutina usa la API.
+- **NO-GO:** ninguno responde. El reporte dice qué acceso falta.
+
+<table>
+<thead><tr><th>Si el reporte dice</th><th>Causa probable</th><th>Qué hacer</th></tr></thead>
+<tbody>
+<tr><td><code>invalid_client</code> al iniciar sesión</td><td>App ID o secret mal copiados, o la aplicación está deshabilitada</td><td>Revisar la <a href="#ayuda-config-uipath">External App</a> y las variables</td></tr>
+<tr><td>Login correcto y error 403 en una lectura</td><td>Falta un scope, o la aplicación no está asignada a la carpeta</td><td>Agregar el scope que nombra el reporte o <a href="#ayuda-config-uipath-carpetas">asignar la carpeta</a></td></tr>
+<tr><td>Lista vacía en una carpeta con actividad</td><td>El nombre de la carpeta está mal escrito, o la aplicación no la ve</td><td>Revisar <code>UIPATH_CARPETA_PRUEBA</code> y la asignación a la carpeta</td></tr>
+<tr><td>No se pudo bajar un paquete o una librería</td><td>Al rol le falta ver los paquetes</td><td>Sumar <strong>View</strong> en Packages al rol de carpeta, y en Libraries al rol de tenant</td></tr>
+<tr><td>Host bloqueado</td><td>El dominio no está entre los permitidos</td><td>Agregarlo a la red del <a href="#ayuda-config-entorno">entorno</a></td></tr>
+<tr><td><code>Authentication failed</code> en Bitbucket</td><td>Token vencido o sin lectura de repositorios, o falta <code>BITBUCKET_USER</code> con un API token</td><td>Crear de nuevo el <a href="#ayuda-config-bitbucket">token</a></td></tr>
+</tbody>
+</table>
+
+</Seccion>
+
+<Seccion id="config-tablero" nivel="2" titulo="5. Tablero y rutina" breve="Publicar el tablero, cargar su configuración inicial, programar la corrida de cada hora y compartirlo con el equipo.">
+
+1. **Publicá el tablero.** Es el archivo `dashboard/index.html` del repositorio, publicado como artifact con las capacidades de `dashboard/capabilities.json`. Queda con una dirección propia y la base vacía.
+2. **Cargá esa dirección** en la variable `OPS_ARTIFACT_URL` del entorno.
+3. **Sembrá la configuración inicial.** En una sesión nueva del entorno, pedí `/control-mantenimiento seed`. Carga los criterios de triage, los umbrales y la retención que después se ven en [Ajustes](#ayuda-ajustes).
+4. **Programá la rutina.** Una tarea programada de Claude que abre una sesión nueva en el entorno cada hora, en el horario operativo, con el pedido `Ejecutá /control-corrida.` La hora de cada corrida se ve en el [pulso de la rutina](#ayuda-pulso).
+5. **Compartí el tablero** con el equipo y dale a cada persona su [rol](#ayuda-roles).
+
+La rutina corre como la cuenta dueña del tablero. Por eso es la única que escribe corridas y temas.
+
+</Seccion>
+
+<Seccion id="primeros-pasos" nivel="2" titulo="6. Primeros pasos en un tablero nuevo" breve="Con la rutina en marcha, un Admin indica la carpeta a escanear y registra los proyectos.">
+
+Un tablero recién publicado no tiene proyectos. Un Admin lo pone en marcha así:
+
+1. **Indicá la carpeta a escanear.** En [Ajustes](#ayuda-descubrimiento), escribí la carpeta de Orchestrator donde están los proyectos de producción y tocá **Guardar y escanear**.
+2. **Revisá los proyectos propuestos.** La próxima corrida recorre esa carpeta y propone como proyecto cada carpeta que tiene procesos. Aparecen en [Registrar proyecto](#ayuda-propuestos).
+3. **Registrá los que quieras controlar** e ignorá el resto. La rutina hace el [alta](#ayuda-alta) de cada uno, hasta 3 por corrida.
+4. **Revisá y activá.** Cada proyecto queda En revisión con su memoria de proceso, sus discrepancias y sus reglas propuestas. Cuando esté bien, activá el control.
+
+Mientras no hay proyectos, la Bandeja y Proyectos muestran estos pasos.
+
+</Seccion>
+
+<Seccion id="config-credenciales" nivel="2" titulo="Renovar credenciales y resolver problemas" breve="Qué hacer cuando vence o se cambia el secret de UiPath o el token de Bitbucket, y qué mirar si la rutina deja de leer.">
+
+**Secret de la External App.** En **Admin → External Applications**, editá la aplicación y generá un secret nuevo. Cargalo en `UIPATH_APP_SECRET`. El secret anterior deja de servir.
+
+**Token de Bitbucket.** Revocá el anterior, creá uno nuevo con los [mismos permisos](#ayuda-config-bitbucket) y cargalo en `BITBUCKET_TOKEN`. Los API tokens de Atlassian tienen vencimiento: conviene anotar la fecha.
+
+Después de cualquier cambio, corré `/verificar-entorno` en una sesión nueva. La corrida siguiente ya usa el valor nuevo.
+
+<table>
+<thead><tr><th>Lo que se ve en el tablero</th><th>Qué mirar</th></tr></thead>
+<tbody>
+<tr><td><strong>Rutina detenida</strong>, en rojo</td><td>La tarea programada está pausada o falla al arrancar. Revisá su historial de ejecuciones en Claude.</td></tr>
+<tr><td>Un tema de categoría Monitoreo que dice que no pudo iniciar sesión</td><td>El secret de la External App venció o se cambió. Renovalo y verificá.</td></tr>
+<tr><td>Un proyecto <strong>Con error</strong></td><td>La nota del proyecto dice el motivo. Lo habitual es que la External App no esté <a href="#ayuda-config-uipath-carpetas">asignada a esa carpeta</a>.</td></tr>
+<tr><td>El escaneo no encuentra subcarpetas</td><td>A la External App le falta el rol de tenant con View en Folders.</td></tr>
+<tr><td>Un análisis previo sin código relacionado</td><td>El paquete no trae las fuentes y no hay repositorio o token de Bitbucket para ese proceso.</td></tr>
+</tbody>
+</table>
+
+</Seccion>

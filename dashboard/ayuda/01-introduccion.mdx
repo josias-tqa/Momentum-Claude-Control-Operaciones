@@ -1,6 +1,6 @@
 {/* Ayuda del tablero · Introducción. Después de editar: npm run build:ayuda */}
 
-<Seccion id="introduccion" titulo="Qué es la Torre de Control">
+<Seccion id="introduccion" titulo="Qué es la Torre de Control" breve="Qué hace, cómo trabaja, qué no hace nunca y qué puede hacer cada rol.">
 
 La Torre de Control vigila los robots de UiPath que Grupo Momentum tiene en producción. Cada hora una **rutina** de Claude revisa Orchestrator, detecta lo que anda mal, decide qué tan grave es y lo deja en este tablero, explicado y ordenado.
 
@@ -16,19 +16,6 @@ El tablero es donde el equipo trabaja: ve lo que requiere atención, lo responde
 4. **Analiza.** Antes de escalar, cruza el error con el código del paquete desplegado y su documentación. El resultado es el [análisis previo](#ayuda-analisis-previo).
 5. **Publica.** Lo que necesita a una persona aparece en la [Bandeja](#ayuda-bandeja). El resto queda en [No reportados](#ayuda-no-reportados).
 6. **Aprende.** Las respuestas del equipo se guardan en la [memoria de producción](#ayuda-memoria-de-produccion) y pueden convertirse en reglas propuestas.
-
-</Seccion>
-
-<Seccion id="primeros-pasos" nivel="2" titulo="Primeros pasos en un tablero nuevo">
-
-Un tablero recién publicado no tiene proyectos. Un Admin lo pone en marcha así:
-
-1. **Indicá la carpeta a escanear.** En [Ajustes](#ayuda-descubrimiento), escribí la carpeta de Orchestrator donde están los proyectos de producción y tocá **Guardar y escanear**.
-2. **Revisá los proyectos propuestos.** La próxima corrida recorre esa carpeta y propone como proyecto cada carpeta que tiene procesos. Aparecen en [Registrar proyecto](#ayuda-propuestos).
-3. **Registrá los que quieras controlar** e ignorá el resto. La rutina hace el [alta](#ayuda-alta) de cada uno, hasta 3 por corrida.
-4. **Revisá y activá.** Cada proyecto queda En revisión con su memoria de proceso, sus discrepancias y sus reglas propuestas. Cuando esté bien, activá el control.
-
-Mientras no hay proyectos, la Bandeja y Proyectos muestran estos pasos.
 
 </Seccion>
 

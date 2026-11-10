@@ -739,6 +739,45 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await l.page.waitForTimeout(200);
   assert.ok(await visible(l.page, 'text=Qué es la Torre de Control'));
   await l.ctx.close();
+  // Índice lateral: sigue la lectura, abre el tercer nivel de la sección activa y tiene buscador.
+  const w = await abrir({ viewport: { width: 1500, height: 900 } });
+  await w.page.evaluate(() => { location.hash = '#ayuda-config-uipath'; });
+  await w.page.waitForTimeout(300);
+  const actual = () => w.page.getAttribute('#ay-nav .ay-toc a[aria-current]', 'href');
+  assert.equal(await actual(), '#ayuda-config-uipath', 'el índice marca la sección abierta');
+  assert.ok(await visible(w.page, '#ay-nav .ay-toc a[href="#ayuda-config-uipath-carpetas"]'), 'tercer nivel abierto en la sección activa');
+  assert.ok(!(await visible(w.page, '#ay-nav .ay-toc a[href="#ayuda-para-vos"]')), 'tercer nivel cerrado en las demás');
+  assert.ok(await visible(w.page, '#ayuda-config-bitbucket >> text=Repositories → Read'), 'configuración inicial: token de Bitbucket');
+  assert.ok(await visible(w.page, '#ayuda-config-uipath >> text=OR.Monitoring.Read'), 'configuración inicial: scopes de la External App');
+  const navX = await w.page.evaluate(() => [document.getElementById('ay-nav').getBoundingClientRect().left, document.querySelector('.ay-doc').getBoundingClientRect().right]);
+  assert.ok(navX[0] > navX[1], 'índice a la derecha del contenido');
+  await w.page.evaluate(() => document.getElementById('ayuda-reglas').scrollIntoView());
+  await w.page.waitForTimeout(200);
+  assert.equal(await actual(), '#ayuda-reglas', 'el índice sigue el scroll');
+  assert.equal(await w.page.evaluate(() => location.hash), '#ayuda-config-uipath', 'seguir el scroll no cambia la ruta');
+  if (CAPT) await w.page.screenshot({ path: join(CAPT, 'ayuda-indice.png') });
+  await w.page.keyboard.press('/');
+  await w.page.keyboard.type('bitbucket token');
+  await w.page.waitForTimeout(100);
+  assert.equal(await w.page.getAttribute('#ay-res a >> nth=0', 'href'), '#ayuda-config-bitbucket', 'buscador: primero el título que coincide');
+  assert.ok(await w.page.locator('#ay-res mark').count() >= 2, 'buscador: resalta la coincidencia');
+  if (CAPT) await w.page.screenshot({ path: join(CAPT, 'ayuda-buscador.png') });
+  await w.page.fill('#ay-q', 'xyzzy');
+  assert.ok(await visible(w.page, '#ay-res >> text=Nada coincide'), 'buscador: sin resultados');
+  await w.page.fill('#ay-q', 'PÓSPONER');
+  assert.ok(await w.page.locator('#ay-res a[href="#ayuda-posponer"]').count() === 1, 'buscador: sin distinguir tildes ni mayúsculas, incluye acciones');
+  await w.page.fill('#ay-q', 'recurrencia');
+  assert.equal(await w.page.getAttribute('#ay-res a >> nth=0', 'href'), '#ayuda-recurrencia', 'buscador: incluye el glosario');
+  await w.page.press('#ay-q', 'Enter');
+  await w.page.waitForTimeout(250);
+  assert.equal(await w.page.evaluate(() => location.hash), '#ayuda-recurrencia');
+  assert.equal(await actual(), '#ayuda-glosario', 'un término marca el glosario en el índice');
+  await w.page.focus('#ay-q');
+  await w.page.keyboard.press('Escape');
+  assert.ok(await visible(w.page, '#ay-nav .ay-toc'), 'Esc limpia la búsqueda y vuelve el índice');
+  await w.ctx.close();
+  paso('ayuda: configuración inicial, índice lateral que sigue la lectura y buscador');
+
   const m = await abrir({ viewport: { width: 390, height: 844 }, oscuro: true });
   await m.page.evaluate(() => { location.hash = '#mas'; });
   await m.page.waitForTimeout(150);
@@ -748,8 +787,21 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   const ancho = await m.page.evaluate(() => document.documentElement.scrollWidth);
   assert.ok(ancho <= 390, `ayuda sin scroll horizontal (ancho ${ancho})`);
   if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-oscuro.png'), fullPage: true });
+  // En el teléfono el índice es una barra fija que se despliega y se cierra al elegir.
+  assert.ok(!(await visible(m.page, '#ay-nav-p')), 'índice cerrado al entrar');
+  await m.page.click('#ay-nav-b');
+  assert.ok(await visible(m.page, '#ay-nav .ay-toc a[href="#ayuda-config-bitbucket"]'), 'índice desplegado');
+  if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-indice.png') });
+  await m.page.click('#ay-nav .ay-toc a[href="#ayuda-config-bitbucket"]');
+  await m.page.waitForTimeout(300);
+  assert.ok(!(await visible(m.page, '#ay-nav-p')), 'el índice se cierra al elegir');
+  assert.equal((await m.page.textContent('#ay-nav-cur')).trim(), '2. Token de Bitbucket (opcional)', 'la barra dice dónde estás');
+  const bajo = await m.page.evaluate(() => [document.getElementById('ay-nav').getBoundingClientRect().bottom, document.getElementById('ayuda-config-bitbucket').getBoundingClientRect().top]);
+  assert.ok(bajo[1] >= bajo[0], `la barra del índice no tapa el título (${bajo})`);
+  assert.ok((await m.page.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'configuración inicial sin scroll horizontal');
+  if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-config.png') });
   await m.ctx.close();
-  paso('ayuda: visible para Lector, desde Más en el teléfono y sin scroll horizontal');
+  paso('ayuda: visible para Lector, desde Más en el teléfono con índice desplegable y sin scroll horizontal');
 }
 
 // 6) Teléfono (oscuro): sin scroll horizontal.

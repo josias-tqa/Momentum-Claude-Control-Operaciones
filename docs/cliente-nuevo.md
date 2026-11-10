@@ -10,6 +10,8 @@ La Torre de Control no está atada a Grupo Momentum: el mismo repo sirve para ot
 | Entorno cloud con sus variables y su setup script | `docs/configuracion-cloud.md` |
 | Verificación de accesos | skill `/verificar-entorno` |
 
+El paso a paso para crear la External App y el token de Bitbucket también está en la ayuda del tablero, en **Configuración inicial** (`dashboard/ayuda/02-configuracion-inicial.mdx`).
+
 Para que el escaneo recorra las subcarpetas, la External App necesita además un **rol de tenant que permita ver carpetas** (Folders → View). Sin eso solo se puede leer la carpeta indicada, y el tablero lo avisa.
 
 ## Pasos
