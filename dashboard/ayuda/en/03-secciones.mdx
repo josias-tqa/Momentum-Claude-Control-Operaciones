@@ -1,23 +1,24 @@
-{/* Ayuda del tablero · Pantallas y acciones. Cada Seccion o Accion con "breve" es el tooltip de su botón en la app.
-    Todo cambio en el tablero se refleja acá (lo verifica tests/ayuda.test.mjs). Después de editar: npm run build:ayuda */}
+{/* Dashboard help · Screens and actions. Every Seccion or Accion with "breve" is the tooltip of its button in the app.
+    Every change to the dashboard is reflected here (checked by tests/ayuda.test.mjs). After editing: npm run build:ayuda.
+    The Spanish twin lives in ../es/03-secciones.mdx: both files must be updated together. */}
 
-<Seccion id="pantallas" titulo="Pantallas y acciones">
+<Seccion id="pantallas" titulo="Screens and actions">
 
-Cada pantalla tiene un botón **?** al lado del título que trae a su sección de esta ayuda. El link **Ayuda** del menú también abre la parte de la pantalla en la que estás. Al pasar el mouse por un botón o una etiqueta aparece una explicación breve, con un link a más detalle. Las vistas de esta página son las de la app, dibujadas con datos de ejemplo.
+Every screen has a **?** button next to its title that takes you to its section of this help. The **Help** link in the menu also opens the part for the screen you are on. Hovering over a button or a label shows a short explanation, with a link to more detail. The views on this page are the app's own, drawn with sample data.
 
 </Seccion>
 
-<Seccion id="navegacion" nivel="2" titulo="Menú y selector de proyecto">
+<Seccion id="navegacion" nivel="2" titulo="Menu and project selector">
 
-El menú está siempre a la vista: a la izquierda en una computadora y abajo en el teléfono. Lleva a la Bandeja, Proyectos, Corridas, Reglas, Fuera de bandeja, Ajustes (Admin) y esta Ayuda. El número de la Bandeja es la cantidad de temas abiertos; el de Reglas, las propuestas que esperan aprobación.
+The menu is always in view: on the left on a computer and at the bottom on a phone. It leads to Inbox, Projects, Runs, Rules, Outside the inbox, Settings (Admin) and this Help. The number on Inbox is the count of open topics; the one on Rules is the proposals waiting for approval.
 
-Abajo del menú está el [pulso de la rutina](#ayuda-pulso) y tu [rol](#ayuda-roles). En el teléfono el pulso y el **?** están en la barra de arriba, y Fuera de bandeja, Ajustes y Ayuda están dentro de [Más](#ayuda-mas).
+Below the menu are the [routine pulse](#ayuda-pulso) and your [role](#ayuda-roles). On a phone the pulse and the **?** are in the top bar, and Outside the inbox, Settings and Help are inside [More](#ayuda-mas).
 
-<Accion id="scope" nombre="Proyecto" breve="Filtra la Bandeja, Corridas, Reglas y Fuera de bandeja por un proyecto. La × quita el filtro.">
+<Accion id="scope" nombre="Project" breve="Filters Inbox, Runs, Rules and Outside the inbox by one project. The × removes the filter.">
 
-Tocalo y escribí parte del nombre o de la carpeta. Elegí el proyecto con un clic, o con las flechas y Enter. Cada proyecto muestra un punto de color con su salud (verde: sin novedades; ámbar: con avisos; rojo: con problemas P1 o P2; gris: pausado o sin datos) y cuántos temas tiene abiertos. Primero aparecen los que tienen temas abiertos.
+Tap it and type part of the name or the folder. Pick the project with a click, or with the arrow keys and Enter. Each project shows a colored dot with its health (green: no news; amber: with notices; red: with P1 or P2 problems; gray: paused or no data) and how many topics it has open. Projects with open topics come first.
 
-El filtro queda aplicado en todas esas pantallas, y se recuerda en este navegador, hasta que lo quites con la **×**.
+The filter stays applied on all those screens, and is remembered in this browser, until you remove it with the **×**.
 
 <Vista nombre="selector" variante="abierto" />
 
@@ -25,613 +26,621 @@ El filtro queda aplicado en todas esas pantallas, y se recuerda en este navegado
 
 </Seccion>
 
-<Seccion id="bandeja" nivel="2" titulo="Bandeja" breve="La pantalla principal: lo que necesita a una persona, ordenado por severidad.">
+<Seccion id="bandeja" nivel="2" titulo="Inbox" breve="The main screen: what needs a person, sorted by severity.">
 
-Es la pantalla de trabajo. Muestra solo los temas abiertos cuya decisión es escalar o avisar, y que nadie respondió, descartó o pospuso. Están ordenados por severidad, primero los escalados y después los más recientes. Si no hay nada pendiente, dice **Todo en orden**.
+This is the work screen. It shows only the open topics whose decision is to escalate or notify, and that nobody has replied to, dismissed or snoozed. They are sorted by severity, escalated first and then the most recent. If nothing is pending, it says **All clear**.
 
-- Los botones **Todo**, **Para vos**, **Requiere acción** y **Avisos** muestran solo esa parte.
-- El buscador filtra por título, proyecto, categoría, proceso o severidad.
-- Si la rutina está detenida o la última corrida tuvo errores de colecta, arriba aparece un aviso rojo.
+- The **All**, **For you**, **Needs action** and **Notices** buttons show only that part.
+- The search box filters by title, project, category, process or severity.
+- If the routine is stopped or the last run had collection errors, a red warning appears at the top.
 
-<Vista nombre="bandeja" nota="vista de Admin" />
-
-</Seccion>
-
-<Seccion id="para-revisar" nivel="3" titulo="Para revisar" breve="Solo Admin: reglas propuestas, cambios sugeridos en reglas, proyectos propuestos y proyectos que terminaron su análisis.">
-
-Solo la ven los Admin, en la vista **Todo**. Junta las tareas de configuración pendientes: [reglas propuestas](#ayuda-propuestas), reglas con un cambio sugerido, [proyectos propuestos](#ayuda-propuestos) por el escaneo, proyectos **En revisión** que esperan ser activados y proyectos **Con error**. Cada fila lleva a donde se resuelve.
-
-Las [discrepancias](#ayuda-discrepancia) de un proyecto no aparecen acá ni en el resto de la bandeja: se trabajan desde la página del proyecto.
+<Vista nombre="bandeja" nota="Admin view" />
 
 </Seccion>
 
-<Seccion id="para-vos" nivel="3" titulo="Para vos" breve="Temas que alguien te delegó.">
+<Seccion id="para-revisar" nivel="3" titulo="To review" breve="Admin only: proposed rules, suggested rule changes, proposed projects and projects that finished their analysis.">
 
-Los temas que alguien te [delegó](#ayuda-delegar). Salen de esta lista cuando los respondés, descartás o posponés.
+Only Admins see it, in the **All** view. It gathers the pending configuration tasks: [proposed rules](#ayuda-propuestas), rules with a suggested change, [projects proposed](#ayuda-propuestos) by the scan, projects **In review** waiting to be activated and projects **With error**. Each row leads to where it is resolved.
 
-</Seccion>
-
-<Seccion id="requiere-accion" nivel="3" titulo="Requiere acción" breve="Temas escalados: el triage decidió que necesitan a una persona.">
-
-Los temas con decisión **Escalado**. En general son P1 o P2, o algo que la rutina nunca había visto. Cada uno trae su análisis previo en el detalle.
+A project's [discrepancies](#ayuda-discrepancia) do not appear here or in the rest of the inbox: they are handled from the project page.
 
 </Seccion>
 
-<Seccion id="avisos" nivel="3" titulo="Avisos" breve="Cosas para saber que no bloquean, en formato compacto.">
+<Seccion id="para-vos" nivel="3" titulo="For you" breve="Topics someone delegated to you.">
 
-Los temas con decisión **Aviso**, en general P3 o P4 nuevos. Se muestran compactos: sin el porqué y sin Delegar. El detalle tiene todo.
+The topics someone [delegated](#ayuda-delegar) to you. They leave this list when you reply, dismiss or snooze them.
+
+</Seccion>
+
+<Seccion id="requiere-accion" nivel="3" titulo="Needs action" breve="Escalated topics: the triage decided they need a person.">
+
+The topics with the **Escalated** decision. They are usually P1 or P2, or something the routine had never seen. Each one carries its prior analysis in the detail.
+
+</Seccion>
+
+<Seccion id="avisos" nivel="3" titulo="Notices" breve="Things worth knowing that do not block anything, in compact form.">
+
+The topics with the **Notice** decision, usually new P3 or P4. They are shown compactly: without the why and without Delegate. The detail has everything.
 
 <Vista nombre="tarjeta" variante="aviso" />
 
 </Seccion>
 
-<Seccion id="tarjeta" nivel="2" titulo="El tema y su detalle" breve="Un problema por tema, con su severidad, su porqué y las acciones para trabajarlo.">
+<Seccion id="tarjeta" nivel="2" titulo="The topic and its detail" breve="One problem per topic, with its severity, its why and the actions to work on it.">
 
-Cada tarjeta es un [tema](#ayuda-tema). Si el problema vuelve a ocurrir no se crea otra: la misma suma ocurrencias.
+Each card is a [topic](#ayuda-tema). If the problem happens again, no new card is created: the same one adds occurrences.
 
-- **A la izquierda:** la [severidad](#ayuda-severidad).
-- **Etiquetas:** la [categoría](#ayuda-categoria); el proyecto, cuando no hay filtro, y el proceso si el proyecto tiene varios; la [recurrencia](#ayuda-recurrencia); [Reapareció](#ayuda-reaparecio); la [librería](#ayuda-libreria) donde ocurrió el error; [Nueva versión](#ayuda-nueva-version); **Aviso**, y a quién está delegado.
-- **Texto gris:** el porqué del triage, en dos líneas.
-- **Acciones:** abajo. Un Lector no las ve.
+- **On the left:** the [severity](#ayuda-severidad).
+- **Labels:** the [category](#ayuda-categoria); the project, when there is no filter, and the process if the project has several; the [recurrence](#ayuda-recurrencia); [Reappeared](#ayuda-reaparecio); the [library](#ayuda-libreria) where the error happened; [New version](#ayuda-nueva-version); **Notice**, and who it is delegated to.
+- **Gray text:** the triage's why, in two lines.
+- **Actions:** at the bottom. A Reader does not see them.
 
-Un clic en la tarjeta, o en **Ver detalle**, abre el detalle en un panel al costado, sin perder el lugar en la lista. Se cierra con la **×**, con Esc o tocando fuera.
+A click on the card, or on **View details**, opens the detail in a side panel, without losing your place in the list. It closes with the **×**, with Esc or by clicking outside.
 
 <Vista nombre="tarjeta" />
 
 </Seccion>
 
-<Seccion id="detalle" nivel="3" titulo="El detalle de un tema" breve="Por qué está acá, el análisis previo, la evidencia y la actividad del tema.">
+<Seccion id="detalle" nivel="3" titulo="A topic's detail" breve="Why it is here, the prior analysis, the evidence and the topic's activity.">
 
-El detalle muestra, en este orden:
+The detail shows, in this order:
 
-1. **Estado:** si el tema está delegado, pospuesto, descartado o respondido, y por quién. Si salió de la bandeja, ofrece [Devolver a la bandeja](#ayuda-reabrir).
-2. **Acciones:** las mismas de la tarjeta.
-3. **Por qué está acá:** el porqué del triage, la decisión y su confianza, las reglas y memorias en las que se basó, desde cuándo se ve y en cuántas corridas.
-4. **Análisis previo:** resumen, hipótesis con su probabilidad, acciones sugeridas, código y documentación relacionados, y qué cambió en el último deploy. Si dice Pendiente, lo completa la próxima corrida.
-5. **Librería:** si el error ocurrió en una librería, su versión, la actividad y qué otros proyectos la usan.
-6. **Evidencia (redactada):** los últimos logs, queue items y jobs, sin datos personales.
-7. **Actividad:** quién hizo qué con el tema, y un cuadro para [comentar](#ayuda-comentar).
+1. **Status:** whether the topic is delegated, snoozed, dismissed or replied to, and by whom. If it left the inbox, it offers [Return to inbox](#ayuda-reabrir).
+2. **Actions:** the same as on the card.
+3. **Why it is here:** the triage's why, the decision and its confidence, the rules and memories it was based on, since when it has been seen and in how many runs.
+4. **Prior analysis:** summary, hypotheses with their probability, suggested actions, related code and documentation, and what changed in the last deploy. If it says Pending, the next run completes it.
+5. **Library:** if the error happened in a library, its version, its activity and which other projects use it.
+6. **Evidence (redacted):** the latest logs, queue items and jobs, without personal data.
+7. **Activity:** who did what with the topic, and a box to [comment](#ayuda-comentar).
 
 <Vista nombre="tarjeta" variante="detalle" />
 
 </Seccion>
 
-<Seccion id="acciones" nivel="2" titulo="Acciones sobre un tema">
+<Seccion id="acciones" nivel="2" titulo="Actions on a topic">
 
-Las usan los Operadores y los Admin. Cada acción queda en la actividad del tema. Las respuestas y los descartes además le enseñan a la rutina, que los procesa en la próxima corrida. Después de posponer, descartar o responder aparece un aviso con **Deshacer**.
+Operators and Admins use them. Every action is recorded in the topic's activity. Replies and dismissals also teach the routine, which processes them in the next run. After snoozing, dismissing or replying, a notice with **Undo** appears.
 
-<Accion id="responder" nombre="Responder" breve="Registra qué se encontró o qué se va a hacer. Queda en la memoria de producción.">
+<Accion id="responder" nombre="Reply" breve="Records what was found or what will be done. It goes into the production memory.">
 
-Elegí una decisión y agregá notas:
+Pick a decision and add notes:
 
-- **Requiere fix:** hay que corregir el robot. Podés cargar el ticket o la referencia del fix.
-- **Comportamiento esperado**, **Problema de datos**, **Sistema externo** o **Falso positivo / ajustar regla:** la causa es otra; la rutina lo aprende.
-- **Volver a controlar:** elegí una fecha. El tema se oculta hasta ese día y la rutina hace un [re-control](#ayuda-re-control).
-- **Derivar a desarrollo:** lo toma el equipo de desarrollo.
+- **Fix required:** the robot has to be corrected. You can enter the ticket or the fix reference.
+- **Expected behavior**, **Data issue**, **External system** or **False positive / adjust rule:** the cause is something else; the routine learns it.
+- **Check again:** pick a date. The topic is hidden until that day and the routine does a [re-check](#ayuda-re-control).
+- **Hand over to development:** the development team takes it.
 
-El tema sale de la bandeja y la respuesta queda en la memoria de producción del proyecto.
+The topic leaves the inbox and the reply goes into the project's production memory.
 
 <Vista nombre="tarjeta" variante="responder" />
 
 </Accion>
 
-<Accion id="posponer" nombre="Posponer" breve="Oculta el tema hasta una fecha. Vuelve antes si el problema empeora.">
+<Accion id="posponer" nombre="Snooze" breve="Hides the topic until a date. It comes back sooner if the problem gets worse.">
 
-Elegí 1 día, 3 días, 1 semana o una fecha. Mientras tanto el tema pasa a [Fuera de bandeja](#ayuda-no-reportados) como **Pospuesto**.
+Pick 1 day, 3 days, 1 week or a date. In the meantime the topic moves to [Outside the inbox](#ayuda-no-reportados) as **Snoozed**.
 
-- Si la severidad sube antes de la fecha, el tema vuelve a la bandeja solo.
-- Al vencer, vuelve a mostrarse si el problema sigue.
-- Posponer no le enseña nada a la rutina. Si el problema es esperado, conviene **Descartar** o **Responder**.
+- If the severity goes up before the date, the topic returns to the inbox by itself.
+- When it expires, it is shown again if the problem persists.
+- Snoozing teaches the routine nothing. If the problem is expected, it is better to **Dismiss** or **Reply**.
 
 <Vista nombre="tarjeta" variante="posponer" />
 
 </Accion>
 
-<Accion id="descartar" nombre="Descartar" breve="Saca el tema de la bandeja con un motivo. La rutina lo aprende y puede proponer una regla.">
+<Accion id="descartar" nombre="Dismiss" breve="Takes the topic out of the inbox with a reason. The routine learns from it and may propose a rule.">
 
-Elegí un motivo y, si querés, agregá una nota que explique por qué:
+Pick a reason and, if you want, add a note explaining why:
 
-- **Es esperado:** pasa siempre y no es un problema, por ejemplo una ventana de mantenimiento.
-- **Falso positivo:** la detección se equivocó.
-- **Dato de negocio:** es una excepción de negocio esperable, no una falla del robot.
-- **Sistema externo:** el problema está en un sistema que no depende del equipo.
+- **It is expected:** it always happens and is not a problem, for example a maintenance window.
+- **False positive:** the detection got it wrong.
+- **Business data:** it is an expected business exception, not a robot failure.
+- **External system:** the problem is in a system the team does not control.
 
-La rutina anota el motivo en la [memoria de producción](#ayuda-memoria-de-produccion) y puede proponer una [regla](#ayuda-regla) para no volver a avisar. Si el tema se repite, suma ocurrencias en la misma tarjeta, pero no vuelve a la bandeja como nuevo.
+The routine records the reason in the [production memory](#ayuda-memoria-de-produccion) and may propose a [rule](#ayuda-regla) so it does not warn again. If the topic repeats, it adds occurrences to the same card, but it does not return to the inbox as new.
 
 <Vista nombre="tarjeta" variante="descartar" />
 
 </Accion>
 
-<Accion id="delegar" nombre="Delegar" breve="Asigna la revisión a una persona: el tema le aparece en Para vos.">
+<Accion id="delegar" nombre="Delegate" breve="Assigns the review to a person: the topic shows up in For you for them.">
 
-Buscá a la persona por nombre y elegila. La tarjeta muestra a quién está delegado y sigue en la bandeja de todos, pero esa persona lo ve en **Para vos**.
+Search for the person by name and pick them. The card shows who it is delegated to and stays in everyone's inbox, but that person sees it in **For you**.
 
 <Vista nombre="tarjeta" variante="delegar" />
 
 </Accion>
 
-<Accion id="ajustar-regla" nombre="Ajustar regla o Crear regla" breve="Abre el editor de la regla de este tema sin salir de la bandeja. Un Operador la ve pero no la cambia.">
+<Accion id="ajustar-regla" nombre="Adjust rule or Create rule" breve="Opens the editor for this topic's rule without leaving the inbox. An Operator sees it but cannot change it.">
 
-Si el tema salió de una regla, o una regla lo marcó como conocido, el botón dice **Ajustar regla** (o **Ver regla** para un Operador) y abre el [editor de reglas](#ayuda-editor-regla) ahí mismo.
+If the topic came from a rule, or a rule marked it as known, the button says **Adjust rule** (or **View rule** for an Operator) and opens the [rule editor](#ayuda-editor-regla) right there.
 
-Si no salió de ninguna regla, un Admin ve **Crear regla**: escribís una para ese caso, por ejemplo "los abandonados de esta cola los lunes antes de las 9 son normales; no avisar", y vale para ese proyecto desde la próxima corrida. Con **Descartar también este tema** el incidente se cierra en el mismo paso.
+If it did not come from any rule, an Admin sees **Create rule**: you write one for that case, for example "abandoned items in this queue on Mondays before 9 are normal; do not notify", and it applies to that project from the next run. With **Also dismiss this topic** the incident is closed in the same step.
 
-<Vista nombre="tarjeta" variante="regla" nota="vista de Admin" />
-
-</Accion>
-
-<Accion id="re-crear" nombre="Crear regla (desde un tema)" solo="Admin" breve="Crea una regla nueva para el proyecto de este tema. Se compila en la próxima corrida.">
-
-La regla queda **Por compilar** hasta que la rutina la traduce. Si marcaste **Descartar también este tema**, el tema sale de la bandeja como falso positivo, con **Deshacer** en el aviso.
+<Vista nombre="tarjeta" variante="regla" nota="Admin view" />
 
 </Accion>
 
-<Accion id="comentar" nombre="Comentar" breve="Deja una nota para el equipo en la actividad del tema. No cambia su estado.">
+<Accion id="re-crear" nombre="Create rule (from a topic)" solo="Admin" breve="Creates a new rule for this topic's project. It is compiled in the next run.">
 
-El cuadro está en la sección **Actividad** del detalle. El comentario no saca el tema de la bandeja ni le enseña nada a la rutina. Con Ctrl o Cmd + Enter se envía sin usar el mouse.
-
-</Accion>
-
-<Accion id="reanalizar-inc" nombre="Volver a analizar" breve="Pide a la próxima corrida un análisis previo nuevo de este tema.">
-
-Está junto al título **Análisis previo** del detalle (si el tema no tiene análisis, dice **Pedir análisis**). Sirve cuando el análisis quedó viejo, por ejemplo después de un cambio en el sistema o en la documentación.
+The rule stays **To compile** until the routine translates it. If you checked **Also dismiss this topic**, the topic leaves the inbox as a false positive, with **Undo** in the notice.
 
 </Accion>
 
-<Accion id="reabrir" nombre="Devolver a la bandeja" breve="Deshace un posponer, un descarte o una respuesta: el tema vuelve a la bandeja.">
+<Accion id="comentar" nombre="Comment" breve="Leaves a note for the team in the topic's activity. It does not change its status.">
 
-Aparece en el detalle de un tema pospuesto, descartado o respondido. El tema vuelve como estaba antes y queda en su actividad.
+The box is in the **Activity** section of the detail. The comment does not take the topic out of the inbox and teaches the routine nothing. With Ctrl or Cmd + Enter it is sent without using the mouse.
 
 </Accion>
 
-<Accion id="deshacer" nombre="Deshacer" breve="Revierte la última acción sobre el tema (posponer, descartar o responder).">
+<Accion id="reanalizar-inc" nombre="Analyze again" breve="Asks the next run for a new prior analysis of this topic.">
 
-Está en el aviso que aparece abajo durante unos segundos después de la acción. Pasado ese tiempo se usa **Devolver a la bandeja** desde el detalle.
+It is next to the **Prior analysis** heading in the detail (if the topic has no analysis, it says **Request analysis**). It is useful when the analysis got old, for example after a change in the system or in the documentation.
+
+</Accion>
+
+<Accion id="reabrir" nombre="Return to inbox" breve="Undoes a snooze, a dismissal or a reply: the topic goes back to the inbox.">
+
+It appears in the detail of a snoozed, dismissed or replied topic. The topic returns as it was before and it is recorded in its activity.
+
+</Accion>
+
+<Accion id="deshacer" nombre="Undo" breve="Reverts the last action on the topic (snooze, dismiss or reply).">
+
+It is in the notice that appears at the bottom for a few seconds after the action. After that time, use **Return to inbox** from the detail.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="no-reportados" nivel="2" titulo="Fuera de bandeja" breve="Temas abiertos que no se muestran en la bandeja: pospuestos, respondidos, descartados o no reportados por el triage.">
+<Seccion id="no-reportados" nivel="2" titulo="Outside the inbox" breve="Open topics not shown in the inbox: snoozed, replied to, dismissed or not reported by the triage.">
 
-Todo lo abierto que no está en la bandeja, con el motivo. Los botones de arriba filtran por **Pospuestos**, **Respondidos**, **Descartados** o **No reportados por el triage** (decisiones En observación y Conocido).
+Everything open that is not in the inbox, with the reason. The buttons at the top filter by **Snoozed**, **Responded**, **Dismissed** or **Not reported by the triage** (Under observation and Known decisions).
 
-Sirve para controlar el criterio de la rutina. Si algo de acá debería estar en la bandeja, abrilo y usá **Devolver a la bandeja**, respondé **Falso positivo / ajustar regla** o corregí los [criterios](#ayuda-criterios).
+It is useful for checking the routine's criteria. If something here should be in the inbox, open it and use **Return to inbox**, reply **False positive / adjust rule** or fix the [criteria](#ayuda-criterios).
 
 <Vista nombre="fuera" />
 
 </Seccion>
 
-<Seccion id="corridas" nivel="2" titulo="Corridas" breve="Cada ejecución de la rutina, con lo que revisó y lo que encontró.">
+<Seccion id="corridas" nivel="2" titulo="Runs" breve="Each execution of the routine, with what it reviewed and what it found.">
 
-Las últimas 50 corridas, con su estado (Completa, Parcial o Con errores), cuántos proyectos revisó y cuántos temas nuevos, recurrentes y escalados encontró.
+The last 50 runs, with their status (Complete, Partial or With errors), how many projects they reviewed and how many new, recurring and escalated topics they found.
 
 <Vista nombre="corridas" />
 
 </Seccion>
 
-<Seccion id="corrida-detalle" nivel="3" titulo="Detalle de una corrida" breve="Qué revisó la rutina en cada proyecto y qué decidió con cada hallazgo.">
+<Seccion id="corrida-detalle" nivel="3" titulo="A run's detail" breve="What the routine reviewed in each project and what it decided for each finding.">
 
-Por cada proyecto muestra la ventana de tiempo revisada, un resumen de señales, la tabla de [puntos de control](#ayuda-punto-de-control) con su valor observado y los **Hallazgos y triage**: cada hallazgo con su severidad, su decisión, si es nuevo, recurrente o reabierto, y su porqué. Un clic en un hallazgo abre su tema. Si hubo errores al leer Orchestrator, aparecen en la caja del proyecto.
+For each project it shows the time window reviewed, a summary of signals, the table of [checkpoints](#ayuda-punto-de-control) with their observed value and the **Findings and triage**: each finding with its severity, its decision, whether it is new, recurring or reopened, and its why. A click on a finding opens its topic. If there were errors reading Orchestrator, they appear in the project's box.
 
 <Vista nombre="corrida" />
 
 </Seccion>
 
-<Seccion id="proyectos" nivel="2" titulo="Proyectos" breve="Todos los proyectos controlados, con su salud, su estado y sus temas abiertos.">
+<Seccion id="proyectos" nivel="2" titulo="Projects" breve="All monitored projects, with their health, their status and their open topics.">
 
-La lista de proyectos con su carpeta de Orchestrator, sus temas abiertos, sus [discrepancias](#ayuda-discrepancia) pendientes y su [estado](#ayuda-estado-proyecto). Primero aparecen los que tienen problemas o esperan revisión. Con más de 5 proyectos aparece un buscador. Los Admin ven **Registrar proyecto** y un aviso si la rutina [propone proyectos](#ayuda-propuestos) para agregar.
+The list of projects with their Orchestrator folder, their open topics, their pending [discrepancies](#ayuda-discrepancia) and their [status](#ayuda-estado-proyecto). Those with problems or waiting for review come first. With more than 5 projects a search box appears. Admins see **Register project** and a notice if the routine [proposes projects](#ayuda-propuestos) to add.
 
-Si todavía no hay proyectos, un Admin ve los [primeros pasos](#ayuda-primeros-pasos).
+If there are no projects yet, an Admin sees the [first steps](#ayuda-primeros-pasos).
 
 <Vista nombre="proyectos" />
 
 </Seccion>
 
-<Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, discrepancias, documentación, reglas, inventario y configuración de un proyecto.">
+<Seccion id="pagina-proyecto" nivel="2" titulo="A project's page" breve="Processes, memory, discrepancies, documentation, rules, inventory and settings of a project.">
 
-Arriba está la carpeta, la cantidad de procesos, el estado y cuántas discrepancias tiene pendientes, con las acciones. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen siete pestañas.
+At the top are the folder, the number of processes, the status and how many discrepancies are pending, with the actions. Below, each process with its role, its name in Orchestrator, the package and the deployed version, and its libraries. Then come seven tabs.
 
 <Vista nombre="proyecto" variante="memoria" />
 
-<Accion id="ver-bandeja" nombre="Ver temas abiertos" breve="Abre la bandeja filtrada por este proyecto.">
+<Accion id="ver-bandeja" nombre="View open topics" breve="Opens the inbox filtered by this project.">
 
-Aparece cuando el proyecto tiene temas en la bandeja. Aplica el [selector de proyecto](#ayuda-scope).
-
-</Accion>
-
-<Accion id="activar" nombre="Activar el control" solo="Admin" breve="Empieza a controlar el proyecto en cada corrida. También reanuda un control pausado.">
-
-Aparece cuando el proyecto terminó su [alta](#ayuda-alta) y está **En revisión**: antes de activarlo, revisá la memoria de proceso, las reglas propuestas y el inventario. Si el proyecto está **Pausado**, el botón dice **Reanudar control**.
+It appears when the project has topics in the inbox. It applies the [project selector](#ayuda-scope).
 
 </Accion>
 
-<Accion id="pausar" nombre="Pausar control" solo="Admin" breve="Deja de controlar el proyecto hasta que se reanude. No borra nada.">
+<Accion id="activar" nombre="Activate monitoring" solo="Admin" breve="Starts monitoring the project on every run. It also resumes paused monitoring.">
 
-Útil durante un mantenimiento largo o mientras se rehace un proceso. Los temas abiertos quedan como están y el proyecto se ve gris.
+It appears when the project finished its [onboarding](#ayuda-alta) and is **In review**: before activating it, review the process memory, the proposed rules and the inventory. If the project is **Paused**, the button says **Resume monitoring**.
 
 </Accion>
 
-<Accion id="reanalizar" nombre="Pedir re-análisis" solo="Admin" breve="Pide a la próxima corrida que regenere la memoria de proceso, el inventario y las reglas propuestas.">
+<Accion id="pausar" nombre="Pause monitoring" solo="Admin" breve="Stops monitoring the project until it is resumed. It deletes nothing.">
 
-Conviene después de un cambio grande en el proceso o en su documentación. El proyecto sigue activo mientras tanto.
+Useful during a long maintenance or while a process is being rebuilt. Open topics stay as they are and the project looks gray.
+
+</Accion>
+
+<Accion id="reanalizar" nombre="Request re-analysis" solo="Admin" breve="Asks the next run to regenerate the process memory, the inventory and the proposed rules.">
+
+It is worth doing after a big change in the process or its documentation. The project stays active in the meantime.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="proyecto-memoria" nivel="3" titulo="Pestaña Memoria de proceso" breve="Qué hace el proceso, según el alta: el contexto que usa la rutina.">
+<Seccion id="proyecto-memoria" nivel="3" titulo="Process memory tab" breve="What the process does, according to the onboarding: the context the routine uses.">
 
-La [memoria de proceso](#ayuda-memoria-de-proceso): qué hace el proceso, sus pasos, sistemas, colas y excepciones conocidas. La genera el alta a partir del código y la documentación.
+The [process memory](#ayuda-memoria-de-proceso): what the process does, its steps, systems, queues and known exceptions. The onboarding generates it from the code and the documentation.
 
 </Seccion>
 
-<Seccion id="proyecto-produccion" nivel="3" titulo="Pestaña Memoria de producción" breve="Lo que pasó en producción: respuestas del equipo, deploys y re-controles.">
+<Seccion id="proyecto-produccion" nivel="3" titulo="Production memory tab" breve="What happened in production: team replies, deploys and re-checks.">
 
-La [memoria de producción](#ayuda-memoria-de-produccion): un resumen arriba y debajo el historial, del más nuevo al más viejo, con quién respondió y el ticket si lo hay.
+The [production memory](#ayuda-memoria-de-produccion): a summary at the top and below it the history, newest to oldest, with who replied and the ticket if there is one.
 
 <Vista nombre="proyecto" variante="produccion" />
 
 </Seccion>
 
-<Seccion id="proyecto-discrepancias" nivel="3" titulo="Pestaña Discrepancias" breve="Lo que no coincide entre el código, la documentación y Orchestrator. Se responde, se pospone o se descarta acá: no va a la bandeja.">
+<Seccion id="proyecto-discrepancias" nivel="3" titulo="Discrepancies tab" breve="What does not match between the code, the documentation and Orchestrator. It is replied to, snoozed or dismissed here: it does not go to the inbox.">
 
-Las [discrepancias](#ayuda-discrepancia) que encontró el análisis del proyecto, por ejemplo:
+The [discrepancies](#ayuda-discrepancia) found by the project's analysis, for example:
 
-- una cola o un asset que figura en el SDD o en el código y no existe en Orchestrator, o al revés;
-- un trigger con una frecuencia distinta a la documentada;
-- el Dispatcher y el Performer que no usan la misma cola;
-- documentación que no coincide con el código;
-- un paquete que publica capturas o datos que no debería.
+- a queue or an asset that appears in the SDD or in the code and does not exist in Orchestrator, or the other way around;
+- a trigger with a different frequency than documented;
+- the Dispatcher and the Performer not using the same queue;
+- documentation that does not match the code;
+- a package that publishes screenshots or data it should not.
 
-Cada una muestra su tipo, el proceso, qué se encontró, una sugerencia y de dónde sale. Son tarjetas del proyecto: **no aparecen en la bandeja** ni cambian su salud. El número de la pestaña, y el de la lista de proyectos, cuenta las pendientes.
+Each one shows its type, the process, what was found, a suggestion and where it comes from. They are project cards: they **do not appear in the inbox** and do not change its health. The number on the tab, and the one in the project list, counts the pending ones.
 
-- **Pendientes:** las que la rutina sigue detectando y nadie atendió.
-- **Atendidas:** las respondidas, pospuestas o descartadas, con quién lo hizo, y las **resueltas**, que la rutina dejó de detectar.
+- **Pending:** the ones the routine keeps detecting and nobody has handled.
+- **Handled:** the ones replied to, snoozed or dismissed, with who did it, and the **resolved** ones, which the routine stopped detecting.
 
-En cada re-análisis la rutina actualiza la lista: suma las nuevas, cierra las que ya no detecta y respeta lo que respondió el equipo. Una discrepancia descartada no vuelve a aparecer como nueva. Si una que se dio por corregida vuelve a detectarse, reaparece como pendiente con la marca **Reapareció**.
+On each re-analysis the routine updates the list: it adds the new ones, closes the ones it no longer detects and respects what the team replied. A dismissed discrepancy does not appear again as new. If one that was considered fixed is detected again, it reappears as pending with the **Reappeared** mark.
 
 <Vista nombre="proyecto" variante="discrepancias" />
 
-<Accion id="disc-responder" nombre="Responder" breve="Registra qué se va a hacer con la discrepancia. Queda en la memoria de producción del proyecto.">
+<Accion id="disc-responder" nombre="Respond" breve="Records what will be done about the discrepancy. It goes into the project's production memory.">
 
-Elegí una decisión y agregá notas:
+Pick a decision and add notes:
 
-- **Corregir la documentación**, **Corregir en Orchestrator** o **Corregir el código:** hay algo para arreglar. Podés cargar el ticket o la referencia. La discrepancia pasa a Atendidas y la rutina la cierra cuando un re-análisis deja de detectarla.
-- **Es correcto así:** no hay nada que corregir. La rutina lo anota y no vuelve a preguntar.
-- **Derivar a desarrollo:** lo toma el equipo de desarrollo.
-
-</Accion>
-
-<Accion id="disc-posponer" nombre="Posponer" breve="Saca la discrepancia de las pendientes hasta una fecha.">
-
-Elegí 1 semana, 1 mes, 3 meses o una fecha. Al vencer vuelve a Pendientes, si la rutina la sigue detectando.
+- **Fix the documentation**, **Fix in Orchestrator** or **Fix the code:** there is something to repair. You can enter the ticket or the reference. The discrepancy moves to Handled and the routine closes it when a re-analysis stops detecting it.
+- **It is correct as is:** there is nothing to fix. The routine records it and does not ask again.
+- **Hand over to development:** the development team takes it.
 
 </Accion>
 
-<Accion id="disc-descartar" nombre="Descartar" breve="Cierra la discrepancia con un motivo. La rutina no la vuelve a mostrar como nueva.">
+<Accion id="disc-posponer" nombre="Snooze" breve="Takes the discrepancy out of the pending ones until a date.">
 
-Motivos: **Es correcto así**, **La rutina se equivocó**, **Ya se corrigió** o **No es relevante**, con una nota opcional. Queda en Atendidas y en la memoria de producción.
-
-</Accion>
-
-<Accion id="disc-reabrir" nombre="Volver a abrir" breve="Deshace la respuesta, el descarte o la posposición: la discrepancia vuelve a estar pendiente.">
-
-Aparece en las discrepancias atendidas que la rutina todavía detecta.
+Pick 1 week, 1 month, 3 months or a date. When it expires it goes back to Pending, if the routine still detects it.
 
 </Accion>
 
-</Seccion>
+<Accion id="disc-descartar" nombre="Dismiss" breve="Closes the discrepancy with a reason. The routine does not show it again as new.">
 
-<Seccion id="proyecto-documentacion" nivel="3" titulo="Pestaña Documentación" breve="PDD, SDD y Runbook del proyecto, subidos a mano y guardados en Markdown.">
-
-La rutina lee sola la documentación que viene dentro de los paquetes publicados. Cuando un documento no está ahí, o está desactualizado, un Admin lo sube acá. Hay un lugar para cada uno:
-
-- **PDD:** el proceso de negocio, sus pasos y sus excepciones.
-- **SDD:** cómo está construida la solución, con sus colas, assets y triggers.
-- **Runbook:** qué hacer ante cada falla y a quién escalar.
-
-Todo se guarda **en Markdown** (.md), sin imágenes. La rutina usa estos documentos en el análisis del proyecto, para la memoria de proceso y las discrepancias, y en el análisis previo de cada tema. Después de subir uno conviene **Pedir re-análisis**.
-
-Un Lector o un Operador pueden ver y descargar los documentos; solo un Admin los sube, reemplaza o quita.
-
-<Vista nombre="proyecto" variante="documentacion" nota="vista de Admin" />
-
-<Accion id="doc-subir" nombre="Subir archivo o Reemplazar" solo="Admin" breve="Sube un .docx, .md o .txt y lo convierte a Markdown. Se revisa antes de guardar.">
-
-Un Word (.docx) se convierte en el momento: títulos, párrafos, negritas, listas y tablas. Las imágenes, los encabezados y el índice no se pasan. Un PDF o un .doc antiguo no se pueden convertir: guardalo como .docx o usá **Pegar texto**.
-
-Nada se guarda hasta tocar **Guardar**. Si ya había un documento de ese tipo, el nuevo lo reemplaza.
+Reasons: **It is correct as is**, **The routine got it wrong**, **Already fixed** or **Not relevant**, with an optional note. It stays in Handled and in the production memory.
 
 </Accion>
 
-<Accion id="doc-pegar" nombre="Pegar texto" solo="Admin" breve="Abre un cuadro para pegar o escribir el documento, en Markdown o texto plano.">
+<Accion id="disc-reabrir" nombre="Reopen" breve="Undoes the reply, the dismissal or the snooze: the discrepancy is pending again.">
 
-Sirve para documentos que están en una wiki, en un PDF o en otro formato.
-
-</Accion>
-
-<Accion id="doc-guardar" nombre="Guardar" solo="Admin" breve="Guarda el documento en Markdown, después de enmascarar emails, documentos y usuarios.">
-
-Antes de guardar se ve el Markdown y se puede corregir. El tablero no guarda datos personales: los emails, los números de documento y los usuarios de Windows se enmascaran solos, pero los **nombres de personas no se detectan**: quitalos a mano. Cada documento admite hasta 230 KB de texto.
-
-</Accion>
-
-<Accion id="doc-ver" nombre="Ver" breve="Muestra el documento guardado, con formato.">
-
-**Ocultar** lo cierra.
-
-</Accion>
-
-<Accion id="doc-descargar" nombre="Descargar .md" breve="Baja el documento guardado como un archivo Markdown.">
-
-Pide confirmación antes de guardar el archivo. Si esta vista no admite descargas, el botón no aparece.
-
-</Accion>
-
-<Accion id="doc-quitar" nombre="Quitar" solo="Admin" breve="Borra el documento del proyecto. Pide confirmación.">
-
-No se puede deshacer. La memoria de proceso que ya se generó con ese documento no cambia hasta el próximo re-análisis.
+It appears on handled discrepancies that the routine still detects.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="proyecto-reglas" nivel="3" titulo="Pestaña Reglas" breve="Las reglas de este proyecto y su estado.">
+<Seccion id="proyecto-documentacion" nivel="3" titulo="Documentation tab" breve="The project's PDD, SDD and Runbook, uploaded by hand and stored as Markdown.">
 
-Las reglas del proyecto, con las mismas acciones que la pantalla [Reglas](#ayuda-reglas).
+The routine reads on its own the documentation that comes inside the published packages. When a document is not there, or is out of date, an Admin uploads it here. There is a place for each one:
+
+- **PDD:** the business process, its steps and its exceptions.
+- **SDD:** how the solution is built, with its queues, assets and triggers.
+- **Runbook:** what to do for each failure and whom to escalate to.
+
+Everything is stored **as Markdown** (.md), without images. The routine uses these documents in the project analysis, for the process memory and the discrepancies, and in the prior analysis of each topic. After uploading one it is worth using **Request re-analysis**.
+
+A Reader or an Operator can view and download the documents; only an Admin uploads, replaces or removes them.
+
+<Vista nombre="proyecto" variante="documentacion" nota="Admin view" />
+
+<Accion id="doc-subir" nombre="Upload file or Replace" solo="Admin" breve="Uploads a .docx, .md or .txt and converts it to Markdown. It is reviewed before saving.">
+
+A Word file (.docx) is converted on the spot: headings, paragraphs, bold, lists and tables. Images, headers and the table of contents are not carried over. A PDF or an old .doc cannot be converted: save it as .docx or use **Paste text**.
+
+Nothing is saved until you click **Save**. If a document of that type already existed, the new one replaces it.
+
+</Accion>
+
+<Accion id="doc-pegar" nombre="Paste text" solo="Admin" breve="Opens a box to paste or write the document, in Markdown or plain text.">
+
+It is useful for documents that are in a wiki, in a PDF or in another format.
+
+</Accion>
+
+<Accion id="doc-guardar" nombre="Save" solo="Admin" breve="Saves the document as Markdown, after masking emails, IDs and usernames.">
+
+Before saving you can see the Markdown and correct it. The dashboard does not store personal data: emails, ID numbers and Windows usernames are masked automatically, but **people's names are not detected**: remove them by hand. Each document accepts up to 230 KB of text.
+
+</Accion>
+
+<Accion id="doc-ver" nombre="View" breve="Shows the saved document, formatted.">
+
+**Hide** closes it.
+
+</Accion>
+
+<Accion id="doc-descargar" nombre="Download .md" breve="Downloads the saved document as a Markdown file.">
+
+It asks for confirmation before saving the file. If this view does not support downloads, the button does not appear.
+
+</Accion>
+
+<Accion id="doc-quitar" nombre="Remove" solo="Admin" breve="Deletes the document from the project. It asks for confirmation.">
+
+It cannot be undone. The process memory already generated with that document does not change until the next re-analysis.
+
+</Accion>
 
 </Seccion>
 
-<Seccion id="proyecto-inventario" nivel="3" titulo="Pestaña Inventario" breve="Procesos, colas, triggers y assets de la carpeta (de los assets, solo el nombre).">
+<Seccion id="proyecto-reglas" nivel="3" titulo="Rules tab" breve="This project's rules and their status.">
 
-El [inventario](#ayuda-inventario) de la carpeta: procesos con su versión y si son parte del proyecto, colas con sus reintentos, triggers y assets. De los assets se muestra solo el nombre y el tipo.
+The project's rules, with the same actions as the [Rules](#ayuda-reglas) screen.
+
+</Seccion>
+
+<Seccion id="proyecto-inventario" nivel="3" titulo="Inventory tab" breve="Processes, queues, triggers and assets of the folder (for assets, only the name).">
+
+The folder's [inventory](#ayuda-inventario): processes with their version and whether they are part of the project, queues with their retries, triggers and assets. For assets only the name and type are shown.
 
 <Vista nombre="proyecto" variante="inventario" />
 
 </Seccion>
 
-<Seccion id="proyecto-config" nivel="3" titulo="Pestaña Configuración" breve="Nombre, carpeta, procesos, documentación y criterios del proyecto. Solo Admin puede editarla.">
+<Seccion id="proyecto-config" nivel="3" titulo="Settings tab" breve="The project's name, folder, processes, documentation and criteria. Only an Admin can edit it.">
 
-Un Lector o un Operador ven los criterios de triage y la documentación del proyecto. Un Admin puede editar:
+A Reader or an Operator sees the project's triage criteria and documentation. An Admin can edit:
 
-- el nombre y la carpeta de Orchestrator;
-- en **Opciones avanzadas**: controlar solo algunos procesos, el repo de Bitbucket de respaldo de cada proceso, la documentación adicional y los criterios de triage del proyecto.
+- the name and the Orchestrator folder;
+- under **Advanced options**: monitoring only some processes, each process's backup Bitbucket repo, the additional documentation and the project's triage criteria.
 
-**Editar configuración**, debajo de la lista de procesos, abre esta pestaña.
+**Edit settings**, below the list of processes, opens this tab.
 
 <Vista nombre="proyecto" variante="config" />
 
-<Accion id="guardar-proyecto" nombre="Guardar y re-analizar" solo="Admin" breve="Guarda la configuración. Guardar y re-analizar además pide a la próxima corrida que regenere memoria e inventario.">
+<Accion id="guardar-proyecto" nombre="Save and re-analyze" solo="Admin" breve="Saves the settings. Save and re-analyze also asks the next run to regenerate the memory and the inventory.">
 
-Si cambiaste repos o procesos, conviene re-analizar. **Solo guardar** guarda sin pedir el análisis. Si el proyecto estaba activo, sigue activo.
-
-</Accion>
-
-<Accion id="descartar-cambios" nombre="Descartar cambios" solo="Admin" breve="Vuelve el formulario a la configuración guardada.">
-
-Deshace lo que editaste y no guardaste.
+If you changed repos or processes, it is worth re-analyzing. **Save only** saves without requesting the analysis. If the project was active, it stays active.
 
 </Accion>
 
-</Seccion>
+<Accion id="descartar-cambios" nombre="Discard changes" solo="Admin" breve="Returns the form to the saved settings.">
 
-<Seccion id="reglas" nivel="2" titulo="Reglas" breve="Los puntos de control escritos en lenguaje natural, de todos los proyectos.">
-
-Las [reglas](#ayuda-regla) de todos los proyectos. Arriba, las **Propuestas para aprobar**; después, para un Admin, el formulario **Nueva regla**, y al final el resto. Cada una muestra su estado, su proyecto, de dónde salió (a mano, del alta, aprendida de un incidente, por similitud o de la revisión diaria), sus excepciones y cómo la entendió la rutina.
-
-- **Por compilar:** la rutina la traduce a un control en la próxima corrida.
-- **Propuesta:** la rutina la sugirió y dice por qué; un Admin la aprueba o la rechaza. Con la [aprobación automática](#ayuda-auto-reglas) activa, se aprueba sola en la corrida siguiente.
-- **Activa**, **Desactivada** o **Rechazada.**
-- **Cambio sugerido:** la revisión diaria encontró algo para ajustar en la regla.
-
-<Vista nombre="reglas" nota="vista de Admin" />
-
-<Accion id="nueva-regla" nombre="Crear regla" solo="Admin" breve="Agrega una regla escrita en lenguaje natural. Se compila en la próxima corrida.">
-
-Elegí el proyecto, o Todos los proyectos, y escribí la regla como se la dirías a una persona: qué mirar, el umbral y qué hacer. Por ejemplo: si se ven más de 10 errores de login seguidos, escalar.
-
-</Accion>
-
-<Accion id="regla-active" nombre="Aprobar o Activar" solo="Admin" breve="La regla pasa a controlarse en cada corrida.">
-
-**Aprobar** acepta una regla propuesta. **Activar** vuelve a encender una regla desactivada.
-
-</Accion>
-
-<Accion id="regla-rejected" nombre="Rechazar" solo="Admin" breve="Descarta una regla propuesta. No se controla.">
-
-La regla queda como Rechazada, para que la rutina no la vuelva a proponer igual.
-
-</Accion>
-
-<Accion id="regla-disabled" nombre="Desactivar" solo="Admin" breve="Deja de controlar una regla activa, sin borrarla.">
-
-Se puede volver a activar en cualquier momento.
-
-</Accion>
-
-<Accion id="re-abrir" nombre="Editar o Revisar" solo="Admin" breve="Abre el editor de la regla en la lista. Dice Revisar cuando la rutina sugiere un cambio.">
-
-Es el mismo [editor](#ayuda-editor-regla) que se abre desde un tema.
+It undoes what you edited and did not save.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="editor-regla" nivel="3" titulo="Editor de reglas" breve="Cambia el texto, la severidad o las excepciones de una regla, o la desactiva o elimina.">
+<Seccion id="reglas" nivel="2" titulo="Rules" breve="The checkpoints written in natural language, for all projects.">
 
-Se abre con **Ajustar regla** desde un tema o con **Editar** en la lista de reglas. Solo los Admin pueden cambiar algo; un Operador ve la regla y sus excepciones.
+The [rules](#ayuda-regla) of all projects. At the top, the **Proposals to approve**; then, for an Admin, the **New rule** form, and at the end the rest. Each one shows its status, its project, where it came from (by hand, from onboarding, learned from an incident, by similarity or from the daily review), its exceptions and how the routine understood it.
 
-- **Hay una condición en la que no aplica:** escribí la **excepción**, por ejemplo "es lunes antes de las 9". Vale desde la próxima corrida.
-- **Avisa con una gravedad que no corresponde:** elegí otra **severidad**, de P1 a P4. Cambia al guardar.
-- **El umbral o la condición están mal:** corregí el **texto**. Vale desde la próxima corrida.
-- **No querés que controle por un tiempo:** **Desactivar**.
-- **La regla no sirve:** **Eliminar regla**. Pide confirmación y no se puede deshacer.
+- **To compile:** the routine translates it into a check in the next run.
+- **Proposed:** the routine suggested it and says why; an Admin approves or rejects it. With [automatic approval](#ayuda-auto-reglas) on, it approves itself in the following run.
+- **Active**, **Disabled** or **Rejected.**
+- **Suggested change:** the daily review found something to adjust in the rule.
 
-Cuando cambia el texto o una excepción, la regla queda **Por compilar** y la rutina muestra después cómo la entendió. Las excepciones se pueden quitar. Desde un tema, **Descartar también este tema** cierra el incidente en el mismo paso, como falso positivo.
+<Vista nombre="reglas" nota="Admin view" />
 
-<Vista nombre="reglas" variante="editor" nota="vista de Admin, con una sugerencia de la rutina" />
+<Accion id="nueva-regla" nombre="Create rule" solo="Admin" breve="Adds a rule written in natural language. It is compiled in the next run.">
 
-<Accion id="re-guardar" nombre="Guardar cambios" solo="Admin" breve="Guarda el texto, la severidad y las excepciones. En una propuesta dice Guardar y aprobar.">
-
-En una regla desactivada o rechazada dice **Guardar y activar**. El cambio queda en la actividad del tema si se hizo desde uno.
+Pick the project, or All projects, and write the rule the way you would tell it to a person: what to look at, the threshold and what to do. For example: if more than 10 login errors in a row are seen, escalate.
 
 </Accion>
 
-<Accion id="re-sev" nombre="Severidad" solo="Admin" breve="Elige la severidad con la que avisa la regla, de P1 a P4. Cambia al guardar.">
+<Accion id="regla-active" nombre="Approve or Activate" solo="Admin" breve="The rule starts being checked on every run.">
 
-No aparece en reglas que marcan temas como conocidos o los ignoran, porque esas no avisan.
-
-</Accion>
-
-<Accion id="re-estado" nombre="Desactivar (editor)" solo="Admin" breve="Deja de controlar esta regla desde ya, sin borrarla.">
-
-Se puede volver a activar desde la lista de reglas.
+**Approve** accepts a proposed rule. **Activate** turns a disabled rule back on.
 
 </Accion>
 
-<Accion id="re-eliminar" nombre="Eliminar regla" solo="Admin" breve="Borra la regla para siempre. Pide confirmación.">
+<Accion id="regla-rejected" nombre="Reject" solo="Admin" breve="Discards a proposed rule. It is not checked.">
 
-Si solo querés que deje de controlar un tiempo, conviene **Desactivar**.
-
-</Accion>
-
-<Accion id="re-sug-aplicar" nombre="Aplicar sugerencia" solo="Admin" breve="Carga en el formulario el cambio que sugiere la rutina; vos confirmás con Guardar.">
-
-Si la sugerencia es desactivar la regla, el botón dice **Desactivar** y la desactiva directamente. Ver [sugerencias de la rutina](#ayuda-sugerencia).
+The rule stays as Rejected, so the routine does not propose it again in the same form.
 
 </Accion>
 
-<Accion id="re-sug-descartar" nombre="No, gracias" solo="Admin" breve="Descarta la sugerencia de la rutina. No vuelve a sugerirla por 90 días.">
+<Accion id="regla-disabled" nombre="Deactivate" solo="Admin" breve="Stops checking an active rule, without deleting it.">
 
-La regla queda como estaba.
+It can be activated again at any time.
+
+</Accion>
+
+<Accion id="re-abrir" nombre="Edit or Review" solo="Admin" breve="Opens the rule editor in the list. It says Review when the routine suggests a change.">
+
+It is the same [editor](#ayuda-editor-regla) that opens from a topic.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="propuestas" nivel="3" titulo="Propuestas de la rutina" breve="Reglas y cambios que propone la rutina. Los aprueba un Admin, salvo que la aprobación automática esté activa.">
+<Seccion id="editor-regla" nivel="3" titulo="Rule editor" breve="Changes a rule's text, severity or exceptions, or deactivates or deletes it.">
 
-La rutina propone por su cuenta, y todo llega a **Para revisar** y a **Propuestas para aprobar**:
+It opens with **Adjust rule** from a topic or with **Edit** in the rules list. Only Admins can change anything; an Operator sees the rule and its exceptions.
 
-- **Por [similitud](#ayuda-similitud):** cuando un Admin aprueba o edita una regla, la rutina la ofrece a otros procesos que usan el mismo portal, la misma aplicación o la misma librería.
-- **[Cambios sugeridos](#ayuda-sugerencia):** una vez por día revisa los últimos 30 días y marca las reglas que conviene tocar.
-- **Reglas nuevas de la revisión diaria:** si un mismo tema sin regla se descartó varias veces, o un aviso se repite sin que nadie lo mire.
-- **Aprendidas de un incidente:** a partir de los descartes y las respuestas.
+- **There is a condition in which it does not apply:** write the **exception**, for example "it is Monday before 9". It applies from the next run.
+- **It warns with a severity that does not fit:** pick another **severity**, from P1 to P4. It changes when you save.
+- **The threshold or the condition is wrong:** fix the **text**. It applies from the next run.
+- **You do not want it to check for a while:** **Deactivate**.
+- **The rule is useless:** **Delete rule**. It asks for confirmation and cannot be undone.
 
-Llegan como máximo 3 propuestas por proyecto por vez.
+When the text or an exception changes, the rule becomes **To compile** and the routine then shows how it understood it. Exceptions can be removed. From a topic, **Also dismiss this topic** closes the incident in the same step, as a false positive.
 
-Por defecto nada se activa solo. Si un Admin activó la [aprobación automática](#ayuda-auto-reglas) en Ajustes, las **reglas nuevas** se activan en la corrida siguiente y quedan marcadas como **aprobada automáticamente**. Los cambios sugeridos sobre reglas que ya existen siempre esperan a una persona.
+<Vista nombre="reglas" variante="editor" nota="Admin view, with a suggestion from the routine" />
+
+<Accion id="re-guardar" nombre="Save changes" solo="Admin" breve="Saves the text, the severity and the exceptions. On a proposal it says Save and approve.">
+
+On a disabled or rejected rule it says **Save and activate**. The change is recorded in the topic's activity if it was made from one.
+
+</Accion>
+
+<Accion id="re-sev" nombre="Severity" solo="Admin" breve="Picks the severity the rule warns with, from P1 to P4. It changes when you save.">
+
+It does not appear on rules that mark topics as known or ignore them, because those do not warn.
+
+</Accion>
+
+<Accion id="re-estado" nombre="Deactivate (editor)" solo="Admin" breve="Stops checking this rule right away, without deleting it.">
+
+It can be activated again from the rules list.
+
+</Accion>
+
+<Accion id="re-eliminar" nombre="Delete rule" solo="Admin" breve="Deletes the rule for good. It asks for confirmation.">
+
+If you only want it to stop checking for a while, it is better to **Deactivate**.
+
+</Accion>
+
+<Accion id="re-sug-aplicar" nombre="Apply suggestion" solo="Admin" breve="Loads the change the routine suggests into the form; you confirm with Save.">
+
+If the suggestion is to deactivate the rule, the button says **Deactivate** and deactivates it directly. See [routine suggestions](#ayuda-sugerencia).
+
+</Accion>
+
+<Accion id="re-sug-descartar" nombre="No, thanks" solo="Admin" breve="Dismisses the routine's suggestion. It is not suggested again for 90 days.">
+
+The rule stays as it was.
+
+</Accion>
 
 </Seccion>
 
-<Seccion id="registrar" nivel="2" titulo="Registrar proyecto" breve="Solo Admin: suma una carpeta de Orchestrator al control.">
+<Seccion id="propuestas" nivel="3" titulo="Routine proposals" breve="Rules and changes the routine proposes. An Admin approves them, unless automatic approval is on.">
 
-Se llega desde **Proyectos → Registrar proyecto**. Un [proyecto](#ayuda-proyecto) es una carpeta de Orchestrator. La rutina detecta sola sus procesos, sus librerías y su documentación a partir de los paquetes publicados, en la versión que está en producción.
+The routine proposes on its own, and everything arrives in **To review** and in **Proposals to approve**:
 
-1. Registrá la carpeta desde los [proyectos propuestos](#ayuda-propuestos) o con el formulario.
-2. La próxima corrida hace el [alta](#ayuda-alta).
-3. Revisá el proyecto y tocá **Activar el control de este proyecto**.
+- **By [similarity](#ayuda-similitud):** when an Admin approves or edits a rule, the routine offers it to other processes that use the same portal, the same application or the same library.
+- **[Suggested changes](#ayuda-sugerencia):** once a day it reviews the last 30 days and flags the rules that are worth touching.
+- **New rules from the daily review:** if the same topic without a rule was dismissed several times, or a notice repeats without anyone looking at it.
+- **Learned from an incident:** from dismissals and replies.
 
-Los procesos que se agreguen después a la carpeta se suman solos.
+At most 3 proposals per project arrive at a time.
+
+By default nothing is activated on its own. If an Admin turned on [automatic approval](#ayuda-auto-reglas) in Settings, **new rules** are activated in the following run and marked as **automatically approved**. Suggested changes to rules that already exist always wait for a person.
+
+</Seccion>
+
+<Seccion id="registrar" nivel="2" titulo="Register project" breve="Admin only: adds an Orchestrator folder to monitoring.">
+
+You get there from **Projects → Register project**. A [project](#ayuda-proyecto) is an Orchestrator folder. The routine detects its processes, its libraries and its documentation on its own from the published packages, in the version that is in production.
+
+1. Register the folder from the [proposed projects](#ayuda-propuestos) or with the form.
+2. The next run does the [onboarding](#ayuda-alta).
+3. Review the project and click **Activate monitoring for this project**.
+
+Processes added to the folder later are picked up automatically.
 
 <Vista nombre="registrar" />
 
-<Accion id="registrar-analizar" nombre="Registrar y analizar" solo="Admin" breve="Crea el proyecto con el nombre y la carpeta indicados y pide su análisis.">
+<Accion id="registrar-analizar" nombre="Register and analyze" solo="Admin" breve="Creates the project with the given name and folder and requests its analysis.">
 
-Alcanza con el nombre y la carpeta. Las **Opciones avanzadas** son las mismas que en la [Configuración](#ayuda-proyecto-config) y normalmente no hacen falta.
-
-</Accion>
-
-</Seccion>
-
-<Seccion id="propuestos" nivel="3" titulo="Proyectos propuestos" breve="Carpetas de Orchestrator con procesos que encontró el escaneo y que todavía no se controlan.">
-
-La rutina escanea la carpeta indicada en [Ajustes](#ayuda-descubrimiento): cuando un Admin lo pide y, además, una vez por día. Cada carpeta con procesos que todavía no es un proyecto aparece acá como [proyecto propuesto](#ayuda-proyecto-propuesto), con sus procesos y su actividad de los últimos 30 días.
-
-Nada se registra solo: un Admin elige qué controlar. Si no hay propuestas, la pantalla dice por qué y lleva a Ajustes.
-
-<Accion id="registrar-detectada" nombre="Registrar" solo="Admin" breve="Registra un proyecto propuesto y pide su análisis.">
-
-El proyecto toma el nombre y la carpeta propuestos. Se pueden cambiar después en su [Configuración](#ayuda-proyecto-config).
-
-</Accion>
-
-<Accion id="registrar-todos" nombre="Registrar todos" solo="Admin" breve="Registra de una vez todos los proyectos propuestos que quedan en la lista. Pide confirmación.">
-
-Conviene ignorar antes las carpetas que no son de producción. La rutina hace hasta 3 altas por corrida: con muchos proyectos, el análisis tarda varias horas.
-
-</Accion>
-
-<Accion id="ignorar-detectada" nombre="Ignorar" solo="Admin" breve="Saca la carpeta de las propuestas. No se vuelve a proponer.">
-
-Para carpetas de pruebas, de desarrollo o que no se quieren controlar.
-
-</Accion>
-
-<Accion id="restaurar-ignoradas" nombre="Volver a proponerlas" solo="Admin" breve="Vuelve a mostrar como propuestas las carpetas ignoradas.">
-
-Aparece debajo de la lista cuando hay carpetas ignoradas.
+The name and the folder are enough. The **Advanced options** are the same as in [Settings](#ayuda-proyecto-config) and are normally not needed.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="ajustes" nivel="2" titulo="Ajustes" breve="Solo Admin: carpeta a escanear, criterios globales del triage, umbrales, retención y aprobación de reglas.">
+<Seccion id="propuestos" nivel="3" titulo="Proposed projects" breve="Orchestrator folders with processes that the scan found and that are not monitored yet.">
 
-- **Proyectos a controlar:** la [carpeta de Orchestrator a escanear](#ayuda-descubrimiento).
-- **Criterios de triage globales:** se aplican a todos los proyectos, junto con los de cada uno.
-- **Matriz de severidad:** qué es P1, P2, P3 y P4.
-- **Minutos máximos en Pending:** desde cuándo un job que espera se considera un problema.
-- **Retención:** cuántos días se guardan las corridas y los incidentes cerrados.
-- **Reglas:** la [aprobación automática](#ayuda-auto-reglas).
+The routine scans the folder set in [Settings](#ayuda-descubrimiento): when an Admin requests it and, in addition, once a day. Each folder with processes that is not yet a project appears here as a [proposed project](#ayuda-proyecto-propuesto), with its processes and its activity over the last 30 days.
+
+Nothing is registered on its own: an Admin chooses what to monitor. If there are no proposals, the screen says why and leads to Settings.
+
+<Accion id="registrar-detectada" nombre="Register" solo="Admin" breve="Registers a proposed project and requests its analysis.">
+
+The project takes the proposed name and folder. They can be changed later in its [Settings](#ayuda-proyecto-config).
+
+</Accion>
+
+<Accion id="registrar-todos" nombre="Register all" solo="Admin" breve="Registers at once all the proposed projects left in the list. It asks for confirmation.">
+
+It is better to ignore the non-production folders first. The routine does up to 3 onboardings per run: with many projects, the analysis takes several hours.
+
+</Accion>
+
+<Accion id="ignorar-detectada" nombre="Ignore" solo="Admin" breve="Takes the folder out of the proposals. It is not proposed again.">
+
+For test or development folders, or ones you do not want to monitor.
+
+</Accion>
+
+<Accion id="restaurar-ignoradas" nombre="Propose them again" solo="Admin" breve="Shows the ignored folders as proposals again.">
+
+It appears below the list when there are ignored folders.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="ajustes" nivel="2" titulo="Settings" breve="Admin only: folder to scan, global triage criteria, thresholds, retention and rule approval.">
+
+- **Projects to monitor:** the [Orchestrator folder to scan](#ayuda-descubrimiento).
+- **Global triage criteria:** they apply to all projects, together with each project's own.
+- **Severity matrix:** what P1, P2, P3 and P4 are.
+- **Maximum minutes in Pending:** from when a waiting job is considered a problem.
+- **Retention:** how many days runs and closed incidents are kept.
+- **Rules:** the [automatic approval](#ayuda-auto-reglas).
 
 <Vista nombre="ajustes" />
 
-<Accion id="guardar-ajustes" nombre="Guardar ajustes" solo="Admin" breve="Guarda la carpeta, los criterios, los umbrales y la retención. Se usan desde la próxima corrida.">
+<Accion id="guardar-ajustes" nombre="Save settings" solo="Admin" breve="Saves the folder, the criteria, the thresholds and the retention. They are used from the next run.">
 
-Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas. La aprobación automática no depende de este botón: se guarda al cambiar el interruptor.
-
-</Accion>
-
-<Accion id="auto-reglas" nombre="Aprobar automáticamente las reglas" solo="Admin" breve="Interruptor. Activado, las reglas que propone la rutina se activan solas en la corrida siguiente.">
-
-Viene **desactivado**: cada regla que propone la rutina espera a que un Admin la apruebe.
-
-Al activarlo:
-
-- La próxima corrida aprueba las reglas propuestas, también las que ya estaban esperando. Rechazá antes las que no quieras.
-- Una regla nueva se ve como **Propuesta** hasta la corrida siguiente a la que la propuso. En ese rato todavía se puede rechazar.
-- Las reglas aprobadas así quedan marcadas como **aprobada automáticamente** y se pueden desactivar, editar o eliminar como cualquier otra.
-- Los **cambios sugeridos** sobre reglas que ya existen (una excepción, otra severidad, desactivarla) no se aplican solos.
-
-Se guarda en el momento y vale desde la próxima corrida.
+Changes to the criteria do not reclassify what is already on the dashboard: they apply to the findings of upcoming runs. Automatic approval does not depend on this button: it is saved when you change the switch.
 
 </Accion>
 
-</Seccion>
+<Accion id="idioma" nombre="Español / English" solo="Admin" breve="Changes the language of the whole dashboard and of what the routine writes from the next run. It applies to everyone.">
 
-<Seccion id="descubrimiento" nivel="3" titulo="Proyectos a controlar" breve="La carpeta de Orchestrator que la rutina escanea para proponer proyectos. Es el primer paso en un tablero nuevo.">
+It is a **global** setting: an Admin picks it and everyone sees the same. Menus, buttons, messages and this help change immediately, and from the next run the routine writes the topic titles, the analyses, the memories and the rules it proposes in that language.
 
-En Orchestrator los proyectos de producción suelen estar dentro de una misma carpeta, por ejemplo `Produccion`. Escribila acá, con su ruta completa si está dentro de otra (`Clientes/Produccion`). Se pueden indicar varias, separadas por coma.
+Each text is written **only once**, in the language in force when it was generated: what was already stored is neither translated nor duplicated. To get a project's memory in the new language, re-analyze it from the project. Texts written by a person (notes, comments, rule text) and uploaded documents stay as they were written.
 
-La rutina recorre todas las carpetas que están adentro. Cada una que tiene procesos y todavía no se controla pasa a [Proyectos propuestos](#ayuda-propuestos). Lo que está fuera de esa carpeta no se propone.
+</Accion>
 
-Para que el escaneo vea las subcarpetas, la aplicación con la que la rutina lee Orchestrator tiene que poder verlas. Si no puede, debajo del campo aparece un aviso que dice qué falta.
+<Accion id="auto-reglas" nombre="Automatically approve the rules the routine proposes" solo="Admin" breve="Switch. When on, the rules the routine proposes are activated by themselves in the following run.">
 
-<Accion id="escanear" nombre="Guardar y escanear" solo="Admin" breve="Guarda la carpeta y pide a la próxima corrida que la escanee y proponga los proyectos.">
+It comes **off**: every rule the routine proposes waits for an Admin to approve it.
 
-Mientras el pedido espera, dice **Escaneo pedido**. Después muestra cuándo fue el último escaneo y cuántos proyectos propuso. Además del pedido, la rutina repite el escaneo una vez por día para encontrar carpetas nuevas.
+When you turn it on:
+
+- The next run approves the proposed rules, including those that were already waiting. Reject first the ones you do not want.
+- A new rule shows as **Proposed** until the run after the one that proposed it. In that interval it can still be rejected.
+- Rules approved this way are marked as **automatically approved** and can be deactivated, edited or deleted like any other.
+- **Suggested changes** to rules that already exist (an exception, another severity, deactivating it) are not applied on their own.
+
+It is saved immediately and applies from the next run.
 
 </Accion>
 
 </Seccion>
 
-<Seccion id="mas" nivel="2" titulo="Más (teléfono)" breve="En el teléfono: Fuera de bandeja, Ajustes, Registrar proyecto, Ayuda y el estado de la rutina.">
+<Seccion id="descubrimiento" nivel="3" titulo="Projects to monitor" breve="The Orchestrator folder the routine scans to propose projects. It is the first step on a new dashboard.">
 
-En el teléfono la barra de abajo tiene lugar para Bandeja, Proyectos, Corridas y Reglas. Lo demás está en **Más**, junto con el estado de la rutina y tu acceso.
+In Orchestrator, production projects are usually inside a single folder, for example `Produccion`. Type it here, with its full path if it is inside another (`Clientes/Produccion`). You can enter several, separated by commas.
 
-<Vista nombre="mas" nota="vista de Admin" />
+The routine goes through all the folders inside. Each one that has processes and is not monitored yet moves to [Proposed projects](#ayuda-propuestos). Whatever is outside that folder is not proposed.
+
+For the scan to see the subfolders, the application the routine uses to read Orchestrator has to be able to see them. If it cannot, a notice below the field says what is missing.
+
+<Accion id="escanear" nombre="Save and scan" solo="Admin" breve="Saves the folder and asks the next run to scan it and propose the projects.">
+
+While the request is waiting, it says **Scan requested**. Afterwards it shows when the last scan was and how many projects it proposed. Besides the request, the routine repeats the scan once a day to find new folders.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="mas" nivel="2" titulo="More (phone)" breve="On the phone: Outside the inbox, Settings, Register project, Help and the routine's status.">
+
+On the phone the bottom bar has room for Inbox, Projects, Runs and Rules. Everything else is in **More**, together with the routine's status and your access.
+
+<Vista nombre="mas" nota="Admin view" />
 
 </Seccion>

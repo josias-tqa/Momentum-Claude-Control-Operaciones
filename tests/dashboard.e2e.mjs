@@ -796,6 +796,57 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await ctx.close();
 }
 
+// 9) Idioma: un Admin cambia el tablero a inglés desde Ajustes; menús, pantallas y ayuda salen en inglés y vuelve a español.
+{
+  const { page, ctx } = await abrir();
+  const writes = () => page.evaluate(() => window.__WRITES__);
+  const texto = (sel) => page.evaluate((s) => document.querySelector(s).innerText, sel);
+  // Lo que viene de la base (títulos, análisis) o del propio selector ("Español") no cuenta: solo la interfaz.
+  const sinEspanol = async (sel, que) => {
+    const t = (await texto(sel)).replace(/Español/g, '');
+    assert.ok(!/[áéíóúñ¿¡]/i.test(t), `${que}: quedó texto en español: ${(t.match(/.{0,30}[áéíóúñ¿¡].{0,30}/i) || [''])[0]}`);
+  };
+  assert.equal(await page.evaluate(() => document.documentElement.lang), 'es');
+  await page.click('#nav a[href="#ajustes"]');
+  await page.waitForSelector('#aj-idioma-en', { timeout: 3000 });
+  assert.equal(await page.getAttribute('#aj-idioma-es', 'aria-pressed'), 'true', 'por defecto está en español');
+  await page.click('#aj-idioma-en');
+  await page.waitForTimeout(250);
+  const w = (await writes()).filter((x) => x.path === 'config/settings').pop();
+  assert.deepEqual(w.data, { language: 'en' }, 'solo cambia el idioma');
+  assert.equal(await page.getAttribute('#aj-idioma-en', 'aria-pressed'), 'true');
+  assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
+  assert.ok(await visible(page, 'h1 >> text=Settings'));
+  assert.ok(await visible(page, '#nav >> text=Inbox'), 'el menú pasa a inglés');
+  await sinEspanol('#nav', 'menú');
+  await sinEspanol('#view', 'Ajustes');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'ajustes-en.png'), fullPage: true });
+  for (const h of ['#inicio', '#proyectos', '#reglas', '#corridas', '#no-reportados']) {
+    await page.evaluate((x) => { location.hash = x; }, h);
+    await page.waitForTimeout(150);
+    await sinEspanol('#nav', h);
+    assert.ok((await texto('#view h1')).trim().length > 0, `${h} tiene título`);
+  }
+  assert.ok(await visible(page, '#nav >> text=Inbox'));
+  // La ayuda sale en el idioma activo, con sus vistas de ejemplo.
+  await page.evaluate(() => { location.hash = '#ayuda'; });
+  await page.waitForSelector('.ayuda', { timeout: 3000 });
+  await sinEspanol('.ayuda', 'ayuda');
+  assert.ok(await visible(page, '.ayuda >> text=Example with sample data'));
+  // Tooltips en inglés.
+  await page.evaluate(() => { location.hash = '#inicio'; });
+  await page.waitForTimeout(150);
+  // Volver a español.
+  await page.evaluate(() => { location.hash = '#ajustes'; });
+  await page.click('#aj-idioma-es');
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => document.documentElement.lang), 'es');
+  assert.ok(await visible(page, 'h1 >> text=Ajustes'));
+  assert.ok(await visible(page, '#nav >> text=Bandeja'));
+  paso('idioma: el Admin cambia a inglés y vuelve a español; menú, pantallas y ayuda siguen el idioma');
+  await ctx.close();
+}
+
 await browser.close();
 for (const p of ok) console.log('ok -', p);
 if (errores.length) { console.error('Errores de página:\n' + errores.join('\n')); process.exit(1); }
