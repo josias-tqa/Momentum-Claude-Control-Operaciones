@@ -5,6 +5,7 @@
   "intervalMinutes": 60,
   "pendingMaxMinutes": 30,
   "timezone": "America/Argentina/Buenos_Aires",
+  "language": "es",
   "autoApproveRules": false,
   "discovery": { "rootFolders": [], "ignoredFolders": [] }
 }

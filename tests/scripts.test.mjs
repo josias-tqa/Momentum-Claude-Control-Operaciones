@@ -684,6 +684,8 @@ test('esquemas: documentos en Markdown, lado humano de una discrepancia, ajustes
   mal('discrepancyWork', 'd1', { state: 'delegated' }, /fuera de/);
   ok('config', 'settings', { ...JSON.parse(readFileSync(join(RAIZ, 'seed/settings.json'), 'utf8')), autoApproveRules: true, discovery: { rootFolders: ['Produccion'], ignoredFolders: ['Produccion/Pruebas'] } });
   mal('config', 'settings', { triageCriteria: '', retention: {}, autoApproveRules: 'si' }, /boolean/);
+  ok('config', 'settings', { triageCriteria: '', retention: {}, language: 'en' });
+  mal('config', 'settings', { triageCriteria: '', retention: {}, language: 'fr' }, /language/);
   ok('requests', 'r1', { type: 'discover_projects', roots: ['Produccion'], requestedBy: 'u_1', requestedAt: AHORA, status: 'pending' });
   ok('history', 'h1', { projectId: 'p', type: 'discrepancy', at: AHORA, summary: 'Discrepancia respondida: se corrige el SDD.', discrepancyId: 'd1', by: 'u_1' });
 });

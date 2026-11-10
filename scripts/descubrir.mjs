@@ -26,6 +26,7 @@ import { listarRepos, paqueteDeRepo } from './lib/bitbucket-api.mjs';
 import { arg, bandera, leerJson, desenvolver } from './lib/args.mjs';
 import { normalizarProyecto, inferirRol, slugProceso } from './lib/proyecto.mjs';
 import { listaDeCarpetas, limpiarCarpeta, raizDe, dentroDe, mismaCarpeta } from './lib/carpetas.mjs';
+import { idiomaDe, m } from './lib/idioma.mjs';
 
 const salida = arg('--salida');
 const dias = Number(arg('--dias') || 30);
@@ -38,6 +39,7 @@ const probar = (fn, d = []) => { try { return fn(); } catch { return d; } };
 // ---------- carpetas raíz e ignoradas (Ajustes del tablero) ----------
 const ajustes = arg('--ajustes') ? desenvolver(leerJson(arg('--ajustes'), {})) : {};
 const ajDesc = ajustes.discovery || {};
+const lang = idiomaDe(ajustes);
 const raices = listaDeCarpetas(arg('--raices') !== undefined ? arg('--raices') : ajDesc.rootFolders || []);
 const ignoradas = listaDeCarpetas(ajDesc.ignoredFolders || []);
 
@@ -194,8 +196,8 @@ if (arg('--plan-tablero') && !sinAcceso) {
   const folders = candidatos.filter((c) => !c.registradoComo && !c.fueraDeLasRaices && c.folderPath !== '(sin carpeta)').slice(0, 500)
     .map((c) => ({ folderPath: c.folderPath, name: c.name, procesos: c.processes.map((p) => p.orchestratorProcess).slice(0, 50), jobs30d: c.jobs, ...(c.root ? { root: c.root } : {}) }));
   const avisos = [];
-  if (raices.length && !carpetasListadas.length) avisos.push('No se pudieron listar las subcarpetas: solo se revisó la carpeta indicada. La External App necesita un rol de tenant que permita ver carpetas (Folders → View).');
-  for (const r of raices) if (!candidatos.some((c) => mismaCarpeta(c.root, r))) avisos.push(`No se encontraron procesos dentro de ${r}: revisar que la ruta sea exacta y que la External App esté asignada a esa carpeta.`);
+  if (raices.length && !carpetasListadas.length) avisos.push(m(lang, 'desc.sinSubcarpetas'));
+  for (const r of raices) if (!candidatos.some((c) => mismaCarpeta(c.root, r))) avisos.push(m(lang, 'desc.sinProcesos', { raiz: r }));
   const data = { at: resultado.generadoEn, roots: raices, folders, ...(avisos.length ? { note: avisos.join(' ').slice(0, 2000) } : {}) };
   writeFileSync(arg('--plan-tablero'), JSON.stringify({ writes: [{ op: 'set', collection: 'config', doc_id: 'discovery', data }] }, null, 2));
 }

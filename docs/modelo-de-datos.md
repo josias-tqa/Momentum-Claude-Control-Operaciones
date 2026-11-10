@@ -13,7 +13,7 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 
 | Colección | Escribe | Contenido |
 |---|---|---|
-| `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria. `autoApproveRules`: aprobación automática de reglas (apagada por defecto). `discovery`: carpetas de Orchestrator a escanear (`rootFolders`) y carpetas propuestas que un Admin ignoró (`ignoredFolders`) |
+| `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria. `language` (`es` | `en`, por defecto `es`): idioma global del tablero y de todo lo que escribe la rutina; lo fija un Admin en Ajustes y la rutina lo lee de acá (cada texto se escribe una sola vez, en ese idioma). `autoApproveRules`: aprobación automática de reglas (apagada por defecto). `discovery`: carpetas de Orchestrator a escanear (`rootFolders`) y carpetas propuestas que un Admin ignoró (`ignoredFolders`) |
 | `config/health`, `config/runlock` | Rutina | Última corrida, fallas consecutivas, uso de la base, marcas de la revisión de reglas (`rulesReview`); lock entre corridas |
 | `projects/{id}` | Admin (alta y configuración) y rutina (salud, watermarks, inventario, emparejamiento) | Carpeta de Orchestrator, **procesos** (cada uno con su repo, su rol, su nombre en Orchestrator y, opcionalmente, su carpeta y su documentación), documentación común, `status`, criterios del proyecto, baseline. Detalle: `scripts/lib/proyecto.mjs` |
 | `memory/{projectId}` | Rutina (Admin puede corregir) | `process`: memoria de proceso (mini-PDD). `productionSummary`: resumen rodante de la memoria de producción |

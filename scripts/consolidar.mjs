@@ -16,6 +16,7 @@ import { readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
 import { inferirRol, slugProceso } from './lib/proyecto.mjs';
+import { idiomaDe, m } from './lib/idioma.mjs';
 
 const ORDEN_SEV = { P1: 1, P2: 2, P3: 3, P4: 4 };
 const masGrave = (a, b) => (ORDEN_SEV[a] <= ORDEN_SEV[b] ? a : b);
@@ -46,7 +47,8 @@ function decisionPorDefecto(h) {
 // Una tarjeta se "reporta" (aparece en la bandeja) si la decisión es escalate/notify.
 export const esReportable = (decision) => decision === 'escalate' || decision === 'notify';
 
-export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos, incidentes, trabajo, porProyecto, triage = {}, librerias = [], reanalizar = [] }) {
+export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos, incidentes, trabajo, porProyecto, triage = {}, librerias = [], reanalizar = [], ajustes = {} }) {
+  const lang = idiomaDe(ajustes);
   const writes = [];
   const analizar = [];
   const runProyectos = [];
@@ -70,7 +72,7 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
         category: categoria,
         severity: severidad,
         decision,
-        rationale: t.rationale || (h.conocidoPor ? `Coincide con la regla activa ${h.conocidoPor} (comportamiento conocido).` : 'Clasificación automática por check base; no hubo triage de Claude para este hallazgo.'),
+        rationale: t.rationale || (h.conocidoPor ? m(lang, 'cons.rationale.regla', { regla: h.conocidoPor }) : m(lang, 'cons.rationale.auto')),
         confidence: t.confidence || (t.rationale ? 'media' : 'baja'),
         matchedRules: t.matchedRules || (h.ruleId ? [h.ruleId] : h.conocidoPor ? [h.conocidoPor] : []),
         memoryRefs: t.memoryRefs || [],
@@ -230,7 +232,7 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
   for (const inc of abiertos) {
     if (tocados.has(inc.id) || !proyectosCorridos.has(inc.projectId) || esReportable(inc.decision)) continue;
     if (!inc.lastSeenAt || (Date.parse(ahora) - Date.parse(inc.lastSeenAt)) / 3600000 < 24) continue;
-    tocados.set(inc.id, { ...inc, status: 'closed', closedAt: ahora, closedReason: 'Sin recurrencia en 24 h (no reportado)' });
+    tocados.set(inc.id, { ...inc, status: 'closed', closedAt: ahora, closedReason: m(lang, 'cons.cerrado.sinRecurrencia') });
   }
 
   // Re-análisis pedido por un humano (requests reanalyze_incident).
@@ -302,6 +304,7 @@ if (process.argv[1] && process.argv[1].endsWith('consolidar.mjs')) {
   const trabajo = leerColeccion(join(dbDir, 'incidentWork'));
   const triagePath = arg('--triage') || join(runDir, 'triage.json');
   const triage = existsSync(triagePath) ? leerJson(triagePath) : {};
+  const ajustes = desenvolver(leerJson(join(dbDir, 'config', 'settings.json'), {}));
   const porProyecto = [];
   for (const p of proyectos) {
     const hp = join(runDir, p.id, 'hallazgos.json');
@@ -312,7 +315,7 @@ if (process.argv[1] && process.argv[1].endsWith('consolidar.mjs')) {
   const fin = new Date().toISOString();
   const librerias = leerColeccion(join(dbDir, 'libraries'));
   const reanalizar = (arg('--reanalizar') || '').split(',').filter(Boolean);
-  const plan = consolidar({ runId, inicio: arg('--inicio') || fin, fin, trigger: arg('--trigger') || 'scheduled', sessionUrl: arg('--session-url'), proyectos, incidentes, trabajo, porProyecto, triage, librerias, reanalizar });
+  const plan = consolidar({ runId, inicio: arg('--inicio') || fin, fin, trigger: arg('--trigger') || 'scheduled', sessionUrl: arg('--session-url'), proyectos, incidentes, trabajo, porProyecto, triage, librerias, reanalizar, ajustes });
   writeFileSync(join(runDir, 'plan.json'), JSON.stringify(plan, null, 2));
   console.log(JSON.stringify({ escrituras: plan.writes.length, analizar: plan.analizar, resumen: plan.resumen }));
 }
