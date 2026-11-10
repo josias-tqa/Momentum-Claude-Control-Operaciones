@@ -57,7 +57,7 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
    node scripts/set-analisis.mjs --plan work/$RUN/plan.json --incidente <id> --analisis work/$RUN/analisis/<id>.json
    ```
 
-## Forma del análisis (en español, sin PII ni valores de casos)
+## Forma del análisis (en el idioma de `config/settings.language`, por defecto `es`; sin PII ni valores de casos)
 
 ```json
 {

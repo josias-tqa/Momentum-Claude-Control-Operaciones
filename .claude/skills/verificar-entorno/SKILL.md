@@ -25,7 +25,7 @@ nombres de campos y conteos, y el informe final debe mantener esa regla.
    - `get` del mismo documento para confirmar;
    - `delete` del documento (con `if_version`).
    Registrar si alguna de las llamadas pidió aprobación manual: en una rutina desatendida eso es una falla.
-4. Leer `work/verificacion/<marca>/reporte.md` y presentar, en español:
+4. Leer `work/verificacion/<marca>/reporte.md` y presentar, en el idioma de `config/settings.language` si ya existe el tablero (si no, en español):
    - el veredicto UiPath (GO / GO CON FALLBACK / NO-GO) y el de Bitbucket;
    - el resultado de ArtifactData;
    - cada comprobación en falla con su causa probable y qué acceso falta (scope de la External App,

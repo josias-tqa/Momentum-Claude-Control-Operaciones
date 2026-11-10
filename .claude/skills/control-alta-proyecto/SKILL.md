@@ -81,7 +81,7 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
       ```
       - `key` identifica la discrepancia de un análisis al siguiente: `<kind>:<objeto>`, corta y estable (nombres de colas, assets, triggers o procesos; nunca fechas ni conteos). **Si la discrepancia ya existe, reusá su `key` tal cual**: así conserva su respuesta.
       - Una discrepancia por cosa concreta: tres assets faltantes son tres tarjetas, no una.
-      - Todo en español, **sin PII y sin valores de assets**. `refs[].source` es un archivo, una sección o un lugar de Orchestrator.
+      - Todo en el idioma de `config/settings.language` (lo lee `/control-corrida` de `work/$RUN/db/config/settings.json`; por defecto `es`), **sin PII y sin valores de assets**. `refs[].source` es un archivo, una sección o un lugar de Orchestrator.
       - Si una persona respondió "es correcto así" o la descartó, no hace falta que la quites de la lista: el script respeta la respuesta. Tenelo en cuenta en la memoria (paso 6).
    3. Consolidá (determinista):
       ```bash
@@ -90,7 +90,7 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
       Crea las nuevas, suma una detección a las conocidas, cierra (`resolved`) las abiertas que ya no encontraste y vuelve a abrir las que reaparecen. Nunca toca `discrepancyWork`. Sumá sus `writes` al plan del alta.
    4. **Solo si el cruce se completó.** Si no pudiste leer el código o Orchestrator, no corras el script: una lista vacía cerraría discrepancias que siguen ahí.
 6. **Memoria de proceso.** `set` de `memory/<id>` con `{projectId, process, productionSummary, sources, updatedAt}`:
-   - `process` es Markdown en español, 2 a 4 páginas como máximo. Es un mini-PDD que permite analizar ejecuciones sin releer todo. Secciones:
+   - `process` es Markdown en el idioma de `config/settings.language` (lo lee `/control-corrida` de `work/$RUN/db/config/settings.json`; por defecto `es`), 2 a 4 páginas como máximo. Es un mini-PDD que permite analizar ejecuciones sin releer todo. Secciones:
      - Qué hace
      - Procesos del proyecto (tabla: proceso, nombre en Orchestrator, rol, repo, versión desplegada, sha leído)
      - Disparadores y horario

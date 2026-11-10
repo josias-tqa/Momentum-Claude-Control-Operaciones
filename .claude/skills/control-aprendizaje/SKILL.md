@@ -33,7 +33,7 @@ El script devuelve:
 | `snoozed` | nada | nada (solo se revisa al vencer) |
 
 - La entrada `history/<id>` lleva `{projectId, type, at, summary, incidentId, by: <id del humano que respondió>, ticket?}`.
-- El `summary` va en español, 1 a 3 frases: qué pasó, qué se decidió y por qué, según las notas, **sin PII**. Si las notas tienen datos personales, parafraseá sin ellos.
+- El `summary` va en el idioma de `config/settings.language` (por defecto `es`), 1 a 3 frases: qué pasó, qué se decidió y por qué, según las notas, **sin PII**. Si las notas tienen datos personales, parafraseá sin ellos.
 - En el incidente, actualizá `learning: {processedAt, workUpdatedAt}`, y `closedAt` si se cierra.
 
 ## 3. Memoria rodante
@@ -73,7 +73,7 @@ Las discrepancias son tarjetas a nivel proyecto (las crea `/control-alta-proyect
 | `responded` + `fix_docs` / `fix_orchestrator` / `fix_code` | "Corrección pendiente (<dónde>): …", con `ticket` si lo hay | queda como corrección pendiente en la memoria rodante |
 | `responded` + `escalate_dev` | "Derivada a desarrollo: …" | igual |
 
-- La entrada `history/<id>` lleva `{projectId, type: "discrepancy", at, summary, discrepancyId, by: <id de quien respondió>, ticket?}`. El `summary` va en español, 1 a 3 frases, **sin PII**.
+- La entrada `history/<id>` lleva `{projectId, type: "discrepancy", at, summary, discrepancyId, by: <id de quien respondió>, ticket?}`. El `summary` va en el idioma de `config/settings.language` (por defecto `es`)l, 1 a 3 frases, **sin PII**.
 - En la discrepancia, `update` de `discrepancies/<id>` con `{learning: {processedAt, workUpdatedAt: <at de la respuesta>}}` y su `if_version`. **No cambies `status`** (lo maneja `consolidar-discrepancias.mjs` en cada análisis) y **nunca escribas `discrepancyWork`**: es del lado humano.
 - Una posposición no enseña nada: el script ni la lista.
 - Las discrepancias no generan reglas. Si la respuesta "es correcto así" cambia lo que el triage debería considerar normal, alcanza con la memoria rodante.

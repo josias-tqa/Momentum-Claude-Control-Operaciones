@@ -65,7 +65,7 @@ Para decidir, leé lo necesario de `work/$RUN/db`: la regla, los incidentes cita
 - **Nunca** toques `text`, `exceptions`, `compiled.severity` ni `status` de una regla existente: eso lo hace el Admin al aplicar la sugerencia.
 - Si `plan.writes` ya trae un `update` de esa misma regla (`lastTriggeredAt`), **fusioná** los datos en esa escritura: un lote no puede tocar dos veces el mismo documento.
 
-`why`, `text` y `value` van en español y **sin PII**: citá cantidades e ids de incidente, nunca datos de un caso.
+`why`, `text` y `value` van en el idioma de `config/settings.language` (por defecto `es`) y **sin PII**: citá cantidades e ids de incidente, nunca datos de un caso.
 
 **Candidato descartado:** agregá su `key` a `rulesReview.descartados` en la escritura de `config/health` del plan, como `{"<key>": "<ISO de ahora>"}`. Así no vuelve por 90 días.
 

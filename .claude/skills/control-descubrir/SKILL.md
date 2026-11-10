@@ -52,12 +52,12 @@ Si `orchestrator.fuenteCarpetas.listadas` es 0, decilo: falta ese permiso de ten
    - Si un proceso tiene `reposAlternativos`, hay más de un repo con ese paquete. Quedó el más reciente: mencionalo en el resumen.
 5. Armá y validá el plan:
    ```bash
-   node scripts/plan-descubrimiento.mjs --candidatos work/$RUN/candidatos.json --salida work/$RUN/plan.json
+   node scripts/plan-descubrimiento.mjs --candidatos work/$RUN/candidatos.json --ajustes work/$RUN/db/config/settings.json --salida work/$RUN/plan.json
    node scripts/build-writes.mjs --plan work/$RUN/plan.json --salida work/$RUN/lotes
    ```
    - Sin `--incluir-inactivos` se omiten las carpetas sin jobs en los últimos 30 días. Las que están fuera de la carpeta raíz y las ignoradas se omiten siempre.
 6. Publicá los lotes con `ArtifactData batch`.
-7. Resumen en español:
+7. Resumen en el idioma de `config/settings.language` (por defecto `es`):
    - proyectos creados: carpeta, procesos, cuáles quedaron sin repo;
    - omitidos, con el motivo;
    - cuántos repos se leyeron.

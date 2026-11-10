@@ -75,7 +75,7 @@ node scripts/aprobar-reglas.mjs --db work/$RUN/db --ahora <ISO> --salida work/$R
 - `absence` ("no corrió en N horas"): `windowMinutes` es la brecha máxima tolerada. Se evalúa contra el último job conocido del proceso (`watermarks.lastJobByProcess`), no solo contra la ventana colectada.
 - `rate`: el denominador son los registros del mismo alcance (`process`/`queue`), y la condición (`state`, `level`, `messageRegex`) define el numerador. Con menos de `minSample` registros (3 por defecto) no alerta.
 - Si la regla no se puede expresar así, usá `{"mode":"llm", "severity", "action"}`. La evaluás vos en el paso 6.
-- Escribí `compileNote` con una frase en español que diga cómo se entendió la regla. El tablero la muestra.
+- Escribí `compileNote` con una frase en el idioma de `config/settings.language` (ver «Idioma» abajo) que diga cómo se entendió la regla. El tablero la muestra.
 - Pasá la regla a `status: "active"`. Las reglas `proposed` no se tocan: las aprueba un Admin, o `aprobar-reglas.mjs` si la aprobación automática está activa.
 
 **Reglas editadas desde el tablero.** Un Admin puede cambiar el texto, la severidad o las excepciones de una regla desde la tarjeta de un incidente o desde la lista de reglas. Si cambió el texto o las excepciones, la regla vuelve a `pending_compile` y trae su `compiled` anterior:
@@ -181,7 +181,7 @@ Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos
 2. Si es la primera corrida del día en UTC, ejecutá `/control-mantenimiento retencion`.
 3. `delete` de `config/runlock` con su `if_version`.
 
-Al final respondé con un resumen breve en español:
+Al final respondé con un resumen breve en el idioma de `config/settings.language`:
 - proyectos revisados;
 - incidentes nuevos y recurrentes;
 - escalados;
@@ -189,3 +189,12 @@ Al final respondé con un resumen breve en español:
 - errores de colecta.
 
 Si algo falló, decilo con el comando y el motivo. No ocultes fallas parciales.
+
+## Idioma
+
+Todo texto que esta rutina escribe en el tablero (triage, análisis, memorias, reglas propuestas, resúmenes, `compileNote`) va **una sola vez, en el idioma de `config/settings.language`** (`es` o `en`; si falta, `es`). Lo fija un Admin en Ajustes.
+
+- Leelo una vez de `work/$RUN/db/config/settings.json` al empezar y usalo en cada skill que invoques.
+- **No dupliques el texto en los dos idiomas.** Lo ya guardado queda en el idioma en que se escribió.
+- Los scripts leen el mismo ajuste solos (`scripts/lib/idioma.mjs`) para sus títulos y motivos; nunca traduzcas a mano un `title` que ya vino del script.
+- Los identificadores técnicos, los códigos (`decision`, `category`, `type`...) y los nombres de campos quedan siempre en inglés, y las `firma` de los hallazgos no se traducen.
