@@ -226,12 +226,6 @@ Si todavía no hay proyectos, un Admin ve los [primeros pasos](#ayuda-primeros-p
 
 <Vista nombre="proyectos" />
 
-<Accion id="proyecto-eliminar" nombre="Eliminar proyecto" solo="Admin" breve="Borra el proyecto del tablero: su configuración, su memoria, sus reglas y su documentación. Pide confirmación.">
-
-Está en cada fila de la lista. No se puede deshacer y no toca nada en Orchestrator. Los temas y las corridas del proyecto no se borran: quedan hasta que los limpie la [retención](#ayuda-retencion). Si la carpeta sigue en la carpeta a escanear, el próximo escaneo la vuelve a [proponer](#ayuda-propuestos); para que no vuelva, ignorala.
-
-</Accion>
-
 </Seccion>
 
 <Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, discrepancias, documentación, reglas, inventario y configuración de un proyecto.">
@@ -428,6 +422,12 @@ Si cambiaste repos o procesos, conviene re-analizar. **Solo guardar** guarda sin
 <Accion id="descartar-cambios" nombre="Descartar cambios" solo="Admin" breve="Vuelve el formulario a la configuración guardada.">
 
 Deshace lo que editaste y no guardaste.
+
+</Accion>
+
+<Accion id="proyecto-eliminar" nombre="Eliminar proyecto" solo="Admin" breve="Borra el proyecto del tablero: su configuración, su memoria, sus reglas y su documentación. Pide confirmación.">
+
+Está al final de la pestaña Configuración del proyecto. No se puede deshacer y no toca nada en Orchestrator. Los temas y las corridas del proyecto no se borran: quedan hasta que los limpie la [retención](#ayuda-retencion). Si la carpeta sigue en la carpeta a escanear, el próximo escaneo la vuelve a [proponer](#ayuda-propuestos); para que no vuelva, ignorala.
 
 </Accion>
 

@@ -199,8 +199,10 @@
   "vistas.docs.loSubeAdmin": "Los sube un Admin.",
   "vistas.docs.noLeyoPdf": "No se pudo leer el PDF. Probá de nuevo, o pegá el texto.",
   "vistas.docs.pdfVacio": "El PDF no tiene texto para leer (¿está escaneado?). Pegá el texto.",
-  "vistas.proyectos.eliminar": "Eliminar",
+  "vistas.proyectos.eliminar": "Eliminar proyecto",
   "vistas.proyectos.eliminarAria": "Eliminar el proyecto {nombre}",
   "vistas.proyectos.eliminarConf": "¿Eliminar el proyecto {nombre}? Se borran su configuración, su memoria, sus reglas y su documentación. No se puede deshacer.",
-  "vistas.proyectos.eliminarSi": "Sí, eliminar"
+  "vistas.proyectos.eliminarSi": "Sí, eliminar",
+  "vistas.proyectos.eliminarTitulo": "Eliminar proyecto",
+  "vistas.proyectos.eliminarAyuda": "Borra el proyecto del tablero. No toca nada en Orchestrator. Los temas y las corridas quedan hasta la retención."
 }

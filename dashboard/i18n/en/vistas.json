@@ -199,8 +199,10 @@
   "vistas.docs.loSubeAdmin": "An Admin uploads them.",
   "vistas.docs.noLeyoPdf": "The PDF could not be read. Try again, or paste the text.",
   "vistas.docs.pdfVacio": "The PDF has no text to read (is it scanned?). Paste the text.",
-  "vistas.proyectos.eliminar": "Delete",
+  "vistas.proyectos.eliminar": "Delete project",
   "vistas.proyectos.eliminarAria": "Delete the project {nombre}",
   "vistas.proyectos.eliminarConf": "Delete the project {nombre}? Its settings, memory, rules and documentation are deleted. This cannot be undone.",
-  "vistas.proyectos.eliminarSi": "Yes, delete"
+  "vistas.proyectos.eliminarSi": "Yes, delete",
+  "vistas.proyectos.eliminarTitulo": "Delete project",
+  "vistas.proyectos.eliminarAyuda": "Removes the project from the dashboard. Nothing changes in Orchestrator. Topics and runs stay until retention."
 }
