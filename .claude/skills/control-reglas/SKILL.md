@@ -7,7 +7,9 @@ description: Propone reglas nuevas y cambios sobre reglas existentes de la Torre
 
 Leé primero `CLAUDE.md`. Entrada: lo exportado en `work/$RUN/db` (`projects`, `rules`, `incidents`, `incidentWork`, `config`).
 
-**Nada de lo que hace este skill se activa solo.** Una regla nueva nace `proposed`; un cambio sobre una regla existente queda como `suggestion` en esa regla. Los aprueba o descarta un Admin desde el tablero.
+**Este skill solo propone.** Una regla nueva nace `proposed`; un cambio sobre una regla existente queda como `suggestion` en esa regla. Los aprueba o descarta un Admin desde el tablero.
+
+Si un Admin activó en Ajustes la **aprobación automática** (`config/settings.autoApproveRules`), las reglas `proposed` las aprueba la corrida siguiente con `scripts/aprobar-reglas.mjs` (`/control-corrida`, paso 4). Acá no cambia nada: seguí escribiendo `proposed`, nunca `active`. Los cambios sugeridos (`suggestion`) no se aplican solos en ningún caso. Con la aprobación automática activa sé todavía más estricto con las reglas `known`: nadie las va a mirar antes de que empiecen a tapar hallazgos.
 
 ## 1. Candidatos (determinista)
 

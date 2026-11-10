@@ -25,7 +25,8 @@
         "deploy_detected",
         "rule_added",
         "onboarding",
-        "note"
+        "note",
+        "discrepancy"
       ]
     },
     "at": {
@@ -49,6 +50,10 @@
       "maxLength": 200
     },
     "ticket": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "discrepancyId": {
       "type": "string",
       "maxLength": 200
     }

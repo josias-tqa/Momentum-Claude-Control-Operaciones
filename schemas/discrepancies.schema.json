@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "discrepancies",
+  "type": "object",
+  "required": [
+    "projectId",
+    "key",
+    "kind",
+    "title",
+    "status"
+  ],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "key": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "orchestrator",
+        "code",
+        "queue",
+        "version",
+        "trigger",
+        "docs",
+        "hygiene",
+        "other"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "detail": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "suggestion": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "processId": {
+      "type": "string",
+      "maxLength": 60
+    },
+    "refs": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "resolved"
+      ]
+    },
+    "firstSeenAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "lastSeenAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "seenCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reopenCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reopenedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "resolvedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "resolvedReason": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "learning": {
+      "type": "object"
+    },
+    "createdBy": {
+      "type": "string",
+      "maxLength": 200
+    }
+  }
+}

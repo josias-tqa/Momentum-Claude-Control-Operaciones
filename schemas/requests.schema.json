@@ -11,7 +11,8 @@
         "onboard_project",
         "reanalyze_project",
         "recompile_rule",
-        "reanalyze_incident"
+        "reanalyze_incident",
+        "discover_projects"
       ]
     },
     "projectId": {
@@ -45,6 +46,14 @@
     "incidentId": {
       "type": "string",
       "maxLength": 200
+    },
+    "roots": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      }
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",

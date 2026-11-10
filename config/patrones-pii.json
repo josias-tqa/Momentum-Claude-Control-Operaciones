@@ -8,7 +8,7 @@
     },
     {
       "nombre": "documento_etiquetado",
-      "regex": "\\b(c\\.?\\s?c\\.?|t\\.?\\s?i\\.?|c[eé]dula|documento|identificaci[oó]n|n[uú]mero de id|nro\\.? doc\\.?|pasaporte)(\\s*(?:no\\.?|n[°º]|#)?\\s*[:=]?\\s*)[A-Z]{0,2}\\d[\\d.\\-]{4,14}",
+      "regex": "\\b(c\\.?\\s?c\\.?|t\\.?\\s?i\\.?|c[eé]dula|d\\.?n\\.?i\\.?|documento|identificaci[oó]n|n[uú]mero de id|nro\\.? doc\\.?|pasaporte)(\\s*(?:no\\.?|n[°º]|#)?\\s*[:=]?\\s*)[A-Z]{0,2}\\d[\\d.\\-]{4,14}",
       "flags": "gi",
       "reemplazo": "$1$2[DOCUMENTO]"
     },

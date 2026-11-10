@@ -9,9 +9,14 @@
 //    y empareja cada proceso con su repo por nombre de paquete.
 // 4) Marca los candidatos que ya están registrados en el tablero (misma carpeta) y los inactivos.
 //
+// Carpetas raíz: un Admin indica en Ajustes (config/settings.discovery.rootFolders) qué carpeta escanear.
+// Con --ajustes (o --raices) solo se proponen las carpetas que están adentro de esas raíces; las que el
+// Admin ignoró (discovery.ignoredFolders) se marcan y no se registran solas.
+//
 // Uso:
 //   node scripts/descubrir.mjs --salida work/descubrimiento/candidatos.json
-//        [--registrados work/<run>/db/projects] [--carpetas "A/B,C/D"] [--workspaces itmz,otro] [--dias 30] [--sin-bitbucket]
+//        [--registrados work/<run>/db/projects] [--ajustes work/<run>/db/config/settings.json] [--raices "A,B"]
+//        [--carpetas "A/B,C/D"] [--workspaces itmz,otro] [--dias 30] [--sin-bitbucket] [--plan-tablero <plan.json>]
 // La salida no contiene PII: nombres de carpetas, procesos, paquetes, repos y conteos.
 
 import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
@@ -20,6 +25,7 @@ import { uipTodo, login } from './lib/uip.mjs';
 import { listarRepos, paqueteDeRepo } from './lib/bitbucket-api.mjs';
 import { arg, bandera, leerJson, desenvolver } from './lib/args.mjs';
 import { normalizarProyecto, inferirRol, slugProceso } from './lib/proyecto.mjs';
+import { listaDeCarpetas, limpiarCarpeta, raizDe, dentroDe, mismaCarpeta } from './lib/carpetas.mjs';
 
 const salida = arg('--salida');
 const dias = Number(arg('--dias') || 30);
@@ -27,6 +33,13 @@ const dirRegistrados = arg('--registrados');
 const desde = new Date(Date.now() - dias * 86400000).toISOString();
 const errores = [];
 const intentar = (n, fn, d = []) => { try { return fn(); } catch (e) { errores.push(`${n}: ${e.message}`); return d; } };
+const probar = (fn, d = []) => { try { return fn(); } catch { return d; } };
+
+// ---------- carpetas raíz e ignoradas (Ajustes del tablero) ----------
+const ajustes = arg('--ajustes') ? desenvolver(leerJson(arg('--ajustes'), {})) : {};
+const ajDesc = ajustes.discovery || {};
+const raices = listaDeCarpetas(arg('--raices') !== undefined ? arg('--raices') : ajDesc.rootFolders || []);
+const ignoradas = listaDeCarpetas(ajDesc.ignoredFolders || []);
 
 try { login(); } catch (e) { errores.push(`login: ${e.message}`); }
 
@@ -42,14 +55,21 @@ const registradosPrevios = dirRegistrados && existsSync(dirRegistrados)
 // ver carpetas a nivel tenant), `folders list`, las carpetas indicadas con --carpetas, y las de
 // los proyectos ya registrados.
 const rutaDe = (f) => f.FullyQualifiedName || f.FullyQualifiedNameOrderable || f.Path || f.FolderPath || f.DisplayName || null;
-const carpetasListadas = [
+const carpetasVistas = [...new Set([
   ...intentar('folders list --all', () => uipTodo(['or', 'folders', 'list', '--all'], { maximo: 5000 })),
   ...intentar('folders list', () => uipTodo(['or', 'folders', 'list'], { maximo: 5000 })),
-].map(rutaDe).filter(Boolean);
-const carpetasManual = (arg('--carpetas') || process.env.OPS_CARPETAS || '').split(',').map((x) => x.trim()).filter(Boolean);
+  // Subcarpetas de cada raíz: sirve cuando la app no puede listar todo el tenant pero sí esa rama.
+  ...raices.flatMap((r) => probar(() => uipTodo(['or', 'folders', 'list', '--path', r], { maximo: 5000 }))),
+].map(rutaDe).filter(Boolean).map(limpiarCarpeta))];
+// Con carpetas raíz, del listado solo cuentan las que están adentro.
+const carpetasListadas = carpetasVistas.filter((c) => dentroDe(c, raices));
+const carpetasManual = listaDeCarpetas(arg('--carpetas') || process.env.OPS_CARPETAS || '');
 const carpetasRegistradas = registradosPrevios.flatMap((r) => [r.orchestrator && r.orchestrator.folderPath, ...r.processes.map((x) => x.folderPath)]).filter(Boolean);
-const carpetas = [...new Set([...carpetasListadas, ...carpetasManual, ...carpetasRegistradas])];
-const fuenteCarpetas = { listadas: carpetasListadas.length, manuales: carpetasManual.length, registradas: carpetasRegistradas.length };
+// La raíz misma se consulta siempre: puede tener procesos propios, y es lo único que se puede leer si no hay listado.
+const carpetas = listaDeCarpetas([...carpetasListadas, ...raices, ...carpetasManual, ...carpetasRegistradas]);
+const fuenteCarpetas = { listadas: carpetasListadas.length, fueraDeLasRaices: carpetasVistas.length - carpetasListadas.length, raices: raices.length, manuales: carpetasManual.length, registradas: carpetasRegistradas.length };
+// Se propone lo que está dentro de una raíz (o todo, si no hay raíces) y lo que se pidió a mano.
+const proponible = (fp) => dentroDe(fp, raices) || carpetasManual.some((m) => mismaCarpeta(m, fp));
 
 const procesos = [];
 const actividad = {};
@@ -76,7 +96,7 @@ for (const carpeta of carpetas) {
 const actDe = (p) => actividad[String(p.key || '').toLowerCase()] || actividad[String(p.name || '').toLowerCase()] || { jobs: 0, faulted: 0, ultimo: null };
 
 const registrados = registradosPrevios;
-const carpetaRegistrada = (fp) => registrados.find((r) => (r.orchestrator && r.orchestrator.folderPath) === fp || r.processes.some((x) => x.folderPath === fp));
+const carpetaRegistrada = (fp) => registrados.find((r) => mismaCarpeta(r.orchestrator && r.orchestrator.folderPath, fp) || r.processes.some((x) => x.folderPath && mismaCarpeta(x.folderPath, fp)));
 
 // ---------- Bitbucket ----------
 const workspaces = new Set((arg('--workspaces') || process.env.BITBUCKET_WORKSPACES || '').split(',').map((x) => x.trim()).filter(Boolean));
@@ -139,6 +159,9 @@ const candidatos = Object.entries(porCarpeta).map(([folderPath, ps]) => {
     activo: jobsTotal > 0,
     jobs: jobsTotal,
     registradoComo: reg ? reg.id : null,
+    root: raizDe(folderPath, raices),
+    fueraDeLasRaices: !proponible(folderPath),
+    ignorada: ignoradas.some((x) => mismaCarpeta(x, folderPath)),
     processes,
     sinRepo: processes.filter((x) => !x.repo).map((x) => x.orchestratorProcess),
   };
@@ -147,22 +170,34 @@ const candidatos = Object.entries(porCarpeta).map(([folderPath, ps]) => {
 const resultado = {
   generadoEn: new Date().toISOString(),
   dias,
+  raices,
   orchestrator: { carpetasConsultadas: carpetas.length, fuenteCarpetas, carpetasConProcesos: candidatos.length, procesos: procesos.length, jobsAnalizados },
   bitbucket,
   resumen: {
-    nuevos: candidatos.filter((c) => c.activo && !c.registradoComo).length,
+    nuevos: candidatos.filter((c) => c.activo && !c.registradoComo && !c.fueraDeLasRaices && !c.ignorada).length,
     yaRegistrados: candidatos.filter((c) => c.registradoComo).length,
-    inactivos: candidatos.filter((c) => !c.activo && !c.registradoComo).length,
+    inactivos: candidatos.filter((c) => !c.activo && !c.registradoComo && !c.fueraDeLasRaices).length,
+    ignorados: candidatos.filter((c) => c.ignorada && !c.registradoComo).length,
+    fueraDeLasRaices: candidatos.filter((c) => c.fueraDeLasRaices && !c.registradoComo).length,
   },
   candidatos,
   errores,
 };
 mkdirSync(dirname(salida), { recursive: true });
 writeFileSync(salida, JSON.stringify(resultado, null, 2));
-// Documento para el tablero: carpetas con procesos activos que todavía no son un proyecto.
-if (arg('--plan-tablero')) {
-  const folders = candidatos.filter((c) => !c.registradoComo && c.folderPath !== '(sin carpeta)')
-    .map((c) => ({ folderPath: c.folderPath, name: c.name, procesos: c.processes.map((p) => p.orchestratorProcess).slice(0, 50), jobs30d: c.jobs }));
-  writeFileSync(arg('--plan-tablero'), JSON.stringify({ writes: [{ op: 'set', collection: 'config', doc_id: 'discovery', data: { at: resultado.generadoEn, folders } }] }, null, 2));
+// Documento para el tablero (config/discovery): los proyectos propuestos, es decir las carpetas con procesos
+// que todavía no son un proyecto. Las ignoradas se incluyen: el tablero las oculta con su propia lista, así
+// vuelven a verse en cuanto un Admin las restaura.
+// Si falló el login no se escribe: una lista vacía por un problema de acceso borraría las propuestas vigentes.
+const sinAcceso = errores.some((e) => e.startsWith('login'));
+if (arg('--plan-tablero') && !sinAcceso) {
+  const folders = candidatos.filter((c) => !c.registradoComo && !c.fueraDeLasRaices && c.folderPath !== '(sin carpeta)').slice(0, 500)
+    .map((c) => ({ folderPath: c.folderPath, name: c.name, procesos: c.processes.map((p) => p.orchestratorProcess).slice(0, 50), jobs30d: c.jobs, ...(c.root ? { root: c.root } : {}) }));
+  const avisos = [];
+  if (raices.length && !carpetasListadas.length) avisos.push('No se pudieron listar las subcarpetas: solo se revisó la carpeta indicada. La External App necesita un rol de tenant que permita ver carpetas (Folders → View).');
+  for (const r of raices) if (!candidatos.some((c) => mismaCarpeta(c.root, r))) avisos.push(`No se encontraron procesos dentro de ${r}: revisar que la ruta sea exacta y que la External App esté asignada a esa carpeta.`);
+  const data = { at: resultado.generadoEn, roots: raices, folders, ...(avisos.length ? { note: avisos.join(' ').slice(0, 2000) } : {}) };
+  writeFileSync(arg('--plan-tablero'), JSON.stringify({ writes: [{ op: 'set', collection: 'config', doc_id: 'discovery', data }] }, null, 2));
 }
-console.log(JSON.stringify({ ...resultado.orchestrator, ...resultado.resumen, repos: bitbucket.repos, reposConPaquete: bitbucket.conPaquete, errores: errores.length + bitbucket.errores.length }));
+console.log(JSON.stringify({ ...resultado.orchestrator, ...resultado.resumen, raices, repos: bitbucket.repos, reposConPaquete: bitbucket.conPaquete, errores: errores.length + bitbucket.errores.length,
+  ...(arg('--plan-tablero') ? { planTablero: !sinAcceso } : {}) }));

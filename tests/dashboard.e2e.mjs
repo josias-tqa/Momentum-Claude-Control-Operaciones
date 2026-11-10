@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { deflateRawSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 import { demoSeed } from './demo-data.mjs';
 
@@ -33,6 +34,44 @@ async function abrir({ role = 'admin', vacio = false, sinDb = false, viewport = 
 }
 const ok = [];
 const paso = (n) => ok.push(n);
+
+// Un .docx mínimo (ZIP con el XML de Word) para probar la conversión a Markdown sin depender de Word.
+function crc32(buf) { let c = 0xffffffff; for (const b of buf) { c ^= b; for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); } return (c ^ 0xffffffff) >>> 0; }
+function zip(files) {
+  const partes = []; const central = []; let pos = 0;
+  for (const [nombre, texto] of Object.entries(files)) {
+    const n = Buffer.from(nombre); const datos = Buffer.from(texto); const comp = deflateRawSync(datos); const crc = crc32(datos);
+    const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(8, 8); local.writeUInt32LE(crc, 14); local.writeUInt32LE(comp.length, 18); local.writeUInt32LE(datos.length, 22); local.writeUInt16LE(n.length, 26);
+    const c = Buffer.alloc(46); c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt16LE(8, 10); c.writeUInt32LE(crc, 16); c.writeUInt32LE(comp.length, 20); c.writeUInt32LE(datos.length, 24); c.writeUInt16LE(n.length, 28); c.writeUInt32LE(pos, 42);
+    partes.push(local, n, comp); central.push(c, n); pos += 30 + n.length + comp.length;
+  }
+  const cd = Buffer.concat(central); const fin = Buffer.alloc(22);
+  fin.writeUInt32LE(0x06054b50, 0); fin.writeUInt16LE(central.length / 2, 8); fin.writeUInt16LE(central.length / 2, 10); fin.writeUInt32LE(cd.length, 12); fin.writeUInt32LE(pos, 16);
+  return Buffer.concat([...partes, cd, fin]);
+}
+function docxDePrueba() {
+  const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  const r = (txt, negrita) => `<w:r>${negrita ? '<w:rPr><w:b/></w:rPr>' : ''}<w:t xml:space="preserve">${txt}</w:t></w:r>`;
+  const par = (cont, estilo, num) => `<w:p><w:pPr>${estilo ? `<w:pStyle w:val="${estilo}"/>` : ''}${num ? `<w:numPr><w:ilvl w:val="0"/><w:numId w:val="${num}"/></w:numPr>` : ''}</w:pPr>${cont}</w:p>`;
+  const celda = (txt) => `<w:tc>${par(r(txt))}</w:tc>`;
+  const fila = (...cs) => `<w:tr>${cs.map(celda).join('')}</w:tr>`;
+  return zip({
+    '[Content_Types].xml': '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
+    // Los ids de estilo dependen del idioma de Word ("Ttulo1"); el nombre interno ("heading 1") no.
+    'word/styles.xml': `<?xml version="1.0"?><w:styles ${W}><w:style w:type="paragraph" w:styleId="Ttulo1"><w:name w:val="heading 1"/></w:style><w:style w:type="paragraph" w:styleId="Ttulo2"><w:name w:val="heading 2"/></w:style><w:style w:type="paragraph" w:styleId="TDC1"><w:name w:val="toc 1"/></w:style></w:styles>`,
+    'word/numbering.xml': `<?xml version="1.0"?><w:numbering ${W}><w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/></w:lvl></w:abstractNum><w:abstractNum w:abstractNumId="1"><w:lvl w:ilvl="0"><w:numFmt w:val="decimal"/></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num><w:num w:numId="2"><w:abstractNumId w:val="1"/></w:num></w:numbering>`,
+    'word/document.xml': `<?xml version="1.0"?><w:document ${W}><w:body>
+      ${par(r('1. Propósito 3'), 'TDC1')}
+      ${par(r('Process Definition Document'), 'Ttulo1')}
+      ${par(r('Propósito'), 'Ttulo2')}
+      ${par(r('Registra las ') + r('facturas de proveedores', true) + r(' en el sistema contable.'))}
+      ${par(r('Dueño del proceso: escribir a dueno.proceso@cliente.com ante dudas.'))}
+      ${par(r('Lee la cola'), null, 1)}${par(r('Registra la factura'), null, 1)}
+      ${par(r('Verificar el login'), null, 2)}${par(r('Escalar a soporte'), null, 2)}
+      <w:tbl>${fila('Excepción', 'Descripción')}${fila('BE001', 'Factura duplicada | repetida')}</w:tbl>
+      <w:sectPr/></w:body></w:document>`,
+  });
+}
 const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then(() => true, () => false);
 
 // 1) Admin: bandeja de acción ordenada, "Para revisar", sin duplicados por tema.
@@ -153,6 +192,7 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForTimeout(100);
   assert.equal(await page.locator('#scope-pop').count(), 0, 'Esc cierra el selector');
   await page.click('#scope-x');
+  await page.waitForTimeout(100); // la vista se vuelve a dibujar al quitar el filtro: esperar antes de escribir en el buscador
   // Búsqueda dentro de la bandeja.
   await page.fill('#q-inbox', 'login');
   await page.waitForTimeout(100);
@@ -359,6 +399,201 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await ctx.close();
 }
 
+// 1c) Admin: Ajustes (carpeta a escanear y aprobación automática) y proyectos propuestos.
+{
+  const { page, ctx } = await abrir();
+  const writes = () => page.evaluate(() => window.__WRITES__);
+  assert.ok(await visible(page, 'text=3 proyectos propuestos para agregar'), 'los proyectos propuestos llegan a Para revisar');
+  await page.click('#nav a[href="#ajustes"]');
+  await page.waitForSelector('#aj-raices', { timeout: 3000 });
+  assert.ok(await visible(page, 'text=Último escaneo'));
+  // Interruptor de aprobación automática: desactivado por defecto, se guarda al cambiarlo.
+  assert.equal(await page.getAttribute('#aj-auto', 'aria-checked'), 'false');
+  await page.click('#aj-auto');
+  await page.waitForTimeout(150);
+  let w = (await writes()).filter((x) => x.path === 'config/settings').pop();
+  assert.deepEqual(w.data, { autoApproveRules: true }, 'solo cambia ese ajuste');
+  assert.equal(await page.getAttribute('#aj-auto', 'aria-checked'), 'true');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'aj-auto', 'el foco queda en el interruptor');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'ajustes.png'), fullPage: true });
+  await page.click('#nav a[href="#reglas"]');
+  assert.ok(await visible(page, 'text=Se aprueba sola en la próxima corrida'), 'las propuestas avisan que se aprueban solas');
+  assert.ok(await visible(page, 'text=Aprobación automática activa'));
+  await page.click('#nav a[href="#inicio"]');
+  assert.ok(await visible(page, 'text=reglas propuestas por aprobarse'));
+  // Carpeta a escanear: "Guardar ajustes" también la guarda; "Guardar y escanear" además pide el escaneo.
+  await page.click('#nav a[href="#ajustes"]');
+  await page.fill('#aj-raices', 'Produccion, Clientes/Produccion');
+  await page.click('[data-act="guardar-ajustes"]');
+  await page.waitForTimeout(150);
+  w = (await writes()).filter((x) => x.path === 'config/settings').pop();
+  assert.deepEqual(w.data.discovery.rootFolders, ['Produccion', 'Clientes/Produccion']);
+  assert.equal(w.data.autoApproveRules, true, 'guardar el formulario no pisa el interruptor');
+  assert.ok(!(await writes()).some((x) => x.path.startsWith('requests/')), 'guardar no pide el escaneo');
+  await page.click('[data-act="escanear"]');
+  await page.waitForTimeout(150);
+  assert.ok((await writes()).some((x) => x.path.startsWith('requests/') && x.data.type === 'discover_projects'));
+  assert.ok(await visible(page, 'text=Escaneo pedido'));
+  await page.click('[data-act="escanear"]');
+  await page.waitForTimeout(150);
+  assert.equal((await writes()).filter((x) => x.path.startsWith('requests/')).length, 1, 'no se pide dos veces el mismo escaneo');
+  paso('ajustes: interruptor de aprobación automática, carpeta a escanear y pedido de escaneo');
+
+  // Proyectos propuestos: ignorar los que no van, restaurarlos y registrar el resto de una vez.
+  await page.evaluate(() => { location.hash = '#registrar'; });
+  await page.waitForSelector('text=Proyectos propuestos', { timeout: 3000 });
+  assert.equal(await page.locator('[data-act="registrar-detectada"]').count(), 3);
+  await page.click('[data-act="ignorar-detectada"][data-folder="Produccion/Pruebas"]');
+  await page.waitForTimeout(150);
+  w = (await writes()).filter((x) => x.path === 'config/settings').pop();
+  assert.deepEqual(w.data.discovery.ignoredFolders, ['Produccion/Pruebas']);
+  assert.deepEqual(w.data.discovery.rootFolders, ['Produccion', 'Clientes/Produccion'], 'ignorar no pierde la carpeta a escanear');
+  assert.equal(await page.locator('[data-act="registrar-detectada"]').count(), 2, 'la ignorada sale de la lista');
+  assert.ok(await visible(page, 'text=1 carpeta ignorada'));
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'proyectos-propuestos.png'), fullPage: true });
+  await page.click('[data-act="restaurar-ignoradas"]');
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator('[data-act="registrar-detectada"]').count(), 3, 'vuelve a proponerse');
+  await page.click('[data-act="ignorar-detectada"][data-folder="Produccion/Pruebas"]');
+  await page.waitForTimeout(150);
+  await page.click('[data-act="registrar-todos"]');
+  assert.ok(await visible(page, 'text=¿Registrar los 2 proyectos propuestos?'));
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'reg-todos-ok');
+  await page.click('[data-act="registrar-todos-ok"]');
+  await page.waitForTimeout(300);
+  const nuevos = (await writes()).filter((x) => x.path.startsWith('projects/') && x.op === 'set');
+  assert.deepEqual(nuevos.map((x) => x.data.orchestrator.folderPath).sort(), ['Produccion/Compras/Ordenes', 'Produccion/Tesoreria/Pagos']);
+  assert.ok(nuevos.every((x) => x.data.status === 'pending_analysis'), 'nada queda activo solo');
+  assert.equal((await writes()).filter((x) => x.path.startsWith('requests/') && x.data.type === 'onboard_project').length, 2);
+  assert.equal(await page.locator('[data-act="registrar-detectada"]').count(), 0, 'no quedan propuestas');
+  assert.ok(await visible(page, 'text=Escaneo pedido: la próxima corrida propone acá'), 'sin propuestas, la pantalla dice qué falta');
+  paso('proyectos propuestos: ignorar, restaurar y registrar todos con confirmación');
+  await ctx.close();
+}
+
+// 1d) Admin: discrepancias de un proyecto (fuera de la bandeja) y documentación en Markdown.
+{
+  const { page, ctx } = await abrir();
+  const writes = () => page.evaluate(() => window.__WRITES__);
+  assert.equal(await page.locator('main .card', { hasText: 'SDD dice cada 30 minutos' }).count(), 0, 'las discrepancias no van a la bandeja');
+  await page.click('#nav a[href="#proyectos"]');
+  assert.ok(await visible(page, 'main a.rowi[href="#proyecto-facturacion"] >> text=2 discrepancias'), 'la lista de proyectos las cuenta');
+  await page.click('main a.rowi[href="#proyecto-facturacion"]');
+  await page.waitForSelector('#tab-discrepancias', { timeout: 3000 });
+  assert.equal((await page.textContent('#tab-discrepancias')).trim(), 'Discrepancias (2)');
+  assert.ok(await visible(page, 'text=2 discrepancias pendientes'));
+  await page.click('#tab-discrepancias');
+  await page.waitForSelector('.disc', { timeout: 3000 });
+  assert.equal(await page.locator('.disc').count(), 2, 'pendientes: sin las respondidas ni las resueltas');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'discrepancias.png'), fullPage: true });
+  // Responder: pide una decisión y, si hay algo para corregir, ofrece cargar el ticket.
+  const d1 = page.locator('.disc', { hasText: 'SDD dice cada 30 minutos' });
+  await d1.locator('[data-act="disc-panel"][data-p="responder"]').click();
+  assert.ok(await d1.locator('[data-act="disc-responder"]').isDisabled(), 'sin decisión no se envía');
+  await d1.locator('[data-act="disc-sel"][data-v="fix_docs"]').click();
+  await d1.locator('textarea').fill('El trigger está bien: se corrige el SDD');
+  await d1.locator('input[id$="-dticket"]').fill('DOC-12');
+  await d1.locator('[data-act="disc-responder"]').click();
+  await page.waitForTimeout(200);
+  let w = (await writes()).filter((x) => x.path === 'discrepancyWork/disc-facturacion-trigger').pop();
+  assert.equal(w.data.state, 'responded');
+  assert.deepEqual(w.data.response, { decision: 'fix_docs', notes: 'El trigger está bien: se corrige el SDD', ticket: 'DOC-12' });
+  assert.equal(w.data.projectId, 'facturacion');
+  assert.ok(w.data.updatedBy.startsWith('u_'), 'la persona se guarda como id');
+  assert.equal(await page.locator('.disc').count(), 1, 'la respondida sale de pendientes');
+  assert.equal((await page.textContent('#tab-discrepancias')).trim(), 'Discrepancias (1)');
+  // Descartar con motivo.
+  const d2 = page.locator('.disc', { hasText: 'asset de tolerancia' });
+  await d2.locator('[data-act="disc-panel"][data-p="descartar"]').click();
+  await d2.locator('[data-act="disc-sel"][data-v="already_fixed"]').click();
+  await d2.locator('[data-act="disc-descartar"]').click();
+  await page.waitForTimeout(200);
+  w = (await writes()).filter((x) => x.path === 'discrepancyWork/disc-facturacion-asset').pop();
+  assert.ok(w.data.state === 'dismissed' && w.data.dismissReason === 'already_fixed');
+  assert.ok(await visible(page, 'text=Ninguna pendiente'));
+  // Atendidas: respondidas, descartadas y resueltas, con quién y por qué; se pueden volver a abrir.
+  await page.click('[data-act="seg"][data-k="disc"][data-v="atendidas"]');
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator('.disc').count(), 4);
+  assert.ok(await visible(page, 'text=Corregir la documentación — El trigger está bien'));
+  assert.ok(await visible(page, 'text=Resuelta:'));
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'discrepancias-atendidas.png'), fullPage: true });
+  assert.equal(await page.locator('.disc', { hasText: 'PDD no menciona' }).locator('[data-act="disc-reabrir"]').count(), 0, 'una resuelta por la rutina no se reabre a mano');
+  await page.locator('.disc', { hasText: 'asset de tolerancia' }).locator('[data-act="disc-reabrir"]').click();
+  await page.waitForTimeout(200);
+  w = (await writes()).filter((x) => x.path === 'discrepancyWork/disc-facturacion-asset').pop();
+  assert.equal(w.data.state, 'open'); assert.equal(w.data.dismissReason, undefined, 'se limpia el motivo');
+  // Posponer.
+  await page.click('[data-act="seg"][data-k="disc"][data-v="pendientes"]');
+  await page.waitForTimeout(150);
+  const d3 = page.locator('.disc', { hasText: 'asset de tolerancia' });
+  await d3.locator('[data-act="disc-panel"][data-p="posponer"]').click();
+  await d3.locator('[data-act="disc-posponer"][data-d="30"]').click();
+  await page.waitForTimeout(200);
+  w = (await writes()).filter((x) => x.path === 'discrepancyWork/disc-facturacion-asset').pop();
+  assert.ok(w.data.state === 'snoozed' && w.data.snoozeUntil > new Date().toISOString());
+  assert.ok(!(await writes()).some((x) => x.path.startsWith('incidentWork/') || x.path.startsWith('activity/')), 'no toca los incidentes');
+  paso('discrepancias: tarjetas del proyecto fuera de la bandeja; responder, descartar, posponer y volver a abrir');
+
+  // Documentación: subir un .docx, revisarlo convertido a Markdown y guardarlo.
+  await page.click('#tab-documentacion');
+  await page.waitForSelector('.doc', { timeout: 3000 });
+  assert.equal(await page.locator('.doc').count(), 3, 'PDD, SDD y Runbook');
+  assert.ok(await visible(page, '.doc >> text=Runbook Facturación.docx'), 'el documento ya cargado');
+  await page.setInputFiles('#doc-f-facturacion-pdd', { name: 'PDD Facturación.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: docxDePrueba() });
+  await page.waitForSelector('#doc-md-facturacion', { timeout: 5000 });
+  const mdConv = await page.inputValue('#doc-md-facturacion');
+  assert.equal(mdConv, [
+    '# Process Definition Document', '', '## Propósito', '',
+    'Registra las **facturas de proveedores** en el sistema contable.', '',
+    'Dueño del proceso: escribir a [EMAIL] ante dudas.', '',
+    '- Lee la cola', '- Registra la factura', '1. Verificar el login', '2. Escalar a soporte', '',
+    '| Excepción | Descripción |', '| --- | --- |', '| BE001 | Factura duplicada \\| repetida |'].join('\n'), 'títulos por estilo, negrita, listas, tabla, sin índice y con el email enmascarado');
+  assert.ok(await visible(page, 'text=Se enmascaró 1 dato'));
+  assert.ok(!(await writes()).some((x) => x.path.startsWith('documents/')), 'no se guarda hasta confirmar');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'documento-revision.png'), fullPage: true });
+  // Lo que se edita antes de guardar también pasa por el enmascarado.
+  await page.fill('#doc-md-facturacion', mdConv + '\n\nContacto: otra.persona@cliente.com');
+  await page.click('[data-act="doc-guardar"]');
+  await page.waitForTimeout(200);
+  w = (await writes()).find((x) => x.path === 'documents/facturacion_pdd');
+  assert.ok(w && w.op === 'set' && w.data.kind === 'pdd' && w.data.projectId === 'facturacion' && w.data.source === 'docx');
+  assert.equal(w.data.fileName, 'PDD Facturación.docx');
+  assert.ok(w.data.markdown.startsWith('# Process Definition Document') && w.data.markdown.endsWith('Contacto: [EMAIL]'));
+  assert.ok(!/@cliente\.com/.test(w.data.markdown), 'sin emails en lo guardado');
+  assert.equal(w.data.masked, 2);
+  // Ver con formato y descargar como .md.
+  await page.click('#doc-ver-facturacion-pdd');
+  assert.ok(await visible(page, '.doc-view h2 >> text=Process Definition Document'));
+  assert.equal(await page.locator('.doc-view table td').count(), 4, 'la tabla se dibuja');
+  assert.equal(await page.locator('.doc-view ol li').count(), 2, 'lista numerada');
+  assert.equal(await page.locator('.doc-view td', { hasText: 'Factura duplicada | repetida' }).count(), 1, 'la barra escapada queda dentro de la celda');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'documentacion.png'), fullPage: true });
+  await page.click('[data-act="doc-descargar"][data-kind="pdd"]');
+  await page.waitForTimeout(150);
+  const bajado = (await page.evaluate(() => window.__DOWNLOADS__)).pop();
+  assert.equal(bajado.filename, 'facturacion-ejemplo-pdd.md', 'nombre del proyecto y tipo de documento, en .md');
+  assert.equal(bajado.data, w.data.markdown);
+  // Pegar texto en otro tipo de documento; un formato que no se puede convertir se rechaza con un aviso.
+  await page.setInputFiles('#doc-f-facturacion-sdd', { name: 'SDD.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7') });
+  assert.ok(await visible(page, '#toast >> text=no se puede convertir'));
+  await page.click('[data-act="doc-pegar"][data-kind="sdd"]');
+  await page.fill('#doc-md-facturacion', '## Triggers\n\n- Cada 30 minutos');
+  await page.click('[data-act="doc-guardar"]');
+  await page.waitForTimeout(200);
+  w = (await writes()).find((x) => x.path === 'documents/facturacion_sdd');
+  assert.ok(w.data.source === 'paste' && w.data.markdown === '## Triggers\n\n- Cada 30 minutos');
+  // Quitar pide confirmación.
+  await page.click('#doc-q-facturacion-sdd');
+  assert.ok(await visible(page, 'text=¿Quitar el SDD de este proyecto?'));
+  await page.click('[data-act="doc-quitar-ok"]');
+  await page.waitForTimeout(200);
+  assert.ok((await writes()).some((x) => x.op === 'delete' && x.path === 'documents/facturacion_sdd'));
+  assert.ok(await visible(page, '[data-act="reanalizar"] >> text=Pedir re-análisis'), 'ofrece re-analizar con los documentos nuevos');
+  paso('documentación: subir .docx convertido a Markdown, revisar, enmascarar, guardar, ver, descargar .md, pegar y quitar');
+  await ctx.close();
+}
+
 // 2) Operador: acciones sobre incidentes, sin acciones de Admin; "Para vos".
 {
   const { page, ctx } = await abrir({ role: 'operador' });
@@ -372,6 +607,24 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.equal(await page.locator('[data-act="re-guardar"], [data-act="re-eliminar"], [data-act="re-crear"]').count(), 0);
   assert.equal(await page.locator('[data-act="panel"][data-p="regla"]', { hasText: 'Crear regla' }).count(), 0);
   paso('operador: ve "Para vos" y acciones rápidas, no ve tareas de Admin; la regla es de solo lectura');
+  // Discrepancias: un Operador las responde; la documentación la ve y la descarga, pero no la cambia.
+  await page.evaluate(() => { location.hash = '#proyecto-facturacion'; });
+  await page.waitForSelector('#tab-discrepancias', { timeout: 3000 });
+  await page.click('#tab-discrepancias');
+  await page.waitForSelector('.disc', { timeout: 3000 });
+  const d = page.locator('.disc', { hasText: 'SDD dice cada 30 minutos' });
+  await d.locator('[data-act="disc-panel"][data-p="responder"]').click();
+  await d.locator('[data-act="disc-sel"][data-v="expected"]').click();
+  await d.locator('[data-act="disc-responder"]').click();
+  await page.waitForTimeout(200);
+  assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path === 'discrepancyWork/disc-facturacion-trigger' && w.data.response.decision === 'expected'));
+  await page.click('#tab-documentacion');
+  await page.waitForSelector('.doc', { timeout: 3000 });
+  assert.equal(await page.locator('.doc input[type=file], [data-act="doc-pegar"], [data-act="doc-quitar"]').count(), 0);
+  assert.equal(await page.locator('[data-act="doc-ver"], [data-act="doc-descargar"]').count(), 2, 'ver y descargar');
+  await page.evaluate(() => { location.hash = '#ajustes'; });
+  assert.ok(await visible(page, 'text=Solo los Admin pueden ver los ajustes'));
+  paso('operador: responde discrepancias; la documentación y los ajustes son del Admin');
   await ctx.close();
 }
 
@@ -379,6 +632,12 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
 {
   const { page, ctx } = await abrir({ role: 'lector' });
   assert.equal(await page.locator('[data-act="panel"]').count(), 0);
+  await page.evaluate(() => { location.hash = '#proyecto-facturacion'; });
+  await page.waitForSelector('#tab-discrepancias', { timeout: 3000 });
+  await page.click('#tab-discrepancias');
+  await page.waitForSelector('.disc', { timeout: 3000 });
+  assert.equal(await page.locator('.disc').count(), 2);
+  assert.equal(await page.locator('[data-act="disc-panel"], [data-act="disc-reabrir"]').count(), 0, 've las discrepancias sin acciones');
   paso('lector: solo lectura');
   await ctx.close();
 }
@@ -386,13 +645,35 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
 // 4) Base vacía y sin db.
 {
   const { page, ctx } = await abrir({ vacio: true });
-  assert.ok(await visible(page, 'text=Todo en orden'));
-  assert.ok(await visible(page, 'text=Registrá el primero'));
+  assert.ok(await visible(page, 'text=Todavía no hay proyectos'));
+  assert.ok(await visible(page, 'text=Primeros pasos'), 'un tablero nuevo guía al Admin');
+  // El primer paso lleva a Ajustes: indicar la carpeta y pedir el escaneo, aunque config/settings no exista todavía.
+  await page.click('.pasos a[href="#ajustes"]');
+  await page.waitForSelector('#aj-raices', { timeout: 3000 });
+  await page.fill('#aj-raices', '/Produccion/, Clientes\\Produccion');
+  await page.click('[data-act="escanear"]');
+  await page.waitForTimeout(200);
+  const wv = await page.evaluate(() => window.__WRITES__);
+  const aj = wv.find((w) => w.path === 'config/settings');
+  assert.equal(aj.op, 'set', 'crea los ajustes si no existían');
+  assert.deepEqual(aj.data.discovery.rootFolders, ['Produccion', 'Clientes/Produccion'], 'rutas limpias');
+  const req = wv.find((w) => w.path.startsWith('requests/'));
+  assert.ok(req && req.data.type === 'discover_projects' && req.data.status === 'pending');
+  assert.deepEqual(req.data.roots, ['Produccion', 'Clientes/Produccion']);
+  assert.ok(await visible(page, 'text=Escaneo pedido'));
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'ajustes-tablero-nuevo.png'), fullPage: true });
+  await page.click('#nav a[href="#inicio"]');
+  assert.ok(await visible(page, '.pasos li.ok >> text=Ajustes'), 'el primer paso queda hecho');
+  assert.ok(await visible(page, 'text=La próxima corrida escanea la carpeta'));
   await ctx.close();
+  const o = await abrir({ vacio: true, role: 'operador' });
+  assert.ok(await visible(o.page, 'text=Un Admin tiene que registrarlos'));
+  assert.equal(await o.page.locator('.pasos').count(), 0, 'los primeros pasos son del Admin');
+  await o.ctx.close();
   const r = await abrir({ sinDb: true });
   assert.ok(await visible(r.page, 'text=necesita una sesión'));
   await r.ctx.close();
-  paso('estados vacíos: sin datos y sin base');
+  paso('tablero nuevo: primeros pasos, carpeta a escanear y pedido de escaneo; sin base');
 }
 
 // 5) Ayuda: "?" contextual, vistas de ejemplo sin escrituras, tooltip con link y lectura para Lector.
@@ -492,6 +773,25 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForSelector('#scope-q', { timeout: 3000 });
   assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'sin scroll horizontal con el selector abierto');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-selector.png') });
+  // Las pantallas nuevas: discrepancias y documentación de un proyecto, proyectos propuestos y Ajustes.
+  await page.keyboard.press('Escape');
+  const sinScroll = async (hash, sel, clic) => {
+    await page.evaluate((h) => { location.hash = h; }, hash);
+    await page.waitForSelector(clic || sel, { timeout: 3000 });
+    if (clic) { await page.click(clic); await page.waitForSelector(sel, { timeout: 3000 }); }
+    const w = await page.evaluate(() => document.documentElement.scrollWidth);
+    assert.ok(w <= 390, `sin scroll horizontal en ${hash} ${clic || ''} (ancho ${w})`);
+  };
+  await sinScroll('#proyecto-facturacion', '.disc', '#tab-discrepancias');
+  await page.click('.disc [data-act="disc-panel"][data-p="responder"]');
+  await page.waitForSelector('.disc .panel', { timeout: 3000 });
+  assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'sin scroll horizontal con el panel de una discrepancia');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-discrepancias.png'), fullPage: true });
+  await sinScroll('#proyecto-facturacion', '.doc', '#tab-documentacion');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-documentacion.png'), fullPage: true });
+  await sinScroll('#registrar', '[data-act="registrar-detectada"]');
+  await sinScroll('#ajustes', '#aj-auto');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-ajustes.png'), fullPage: true });
   paso('teléfono: barra inferior, detalle a pantalla completa, sin scroll horizontal, tema oscuro');
   await ctx.close();
 }

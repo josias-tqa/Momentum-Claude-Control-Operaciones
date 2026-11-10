@@ -4,5 +4,7 @@
   "retention": { "runsDays": 60, "closedIncidentsDays": 180 },
   "intervalMinutes": 60,
   "pendingMaxMinutes": 30,
-  "timezone": "America/Argentina/Buenos_Aires"
+  "timezone": "America/Argentina/Buenos_Aires",
+  "autoApproveRules": false,
+  "discovery": { "rootFolders": [], "ignoredFolders": [] }
 }
