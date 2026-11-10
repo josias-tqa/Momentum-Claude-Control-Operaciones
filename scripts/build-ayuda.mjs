@@ -9,6 +9,11 @@
 //   <Accion id nombre breve solo>     botón de la app; breve = tooltip; solo = rol mínimo (p. ej. "Admin")
 //   <Termino id nombre>definición</Termino>   entrada del glosario; la definición es su tooltip
 //   <Vista nombre variante nota />    vista real de la app, dibujada con datos de ejemplo al abrir la ayuda
+//   <Nota titulo>texto</Nota>         recuadro destacado (advertencias de la configuración inicial)
+//
+// El bloque generado empieza con el índice (<nav class="ay-toc">, tres niveles) y las tarjetas de entrada
+// (una por sección de nivel 1, con su breve). El tablero arma con eso el índice lateral, el buscador y
+// el resaltado de la sección que se está leyendo (ver viewAyuda y ayudaSync en index.html).
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { evaluate } from '@mdx-js/mdx';
@@ -66,6 +71,9 @@ function componentes(tips, T) {
       tip(id, nombre, texto(def));
       return new Html(`<div class="ay-term" id="ayuda-${esc(id)}"><b class="ay-term-n">${esc(nombre)}</b><div class="ay-term-d">${def}</div></div>`);
     },
+    Nota({ titulo, children }) {
+      return new Html(`<div class="ay-nota" role="note">${titulo ? `<b>${esc(titulo)}</b>` : ''}${aHtml(children)}</div>`);
+    },
     Vista({ nombre, variante = '', nota }) {
       if (!/^[a-z-]+$/.test(nombre || '') || !/^[a-z-]*$/.test(variante)) throw new Error(`Vista inválida: ${nombre}/${variante}`);
       // Marcador que el tablero reemplaza por la vista real (ver vistaDemo en index.html).
@@ -75,14 +83,20 @@ function componentes(tips, T) {
 }
 
 // ---------- índice ----------
+// Árbol de tres niveles: el tablero muestra siempre los dos primeros y abre el tercero en la sección activa.
 function indice(html, T) {
-  const secs = [...html.matchAll(/<section class="ay-sec n(\d)" id="ayuda-([\w-]+)" data-nivel="\d"><h\d>(.*?)<\/h\d>/g)].map((m) => ({ n: Number(m[1]), id: m[2], titulo: m[3] }));
+  const secs = [...html.matchAll(/<section class="ay-sec n(\d)" id="ayuda-([\w-]+)" data-nivel="\d"><h\d>(.*?)<\/h\d>(?:<p class="ay-breve">(.*?)<\/p>)?/g)]
+    .map((m) => ({ n: Number(m[1]), id: m[2], titulo: m[3], breve: m[4] || '', hijos: [] }));
   const grupos = [];
   for (const s of secs) {
-    if (s.n === 1) grupos.push({ ...s, hijos: [] });
-    else if (s.n === 2 && grupos.length) grupos[grupos.length - 1].hijos.push(s);
+    const g = grupos[grupos.length - 1]; const h = g && g.hijos[g.hijos.length - 1];
+    if (s.n === 1) grupos.push(s);
+    else if (s.n === 2 && g) g.hijos.push(s);
+    else if (s.n === 3 && h) h.hijos.push(s);
   }
-  return `<nav class="ay-toc box" aria-label="${esc(T.toc)}">${grupos.map((g) => `<div class="ay-toc-g"><a href="#ayuda-${g.id}"><b>${g.titulo}</b></a>${g.hijos.length ? `<ul>${g.hijos.map((h) => `<li><a href="#ayuda-${h.id}">${h.titulo}</a></li>`).join('')}</ul>` : ''}</div>`).join('')}</nav>`;
+  const lista = (xs, n) => (xs.length ? `<ol class="n${n}">${xs.map((x) => `<li><a href="#ayuda-${x.id}">${x.titulo}</a>${lista(x.hijos, n + 1)}</li>`).join('')}</ol>` : '');
+  return `<nav class="ay-toc" aria-label="${esc(T.toc)}">${lista(grupos, 1)}</nav>`
+    + `<div class="ay-inicio">${grupos.map((g) => `<a class="ay-card" href="#ayuda-${g.id}"><b>${g.titulo}</b><span>${g.breve}</span></a>`).join('')}</div>`;
 }
 
 // ---------- build ----------

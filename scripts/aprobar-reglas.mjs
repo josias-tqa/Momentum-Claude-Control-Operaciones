@@ -2,10 +2,12 @@
 // Aprobación automática de reglas (determinista, sin modelo).
 //
 // Por defecto las reglas que propone la rutina esperan a un Admin. Si un Admin activó en Ajustes
-// "Aprobar automáticamente las reglas que propone la rutina" (config/settings.autoApproveRules), este script
-// pasa a `active` las reglas `proposed` que encuentra al empezar la corrida. Como la corrida lee la base al
-// inicio, una regla propuesta en una corrida se aprueba en la siguiente: mientras tanto se ve como propuesta
-// y un Admin todavía puede rechazarla.
+// "Aprobar automáticamente las reglas que propone la rutina" (config/settings.autoApproveRules), las reglas
+// se activan en el momento, sin esperar a otra corrida:
+//  - aprobarEnPlan: toda regla que un plan está por crear como `proposed` nace `active`. Lo aplica
+//    build-writes.mjs a cada plan, así que vale para cualquier skill que proponga reglas;
+//  - aprobarAutomatico (este CLI): pasa a `active` las `proposed` que ya estaban en la base (por si quedó alguna).
+// El tablero, al encender el interruptor, aprueba él mismo las que estaban esperando.
 //
 // No toca los cambios sugeridos (`suggestion`) sobre reglas existentes: esos siempre los aplica una persona.
 //
@@ -16,6 +18,18 @@ import { join, dirname } from 'node:path';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
 import { leerColeccion } from './consolidar.mjs';
 import { idiomaDe, m } from './lib/idioma.mjs';
+
+// Reescribe las escrituras de un plan: una regla nueva `proposed` nace aprobada. Devuelve los ids aprobados.
+export function aprobarEnPlan(writes, ajustes, ahora) {
+  if (!ajustes || ajustes.autoApproveRules !== true) return [];
+  const aprobadas = [];
+  for (const w of writes || []) {
+    if (w.collection !== 'rules' || w.op !== 'set' || !w.data || w.data.status !== 'proposed') continue;
+    Object.assign(w.data, { status: w.data.compiled ? 'active' : 'pending_compile', approvedBy: 'rutina', approvedAt: ahora, autoApproved: true });
+    aprobadas.push(w.doc_id);
+  }
+  return aprobadas;
+}
 
 export function aprobarAutomatico({ reglas, ajustes, ahora }) {
   if (!ajustes || ajustes.autoApproveRules !== true) return { activa: false, aprobadas: [], writes: [] };

@@ -56,7 +56,7 @@ La regla nace como `rules/<id>`:
   "compiled": { … }, "compileNote": "cómo se entendió", "createdBy": "rutina", "createdAt": "…" }
 ```
 
-- **Nunca** la actives: nace `proposed` aunque la aprobación automática esté activa en Ajustes (en ese caso la aprueba la corrida siguiente, con `scripts/aprobar-reglas.mjs`).
+- **Nunca** la actives: nace `proposed` aunque la aprobación automática esté activa en Ajustes (en ese caso `build-writes` la activa al armar los lotes).
 - No propongas una regla por cada respuesta: solo cuando hay un patrón claro, y si no existe una equivalente.
 - Si la tarjeta tiene una `activity` de tipo `rule`, una persona ya ajustó, creó, desactivó o eliminó la regla desde el tablero: **no propongas otra** para ese mismo patrón. Anotá en `history` qué se cambió, con el texto de esa actividad.
 - Si el patrón es una **salvedad de una regla que ya existe** ("la regla está bien, pero los lunes no"), no crees una regla nueva: dejá en esa regla un cambio sugerido, `suggestion: {kind: "exception", value, why, key: "sug:<ruleId>:respuesta", at}` (formato en `/control-reglas`), salvo que ya tenga uno. Las `exceptions` de una regla las escribe solo una persona, al aplicar la sugerencia.

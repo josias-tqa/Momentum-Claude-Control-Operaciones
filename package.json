@@ -15,6 +15,7 @@
     "check:i18n": "node scripts/build-i18n.mjs --check"
   },
   "devDependencies": {
-    "@mdx-js/mdx": "^3.1.1"
+    "@mdx-js/mdx": "^3.1.1",
+    "pdfjs-dist": "^3.11.174"
   }
 }

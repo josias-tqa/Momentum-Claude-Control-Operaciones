@@ -17,7 +17,8 @@
       "enum": [
         "pdd",
         "sdd",
-        "runbook"
+        "runbook",
+        "other"
       ]
     },
     "markdown": {
@@ -32,6 +33,7 @@
       "type": "string",
       "enum": [
         "docx",
+        "pdf",
         "md",
         "txt",
         "paste"
@@ -52,6 +54,10 @@
     "uploadedAt": {
       "type": "string",
       "maxLength": 40
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200
     }
   }
 }

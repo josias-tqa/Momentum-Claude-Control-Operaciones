@@ -28,6 +28,8 @@ async function abrir({ role = 'admin', vacio = false, sinDb = false, viewport = 
   await page.addInitScript(({ seed, role, sinDb, mock }) => { window.__SEED__ = seed; window.__ROLE__ = role; window.__NODB__ = sinDb; eval(mock); }, { seed: demoSeed({ vacio }), role, sinDb, mock });
   // Se sirve desde una URL (no setContent) para que el script de inicio corra en el documento real.
   await page.route('https://tablero.test/**', (r) => r.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }));
+  // pdf.js (para leer un PDF subido) se sirve desde node_modules en lugar de la CDN.
+  await page.route('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/**', (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: readFileSync(join(RAIZ, 'node_modules/pdfjs-dist/build', r.request().url().split('/').pop())) }));
   await page.goto('https://tablero.test/', { waitUntil: 'load' });
   await page.waitForTimeout(300);
   return { page, ctx };
@@ -48,6 +50,20 @@ function zip(files) {
   const cd = Buffer.concat(central); const fin = Buffer.alloc(22);
   fin.writeUInt32LE(0x06054b50, 0); fin.writeUInt16LE(central.length / 2, 8); fin.writeUInt16LE(central.length / 2, 10); fin.writeUInt32LE(cd.length, 12); fin.writeUInt32LE(pos, 16);
   return Buffer.concat([...partes, cd, fin]);
+}
+// Un PDF mínimo de una página: un título en letra grande, un párrafo en dos renglones, una viñeta y el número de página.
+function pdfDePrueba() {
+  const t = (tam, x, y, txt) => `BT /F1 ${tam} Tf ${x} ${y} Td (${txt}) Tj ET\n`;
+  const cont = t(22, 72, 720, 'Runbook de Facturacion') + t(11, 72, 680, 'Si el login falla, verificar el usuario del robot') + t(11, 72, 666, 'y avisar a soporte@cliente.com.')
+    + t(11, 72, 630, '\\225 Reintentar una sola vez') + t(11, 300, 40, '1');
+  const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${cont.length} >>\nstream\n${cont}endstream`, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];
+  let pdf = '%PDF-1.4\n'; const pos = [];
+  objs.forEach((o, i) => { pos.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${pos.map((n) => `${String(n).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(pdf, 'latin1');
 }
 function docxDePrueba() {
   const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
@@ -413,14 +429,19 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForTimeout(150);
   let w = (await writes()).filter((x) => x.path === 'config/settings').pop();
   assert.deepEqual(w.data, { autoApproveRules: true }, 'solo cambia ese ajuste');
+  // Las propuestas que estaban esperando se aprueban en el momento, sin esperar a la rutina.
+  const apr = (await writes()).filter((x) => x.path.startsWith('rules/') && x.data.autoApproved === true);
+  assert.deepEqual(apr.map((x) => x.path).sort(), ['rules/conciliacion-login-sap', 'rules/facturacion-abandonados']);
+  assert.ok(apr.every((x) => x.data.approvedBy.startsWith('u_') && x.data.approvedAt));
+  assert.equal(apr.find((x) => x.path === 'rules/conciliacion-login-sap').data.status, 'active');
+  assert.equal(apr.find((x) => x.path === 'rules/facturacion-abandonados').data.status, 'pending_compile', 'sin traducir: la compila la rutina');
   assert.equal(await page.getAttribute('#aj-auto', 'aria-checked'), 'true');
   assert.equal(await page.evaluate(() => document.activeElement.id), 'aj-auto', 'el foco queda en el interruptor');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'ajustes.png'), fullPage: true });
   await page.click('#nav a[href="#reglas"]');
-  assert.ok(await visible(page, 'text=Se aprueba sola en la próxima corrida'), 'las propuestas avisan que se aprueban solas');
-  assert.ok(await visible(page, 'text=Aprobación automática activa'));
-  await page.click('#nav a[href="#inicio"]');
-  assert.ok(await visible(page, 'text=reglas propuestas por aprobarse'));
+  await page.waitForSelector('h1 >> text=Reglas de control', { timeout: 3000 });
+  assert.equal(await page.locator('text=Propuestas para aprobar').count(), 0, 'no quedan propuestas');
+  assert.ok(await visible(page, 'text=aprobada automáticamente'));
   // Carpeta a escanear: "Guardar ajustes" también la guarda; "Guardar y escanear" además pide el escaneo.
   await page.click('#nav a[href="#ajustes"]');
   await page.fill('#aj-raices', 'Produccion, Clientes/Produccion');
@@ -538,9 +559,9 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   // Documentación: subir un .docx, revisarlo convertido a Markdown y guardarlo.
   await page.click('#tab-documentacion');
   await page.waitForSelector('.doc', { timeout: 3000 });
-  assert.equal(await page.locator('.doc').count(), 3, 'PDD, SDD y Runbook');
-  assert.ok(await visible(page, '.doc >> text=Runbook Facturación.docx'), 'el documento ya cargado');
-  await page.setInputFiles('#doc-f-facturacion-pdd', { name: 'PDD Facturación.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: docxDePrueba() });
+  assert.equal(await page.locator('.doc').count(), 3, 'el documento ya cargado y los dos del paquete');
+  assert.ok(await visible(page, '.doc >> text=Runbook Facturación.docx'));
+  await page.setInputFiles('#doc-f-facturacion', { name: 'PDD Facturación.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: docxDePrueba() });
   await page.waitForSelector('#doc-md-facturacion', { timeout: 5000 });
   const mdConv = await page.inputValue('#doc-md-facturacion');
   assert.equal(mdConv, [
@@ -550,47 +571,88 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
     '- Lee la cola', '- Registra la factura', '1. Verificar el login', '2. Escalar a soporte', '',
     '| Excepción | Descripción |', '| --- | --- |', '| BE001 | Factura duplicada \\| repetida |'].join('\n'), 'títulos por estilo, negrita, listas, tabla, sin índice y con el email enmascarado');
   assert.ok(await visible(page, 'text=Se enmascaró 1 dato'));
+  // La categoría se propone por el nombre del archivo y se puede cambiar; el título es opcional.
+  assert.equal(await page.getAttribute('#doc-c-facturacion-pdd', 'aria-pressed'), 'true');
+  await page.click('#doc-c-facturacion-other');
+  await page.waitForTimeout(100);
+  assert.equal(await page.getAttribute('#doc-c-facturacion-other', 'aria-pressed'), 'true');
+  await page.click('#doc-c-facturacion-pdd');
+  await page.waitForTimeout(100);
+  await page.fill('#doc-t-facturacion', 'PDD vigente, versión 3');
   assert.ok(!(await writes()).some((x) => x.path.startsWith('documents/')), 'no se guarda hasta confirmar');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'documento-revision.png'), fullPage: true });
   // Lo que se edita antes de guardar también pasa por el enmascarado.
   await page.fill('#doc-md-facturacion', mdConv + '\n\nContacto: otra.persona@cliente.com');
   await page.click('[data-act="doc-guardar"]');
   await page.waitForTimeout(200);
-  w = (await writes()).find((x) => x.path === 'documents/facturacion_pdd');
+  w = (await writes()).find((x) => x.path.startsWith('documents/facturacion_'));
   assert.ok(w && w.op === 'set' && w.data.kind === 'pdd' && w.data.projectId === 'facturacion' && w.data.source === 'docx');
+  assert.equal(w.data.title, 'PDD vigente, versión 3');
+  const idPdd = w.path.split('/')[1];
   assert.equal(w.data.fileName, 'PDD Facturación.docx');
   assert.ok(w.data.markdown.startsWith('# Process Definition Document') && w.data.markdown.endsWith('Contacto: [EMAIL]'));
   assert.ok(!/@cliente\.com/.test(w.data.markdown), 'sin emails en lo guardado');
   assert.equal(w.data.masked, 2);
   // Ver con formato y descargar como .md.
-  await page.click('#doc-ver-facturacion-pdd');
+  assert.ok(await visible(page, '.doc >> text=PDD vigente, versión 3'), 'se lista con su título');
+  await page.click(`#doc-ver-${idPdd}`);
   assert.ok(await visible(page, '.doc-view h2 >> text=Process Definition Document'));
   assert.equal(await page.locator('.doc-view table td').count(), 4, 'la tabla se dibuja');
   assert.equal(await page.locator('.doc-view ol li').count(), 2, 'lista numerada');
   assert.equal(await page.locator('.doc-view td', { hasText: 'Factura duplicada | repetida' }).count(), 1, 'la barra escapada queda dentro de la celda');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'documentacion.png'), fullPage: true });
-  await page.click('[data-act="doc-descargar"][data-kind="pdd"]');
+  await page.click(`[data-act="doc-descargar"][data-doc="${idPdd}"]`);
   await page.waitForTimeout(150);
   const bajado = (await page.evaluate(() => window.__DOWNLOADS__)).pop();
-  assert.equal(bajado.filename, 'facturacion-ejemplo-pdd.md', 'nombre del proyecto y tipo de documento, en .md');
+  assert.equal(bajado.filename, 'facturacion-ejemplo-pdd-vigente-version-3.md', 'nombre del proyecto y del documento, en .md');
   assert.equal(bajado.data, w.data.markdown);
-  // Pegar texto en otro tipo de documento; un formato que no se puede convertir se rechaza con un aviso.
-  await page.setInputFiles('#doc-f-facturacion-sdd', { name: 'SDD.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7') });
+  // Documentos del paquete: se listan y un Admin los puede desactivar y volver a usar.
+  assert.ok(await visible(page, 'text=En los paquetes publicados'));
+  const pkg = page.locator('.doc', { hasText: 'Documentation/PDD.docx' });
+  assert.ok(await pkg.locator('text=En uso').count());
+  await pkg.locator('[data-act="doc-pkg"]').click();
+  await page.waitForTimeout(200);
+  w = (await writes()).filter((x) => x.path === 'projects/facturacion').pop();
+  assert.equal(w.data.disabledDocs.length, 1);
+  assert.match(w.data.disabledDocs[0], /^FIN_Facturacion_\w+:Documentation\/PDD\.docx$/, 'proceso y ruta');
+  assert.ok(await pkg.locator('text=Desactivado').count());
+  assert.ok(await page.locator('.doc', { hasText: 'README.md' }).locator('text=En uso').count(), 'los demás siguen en uso');
+  await pkg.locator('[data-act="doc-pkg"]').click();
+  await page.waitForTimeout(200);
+  assert.deepEqual((await writes()).filter((x) => x.path === 'projects/facturacion').pop().data.disabledDocs, []);
+  // Un PDF: se recupera el texto, con el título por tamaño de letra, los renglones unidos en párrafos y sin el número de página.
+  await page.setInputFiles('#doc-f-facturacion', { name: 'Manual operativo.pdf', mimeType: 'application/pdf', buffer: pdfDePrueba() });
+  await page.waitForSelector('#doc-md-facturacion', { timeout: 15000 });
+  assert.equal(await page.inputValue('#doc-md-facturacion'), '# Runbook de Facturacion\n\nSi el login falla, verificar el usuario del robot y avisar a [EMAIL].\n\n- Reintentar una sola vez');
+  assert.equal(await page.getAttribute('#doc-c-facturacion-other', 'aria-pressed'), 'true', 'sin pista en el nombre: Otro');
+  assert.ok(await visible(page, 'text=De un PDF se recupera el texto, no el formato'));
+  await page.click('#doc-c-facturacion-runbook');
+  await page.waitForTimeout(100);
+  await page.click('[data-act="doc-guardar"]');
+  await page.waitForTimeout(200);
+  w = (await writes()).filter((x) => x.path.startsWith('documents/') && x.op === 'set').pop();
+  assert.ok(w.data.source === 'pdf' && w.data.kind === 'runbook' && w.data.fileName === 'Manual operativo.pdf' && w.data.title === null);
+  // Un formato que no se puede convertir se rechaza con un aviso; pegar texto no pide archivo.
+  await page.setInputFiles('#doc-f-facturacion', { name: 'viejo.doc', mimeType: 'application/msword', buffer: Buffer.from('x') });
   assert.ok(await visible(page, '#toast >> text=no se puede convertir'));
-  await page.click('[data-act="doc-pegar"][data-kind="sdd"]');
+  await page.click('[data-act="doc-pegar"]');
   await page.fill('#doc-md-facturacion', '## Triggers\n\n- Cada 30 minutos');
   await page.click('[data-act="doc-guardar"]');
   await page.waitForTimeout(200);
-  w = (await writes()).find((x) => x.path === 'documents/facturacion_sdd');
-  assert.ok(w.data.source === 'paste' && w.data.markdown === '## Triggers\n\n- Cada 30 minutos');
+  w = (await writes()).filter((x) => x.path.startsWith('documents/') && x.op === 'set').pop();
+  assert.ok(w.data.source === 'paste' && w.data.kind === 'other' && w.data.markdown === '## Triggers\n\n- Cada 30 minutos');
+  assert.equal(await page.locator('.doc').count(), 6, 'tantos documentos como se quiera: dos de la misma categoría conviven');
+  assert.equal(new Set((await writes()).filter((x) => x.path.startsWith('documents/')).map((x) => x.path)).size, 3, 'cada documento con su id');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'documentacion-lista.png'), fullPage: true });
   // Quitar pide confirmación.
-  await page.click('#doc-q-facturacion-sdd');
-  assert.ok(await visible(page, 'text=¿Quitar el SDD de este proyecto?'));
+  const idPegado = w.path.split('/')[1];
+  await page.click(`#doc-q-${idPegado}`);
+  assert.ok(await visible(page, 'text=¿Quitar este documento del proyecto?'));
   await page.click('[data-act="doc-quitar-ok"]');
   await page.waitForTimeout(200);
-  assert.ok((await writes()).some((x) => x.op === 'delete' && x.path === 'documents/facturacion_sdd'));
+  assert.ok((await writes()).some((x) => x.op === 'delete' && x.path === `documents/${idPegado}`));
   assert.ok(await visible(page, '[data-act="reanalizar"] >> text=Pedir re-análisis'), 'ofrece re-analizar con los documentos nuevos');
-  paso('documentación: subir .docx convertido a Markdown, revisar, enmascarar, guardar, ver, descargar .md, pegar y quitar');
+  paso('documentación: varios documentos con categoría y título; .docx y .pdf convertidos a Markdown, revisar, enmascarar, ver, descargar .md, pegar y quitar');
   await ctx.close();
 }
 
@@ -620,7 +682,7 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path === 'discrepancyWork/disc-facturacion-trigger' && w.data.response.decision === 'expected'));
   await page.click('#tab-documentacion');
   await page.waitForSelector('.doc', { timeout: 3000 });
-  assert.equal(await page.locator('.doc input[type=file], [data-act="doc-pegar"], [data-act="doc-quitar"]').count(), 0);
+  assert.equal(await page.locator('.doc input[type=file], [data-act="doc-pegar"], [data-act="doc-quitar"], [data-act="doc-pkg"]').count(), 0);
   assert.equal(await page.locator('[data-act="doc-ver"], [data-act="doc-descargar"]').count(), 2, 'ver y descargar');
   await page.evaluate(() => { location.hash = '#ajustes'; });
   assert.ok(await visible(page, 'text=Solo los Admin pueden ver los ajustes'));
@@ -739,6 +801,45 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await l.page.waitForTimeout(200);
   assert.ok(await visible(l.page, 'text=Qué es la Torre de Control'));
   await l.ctx.close();
+  // Índice lateral: sigue la lectura, abre el tercer nivel de la sección activa y tiene buscador.
+  const w = await abrir({ viewport: { width: 1500, height: 900 } });
+  await w.page.evaluate(() => { location.hash = '#ayuda-config-uipath'; });
+  await w.page.waitForTimeout(300);
+  const actual = () => w.page.getAttribute('#ay-nav .ay-toc a[aria-current]', 'href');
+  assert.equal(await actual(), '#ayuda-config-uipath', 'el índice marca la sección abierta');
+  assert.ok(await visible(w.page, '#ay-nav .ay-toc a[href="#ayuda-config-uipath-carpetas"]'), 'tercer nivel abierto en la sección activa');
+  assert.ok(!(await visible(w.page, '#ay-nav .ay-toc a[href="#ayuda-para-vos"]')), 'tercer nivel cerrado en las demás');
+  assert.ok(await visible(w.page, '#ayuda-config-bitbucket >> text=Repositories → Read'), 'configuración inicial: token de Bitbucket');
+  assert.ok(await visible(w.page, '#ayuda-config-uipath >> text=OR.Monitoring.Read'), 'configuración inicial: scopes de la External App');
+  const navX = await w.page.evaluate(() => [document.getElementById('ay-nav').getBoundingClientRect().left, document.querySelector('.ay-doc').getBoundingClientRect().right]);
+  assert.ok(navX[0] > navX[1], 'índice a la derecha del contenido');
+  await w.page.evaluate(() => document.getElementById('ayuda-reglas').scrollIntoView());
+  await w.page.waitForTimeout(200);
+  assert.equal(await actual(), '#ayuda-reglas', 'el índice sigue el scroll');
+  assert.equal(await w.page.evaluate(() => location.hash), '#ayuda-config-uipath', 'seguir el scroll no cambia la ruta');
+  if (CAPT) await w.page.screenshot({ path: join(CAPT, 'ayuda-indice.png') });
+  await w.page.keyboard.press('/');
+  await w.page.keyboard.type('bitbucket token');
+  await w.page.waitForTimeout(100);
+  assert.equal(await w.page.getAttribute('#ay-res a >> nth=0', 'href'), '#ayuda-config-bitbucket', 'buscador: primero el título que coincide');
+  assert.ok(await w.page.locator('#ay-res mark').count() >= 2, 'buscador: resalta la coincidencia');
+  if (CAPT) await w.page.screenshot({ path: join(CAPT, 'ayuda-buscador.png') });
+  await w.page.fill('#ay-q', 'xyzzy');
+  assert.ok(await visible(w.page, '#ay-res >> text=Nada coincide'), 'buscador: sin resultados');
+  await w.page.fill('#ay-q', 'PÓSPONER');
+  assert.ok(await w.page.locator('#ay-res a[href="#ayuda-posponer"]').count() === 1, 'buscador: sin distinguir tildes ni mayúsculas, incluye acciones');
+  await w.page.fill('#ay-q', 'recurrencia');
+  assert.equal(await w.page.getAttribute('#ay-res a >> nth=0', 'href'), '#ayuda-recurrencia', 'buscador: incluye el glosario');
+  await w.page.press('#ay-q', 'Enter');
+  await w.page.waitForTimeout(250);
+  assert.equal(await w.page.evaluate(() => location.hash), '#ayuda-recurrencia');
+  assert.equal(await actual(), '#ayuda-glosario', 'un término marca el glosario en el índice');
+  await w.page.focus('#ay-q');
+  await w.page.keyboard.press('Escape');
+  assert.ok(await visible(w.page, '#ay-nav .ay-toc'), 'Esc limpia la búsqueda y vuelve el índice');
+  await w.ctx.close();
+  paso('ayuda: configuración inicial, índice lateral que sigue la lectura y buscador');
+
   const m = await abrir({ viewport: { width: 390, height: 844 }, oscuro: true });
   await m.page.evaluate(() => { location.hash = '#mas'; });
   await m.page.waitForTimeout(150);
@@ -748,8 +849,21 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   const ancho = await m.page.evaluate(() => document.documentElement.scrollWidth);
   assert.ok(ancho <= 390, `ayuda sin scroll horizontal (ancho ${ancho})`);
   if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-oscuro.png'), fullPage: true });
+  // En el teléfono el índice es una barra fija que se despliega y se cierra al elegir.
+  assert.ok(!(await visible(m.page, '#ay-nav-p')), 'índice cerrado al entrar');
+  await m.page.click('#ay-nav-b');
+  assert.ok(await visible(m.page, '#ay-nav .ay-toc a[href="#ayuda-config-bitbucket"]'), 'índice desplegado');
+  if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-indice.png') });
+  await m.page.click('#ay-nav .ay-toc a[href="#ayuda-config-bitbucket"]');
+  await m.page.waitForTimeout(300);
+  assert.ok(!(await visible(m.page, '#ay-nav-p')), 'el índice se cierra al elegir');
+  assert.equal((await m.page.textContent('#ay-nav-cur')).trim(), '2. Token de Bitbucket (opcional)', 'la barra dice dónde estás');
+  const bajo = await m.page.evaluate(() => [document.getElementById('ay-nav').getBoundingClientRect().bottom, document.getElementById('ayuda-config-bitbucket').getBoundingClientRect().top]);
+  assert.ok(bajo[1] >= bajo[0], `la barra del índice no tapa el título (${bajo})`);
+  assert.ok((await m.page.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'configuración inicial sin scroll horizontal');
+  if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-config.png') });
   await m.ctx.close();
-  paso('ayuda: visible para Lector, desde Más en el teléfono y sin scroll horizontal');
+  paso('ayuda: visible para Lector, desde Más en el teléfono con índice desplegable y sin scroll horizontal');
 }
 
 // 6) Teléfono (oscuro): sin scroll horizontal.
@@ -803,7 +917,7 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   const texto = (sel) => page.evaluate((s) => document.querySelector(s).innerText, sel);
   // Lo que viene de la base (títulos, análisis) o del propio selector ("Español") no cuenta: solo la interfaz.
   const sinEspanol = async (sel, que) => {
-    const t = (await texto(sel)).replace(/Español/g, '');
+    const t = (await texto(sel)).replace(/Español/g, '').replace(/Ejecutá \/control-corrida\./g, ''); // la solicitud de la tarea programada es un literal
     assert.ok(!/[áéíóúñ¿¡]/i.test(t), `${que}: quedó texto en español: ${(t.match(/.{0,30}[áéíóúñ¿¡].{0,30}/i) || [''])[0]}`);
   };
   assert.equal(await page.evaluate(() => document.documentElement.lang), 'es');

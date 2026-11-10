@@ -1,7 +1,7 @@
 {/* Ayuda del tablero · Pantallas y acciones. Cada Seccion o Accion con "breve" es el tooltip de su botón en la app.
     Todo cambio en el tablero se refleja acá (lo verifica tests/ayuda.test.mjs). Después de editar: npm run build:ayuda */}
 
-<Seccion id="pantallas" titulo="Pantallas y acciones">
+<Seccion id="pantallas" titulo="Pantallas y acciones" breve="Cada pantalla, pestaña y botón del tablero, con vistas de ejemplo.">
 
 Cada pantalla tiene un botón **?** al lado del título que trae a su sección de esta ayuda. El link **Ayuda** del menú también abre la parte de la pantalla en la que estás. Al pasar el mouse por un botón o una etiqueta aparece una explicación breve, con un link a más detalle. Las vistas de esta página son las de la app, dibujadas con datos de ejemplo.
 
@@ -230,7 +230,7 @@ Si todavía no hay proyectos, un Admin ve los [primeros pasos](#ayuda-primeros-p
 
 <Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, discrepancias, documentación, reglas, inventario y configuración de un proyecto.">
 
-Arriba está la carpeta, la cantidad de procesos, el estado y cuántas discrepancias tiene pendientes, con las acciones. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen siete pestañas.
+Arriba está la carpeta, la cantidad de procesos, el estado y cuántas discrepancias tiene pendientes, con las acciones. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Si el último análisis falló, un aviso rojo dice qué acceso o dato faltó. Después vienen siete pestañas. Las notas del último análisis (lo que encontró y los criterios que sugiere) están plegadas al principio de la pestaña Memoria de proceso.
 
 <Vista nombre="proyecto" variante="memoria" />
 
@@ -323,37 +323,48 @@ Aparece en las discrepancias atendidas que la rutina todavía detecta.
 
 </Seccion>
 
-<Seccion id="proyecto-documentacion" nivel="3" titulo="Pestaña Documentación" breve="PDD, SDD y Runbook del proyecto, subidos a mano y guardados en Markdown.">
+<Seccion id="proyecto-documentacion" nivel="3" titulo="Pestaña Documentación" breve="Los documentos del proyecto (PDD, SDD, Runbook y otros), subidos a mano y guardados en Markdown.">
 
-La rutina lee sola la documentación que viene dentro de los paquetes publicados. Cuando un documento no está ahí, o está desactualizado, un Admin lo sube acá. Hay un lugar para cada uno:
+La rutina lee sola la documentación que viene dentro de los paquetes publicados. Cuando un documento no está ahí, o está desactualizado, un Admin lo sube acá. Se pueden subir **tantos documentos como haga falta**. Cada uno lleva una categoría y, si querés, un título o una descripción:
 
 - **PDD:** el proceso de negocio, sus pasos y sus excepciones.
 - **SDD:** cómo está construida la solución, con sus colas, assets y triggers.
 - **Runbook:** qué hacer ante cada falla y a quién escalar.
+- **Otro:** manuales, instructivos, acuerdos de servicio o cualquier otro documento útil.
 
-Todo se guarda **en Markdown** (.md), sin imágenes. La rutina usa estos documentos en el análisis del proyecto, para la memoria de proceso y las discrepancias, y en el análisis previo de cada tema. Después de subir uno conviene **Pedir re-análisis**.
+Puede haber varios de la misma categoría, por ejemplo un SDD por proceso. Todo se guarda **en Markdown** (.md), sin imágenes. La rutina usa estos documentos en el análisis del proyecto, para la memoria de proceso y las discrepancias, y en el análisis previo de cada tema. Después de subir uno conviene **Pedir re-análisis**.
 
-Un Lector o un Operador pueden ver y descargar los documentos; solo un Admin los sube, reemplaza o quita.
+Un Lector o un Operador pueden ver y descargar los documentos; solo un Admin los sube, los quita o desactiva los del paquete. Para cambiar un documento, subí el nuevo y quitá el anterior.
 
 <Vista nombre="proyecto" variante="documentacion" nota="vista de Admin" />
 
-<Accion id="doc-subir" nombre="Subir archivo o Reemplazar" solo="Admin" breve="Sube un .docx, .md o .txt y lo convierte a Markdown. Se revisa antes de guardar.">
+<Accion id="doc-pkg" nombre="Desactivar o Volver a usar" solo="Admin" breve="Hace que la rutina deje de usar, o vuelva a usar, un documento que viene dentro del paquete publicado.">
 
-Un Word (.docx) se convierte en el momento: títulos, párrafos, negritas, listas y tablas. Las imágenes, los encabezados y el índice no se pasan. Un PDF o un .doc antiguo no se pueden convertir: guardalo como .docx o usá **Pegar texto**.
+Debajo de los documentos subidos a mano, **En los paquetes publicados** lista los documentos que la rutina encontró dentro de cada paquete, con el proceso y la versión. Están **En uso** salvo que un Admin los desactive.
 
-Nada se guarda hasta tocar **Guardar**. Si ya había un documento de ese tipo, el nuevo lo reemplaza.
+Sirve cuando el documento del paquete está viejo o es de otra cosa: desactivalo y, si hace falta, subí el correcto. Vale desde la próxima corrida; conviene **Pedir re-análisis** para rehacer la memoria de proceso sin ese documento. Si una versión nueva del paquete trae el documento con la misma ruta, sigue desactivado.
+
+</Accion>
+
+<Accion id="doc-subir" nombre="Subir archivo" solo="Admin" breve="Sube un Word (.docx), un PDF, un .md o un .txt y lo convierte a Markdown. Se revisa antes de guardar.">
+
+- **Word (.docx):** se convierten títulos, párrafos, negritas, listas y tablas. Las imágenes, los encabezados y el índice no se pasan.
+- **PDF:** se recupera el texto. Un PDF no guarda la estructura, así que los títulos se deducen del tamaño de la letra y las tablas quedan como texto corrido: conviene revisarlo. Un PDF escaneado no tiene texto para leer. Si existe el Word original, da mejor resultado.
+- **.md o .txt:** se toman como están.
+
+La categoría se propone por el nombre del archivo y se puede cambiar. Nada se guarda hasta tocar **Guardar documento**.
 
 </Accion>
 
 <Accion id="doc-pegar" nombre="Pegar texto" solo="Admin" breve="Abre un cuadro para pegar o escribir el documento, en Markdown o texto plano.">
 
-Sirve para documentos que están en una wiki, en un PDF o en otro formato.
+Sirve para documentos que están en una wiki o en un formato que no se puede subir.
 
 </Accion>
 
-<Accion id="doc-guardar" nombre="Guardar" solo="Admin" breve="Guarda el documento en Markdown, después de enmascarar emails, documentos y usuarios.">
+<Accion id="doc-guardar" nombre="Guardar documento" solo="Admin" breve="Guarda el documento en Markdown, con su categoría y su título, después de enmascarar emails, documentos y usuarios.">
 
-Antes de guardar se ve el Markdown y se puede corregir. El tablero no guarda datos personales: los emails, los números de documento y los usuarios de Windows se enmascaran solos, pero los **nombres de personas no se detectan**: quitalos a mano. Cada documento admite hasta 230 KB de texto.
+Antes de guardar se elige la categoría, se puede escribir un título o una descripción, y se ve el Markdown para corregirlo. El tablero no guarda datos personales: los emails, los números de documento y los usuarios de Windows se enmascaran solos, pero los **nombres de personas no se detectan**: quitalos a mano. Cada documento admite hasta 230 KB de texto.
 
 </Accion>
 
@@ -421,7 +432,7 @@ Deshace lo que editaste y no guardaste.
 Las [reglas](#ayuda-regla) de todos los proyectos. Arriba, las **Propuestas para aprobar**; después, para un Admin, el formulario **Nueva regla**, y al final el resto. Cada una muestra su estado, su proyecto, de dónde salió (a mano, del alta, aprendida de un incidente, por similitud o de la revisión diaria), sus excepciones y cómo la entendió la rutina.
 
 - **Por compilar:** la rutina la traduce a un control en la próxima corrida.
-- **Propuesta:** la rutina la sugirió y dice por qué; un Admin la aprueba o la rechaza. Con la [aprobación automática](#ayuda-auto-reglas) activa, se aprueba sola en la corrida siguiente.
+- **Propuesta:** la rutina la sugirió y dice por qué; un Admin la aprueba o la rechaza. Con la [aprobación automática](#ayuda-auto-reglas) activa no hay propuestas: las reglas nacen activas.
 - **Activa**, **Desactivada** o **Rechazada.**
 - **Cambio sugerido:** la revisión diaria encontró algo para ajustar en la regla.
 
@@ -522,7 +533,7 @@ La rutina propone por su cuenta, y todo llega a **Para revisar** y a **Propuesta
 
 Llegan como máximo 3 propuestas por proyecto por vez.
 
-Por defecto nada se activa solo. Si un Admin activó la [aprobación automática](#ayuda-auto-reglas) en Ajustes, las **reglas nuevas** se activan en la corrida siguiente y quedan marcadas como **aprobada automáticamente**. Los cambios sugeridos sobre reglas que ya existen siempre esperan a una persona.
+Por defecto nada se activa solo. Si un Admin activó la [aprobación automática](#ayuda-auto-reglas) en Ajustes, las **reglas nuevas** se activan en el momento y quedan marcadas como **aprobada automáticamente**. Los cambios sugeridos sobre reglas que ya existen siempre esperan a una persona.
 
 </Seccion>
 
@@ -604,18 +615,18 @@ Cada texto se escribe **una sola vez**, en el idioma vigente cuando se generó: 
 
 </Accion>
 
-<Accion id="auto-reglas" nombre="Aprobar automáticamente las reglas" solo="Admin" breve="Interruptor. Activado, las reglas que propone la rutina se activan solas en la corrida siguiente.">
+<Accion id="auto-reglas" nombre="Aprobar automáticamente las reglas" solo="Admin" breve="Interruptor. Activado, las reglas que propone la rutina quedan activas en el momento, sin esperar a un Admin.">
 
 Viene **desactivado**: cada regla que propone la rutina espera a que un Admin la apruebe.
 
 Al activarlo:
 
-- La próxima corrida aprueba las reglas propuestas, también las que ya estaban esperando. Rechazá antes las que no quieras.
-- Una regla nueva se ve como **Propuesta** hasta la corrida siguiente a la que la propuso. En ese rato todavía se puede rechazar.
+- Las reglas propuestas que estaban esperando se aprueban en ese momento. Rechazá antes las que no quieras.
+- Desde entonces, cada regla que propone la rutina nace activa: no pasa por **Propuestas para aprobar**.
 - Las reglas aprobadas así quedan marcadas como **aprobada automáticamente** y se pueden desactivar, editar o eliminar como cualquier otra.
 - Los **cambios sugeridos** sobre reglas que ya existen (una excepción, otra severidad, desactivarla) no se aplican solos.
 
-Se guarda en el momento y vale desde la próxima corrida.
+Se guarda en el momento. Al apagarlo, las reglas ya activas siguen activas y las nuevas vuelven a esperar aprobación.
 
 </Accion>
 

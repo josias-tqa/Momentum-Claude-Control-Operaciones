@@ -105,5 +105,7 @@
   "prole.dispatcher": "Dispatcher",
   "prole.performer": "Performer",
   "prole.reporter": "Reporter",
-  "prole.other": "Otro"
+  "prole.other": "Otro",
+  "doc.otroNombre": "Otro",
+  "doc.otro": "Cualquier otro documento útil: manuales, instructivos, acuerdos de servicio."
 }

@@ -48,13 +48,13 @@
   "acciones.regla.guardadaRecompilar": "Rule saved: the next run will translate it again",
   "acciones.escanear.con": "Saved. The next run will scan the folder and propose the projects.",
   "acciones.escanear.sin": "Saved. With no folder set, the next run will scan every folder it can see.",
-  "acciones.auto.on": "Automatic approval turned on: it applies from the next run",
+  "acciones.auto.on": "Automatic approval enabled",
   "acciones.auto.off": "Automatic approval turned off",
   "acciones.registrarTodos.one": "{n} project registered: the routine analyzes up to 3 per run",
   "acciones.registrarTodos.other": "{n} projects registered: the routine analyzes up to 3 per run",
   "acciones.doc.pesado": "The document is {kb} KB and the maximum is {max} KB: trim it or keep only the useful sections",
-  "acciones.doc.guardado": "{nombre} saved as Markdown. The routine uses it in the next analysis of the project.",
-  "acciones.doc.quitado": "{nombre} removed",
+  "acciones.doc.guardado": "Document saved as Markdown. The routine uses it in the next analysis of the project.",
+  "acciones.doc.quitado": "Document removed",
   "acciones.proyecto.detectado": "{nombre} registered: the routine will analyze it on the next run",
   "acciones.err.permiso": "You do not have permission for this action",
   "acciones.err.guardar": "Could not save. Try again.",
@@ -82,5 +82,9 @@
   "acciones.nota.adjust": "the rule was adjusted ({changes})",
   "acciones.nota.disable": "the rule was disabled",
   "acciones.nota.delete": "the rule was deleted",
-  "acciones.nota.create": "a rule was created for this case"
+  "acciones.nota.create": "a rule was created for this case",
+  "acciones.doc.pkgVuelve": "The document is used again from the next run",
+  "acciones.doc.pkgOff": "Document disabled: the routine does not use it from the next run",
+  "acciones.auto.onN.one": "Automatic approval enabled: {n} proposed rule is now active",
+  "acciones.auto.onN.other": "Automatic approval enabled: {n} proposed rules are now active"
 }

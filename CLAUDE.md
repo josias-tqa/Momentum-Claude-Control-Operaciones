@@ -59,7 +59,7 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 | Modelo de datos del tablero | `docs/modelo-de-datos.md` y `schemas/` |
 | Scripts deterministas (colecta, evaluación, consolidación, lotes) | `scripts/` (tests: `npm test`) |
 | Tablero (fuente del artifact) | `dashboard/index.html` |
-| Ayuda del tablero (introducción, glosario, pantallas; MDX, un juego por idioma) | `dashboard/ayuda/<idioma>/*.mdx` → `npm run build:ayuda` |
+| Ayuda del tablero (introducción, configuración inicial, pantallas, glosario; MDX, un juego por idioma) | `dashboard/ayuda/<idioma>/*.mdx` → `npm run build:ayuda` |
 | Textos del tablero por idioma (catálogos) | `dashboard/i18n/<idioma>/*.json` → `npm run build:i18n` |
 | Textos de los scripts de la rutina por idioma | `scripts/lib/mensajes/<idioma>.json` · `scripts/lib/idioma.mjs` |
 

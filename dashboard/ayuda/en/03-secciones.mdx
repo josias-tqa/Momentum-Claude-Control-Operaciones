@@ -2,7 +2,7 @@
     Every change to the dashboard is reflected here (checked by tests/ayuda.test.mjs). After editing: npm run build:ayuda.
     The Spanish twin lives in ../es/03-secciones.mdx: both files must be updated together. */}
 
-<Seccion id="pantallas" titulo="Screens and actions">
+<Seccion id="pantallas" titulo="Screens and actions" breve="Every screen, tab and button of the dashboard, with sample views.">
 
 Every screen has a **?** button next to its title that takes you to its section of this help. The **Help** link in the menu also opens the part for the screen you are on. Hovering over a button or a label shows a short explanation, with a link to more detail. The views on this page are the app's own, drawn with sample data.
 
@@ -231,7 +231,7 @@ If there are no projects yet, an Admin sees the [first steps](#ayuda-primeros-pa
 
 <Seccion id="pagina-proyecto" nivel="2" titulo="A project's page" breve="Processes, memory, discrepancies, documentation, rules, inventory and settings of a project.">
 
-At the top are the folder, the number of processes, the status and how many discrepancies are pending, with the actions. Below, each process with its role, its name in Orchestrator, the package and the deployed version, and its libraries. Then come seven tabs.
+At the top are the folder, the number of processes, the status and how many discrepancies are pending, with the actions. Below, each process with its role, its name in Orchestrator, the package and the deployed version, and its libraries. If the last analysis failed, a red notice says which access or data was missing. Then come seven tabs. The notes from the last analysis (what it found and the criteria it suggests) are collapsed at the top of the Process memory tab.
 
 <Vista nombre="proyecto" variante="memoria" />
 
@@ -324,37 +324,48 @@ It appears on handled discrepancies that the routine still detects.
 
 </Seccion>
 
-<Seccion id="proyecto-documentacion" nivel="3" titulo="Documentation tab" breve="The project's PDD, SDD and Runbook, uploaded by hand and stored as Markdown.">
+<Seccion id="proyecto-documentacion" nivel="3" titulo="Documentation tab" breve="The project's documents (PDD, SDD, Runbook and others), uploaded by hand and stored as Markdown.">
 
-The routine reads on its own the documentation that comes inside the published packages. When a document is not there, or is out of date, an Admin uploads it here. There is a place for each one:
+The routine reads on its own the documentation that comes inside the published packages. When a document is not there, or is out of date, an Admin uploads it here. You can upload **as many documents as needed**. Each one has a category and, if you like, a title or a description:
 
 - **PDD:** the business process, its steps and its exceptions.
 - **SDD:** how the solution is built, with its queues, assets and triggers.
 - **Runbook:** what to do for each failure and whom to escalate to.
+- **Other:** manuals, how-to guides, service agreements or any other useful document.
 
-Everything is stored **as Markdown** (.md), without images. The routine uses these documents in the project analysis, for the process memory and the discrepancies, and in the prior analysis of each topic. After uploading one it is worth using **Request re-analysis**.
+There can be several of the same category, for example one SDD per process. Everything is stored **as Markdown** (.md), without images. The routine uses these documents in the project analysis, for the process memory and the discrepancies, and in the prior analysis of each topic. After uploading one it is worth using **Request re-analysis**.
 
-A Reader or an Operator can view and download the documents; only an Admin uploads, replaces or removes them.
+A Reader or an Operator can view and download the documents; only an Admin uploads them, removes them or deactivates the ones that come with the package. To change a document, upload the new one and remove the old one.
 
 <Vista nombre="proyecto" variante="documentacion" nota="Admin view" />
 
-<Accion id="doc-subir" nombre="Upload file or Replace" solo="Admin" breve="Uploads a .docx, .md or .txt and converts it to Markdown. It is reviewed before saving.">
+<Accion id="doc-pkg" nombre="Deactivate or Use again" solo="Admin" breve="Makes the routine stop using, or use again, a document that comes inside the published package.">
 
-A Word file (.docx) is converted on the spot: headings, paragraphs, bold, lists and tables. Images, headers and the table of contents are not carried over. A PDF or an old .doc cannot be converted: save it as .docx or use **Paste text**.
+Below the documents uploaded by hand, **In the published packages** lists the documents the routine found inside each package, with the process and the version. They are **In use** unless an Admin deactivates them.
 
-Nothing is saved until you click **Save**. If a document of that type already existed, the new one replaces it.
+It is useful when the package document is old or about something else: deactivate it and, if needed, upload the right one. It applies from the next run; it is worth using **Request re-analysis** to rebuild the process memory without that document. If a new version of the package brings the document with the same path, it stays deactivated.
+
+</Accion>
+
+<Accion id="doc-subir" nombre="Upload file" solo="Admin" breve="Uploads a Word (.docx), a PDF, a .md or a .txt and converts it to Markdown. It is reviewed before saving.">
+
+- **Word (.docx):** headings, paragraphs, bold, lists and tables are converted. Images, headers and the table of contents are not carried over.
+- **PDF:** the text is recovered. A PDF does not keep its structure, so headings are inferred from the font size and tables come out as running text: it is worth reviewing. A scanned PDF has no text to read. If the original Word file exists, it gives a better result.
+- **.md or .txt:** taken as they are.
+
+The category is suggested from the file name and can be changed. Nothing is saved until you click **Save document**.
 
 </Accion>
 
 <Accion id="doc-pegar" nombre="Paste text" solo="Admin" breve="Opens a box to paste or write the document, in Markdown or plain text.">
 
-It is useful for documents that are in a wiki, in a PDF or in another format.
+It is useful for documents that are in a wiki or in a format that cannot be uploaded.
 
 </Accion>
 
-<Accion id="doc-guardar" nombre="Save" solo="Admin" breve="Saves the document as Markdown, after masking emails, IDs and usernames.">
+<Accion id="doc-guardar" nombre="Save document" solo="Admin" breve="Saves the document as Markdown, with its category and title, after masking emails, IDs and usernames.">
 
-Before saving you can see the Markdown and correct it. The dashboard does not store personal data: emails, ID numbers and Windows usernames are masked automatically, but **people's names are not detected**: remove them by hand. Each document accepts up to 230 KB of text.
+Before saving you choose the category, you can write a title or a description, and you can see the Markdown and correct it. The dashboard does not store personal data: emails, ID numbers and Windows usernames are masked automatically, but **people's names are not detected**: remove them by hand. Each document accepts up to 230 KB of text.
 
 </Accion>
 
@@ -422,7 +433,7 @@ It undoes what you edited and did not save.
 The [rules](#ayuda-regla) of all projects. At the top, the **Proposals to approve**; then, for an Admin, the **New rule** form, and at the end the rest. Each one shows its status, its project, where it came from (by hand, from onboarding, learned from an incident, by similarity or from the daily review), its exceptions and how the routine understood it.
 
 - **To compile:** the routine translates it into a check in the next run.
-- **Proposed:** the routine suggested it and says why; an Admin approves or rejects it. With [automatic approval](#ayuda-auto-reglas) on, it approves itself in the following run.
+- **Proposed:** the routine suggested it and says why; an Admin approves or rejects it. With [automatic approval](#ayuda-auto-reglas) on there are no proposals: rules are born active.
 - **Active**, **Disabled** or **Rejected.**
 - **Suggested change:** the daily review found something to adjust in the rule.
 
@@ -523,7 +534,7 @@ The routine proposes on its own, and everything arrives in **To review** and in 
 
 At most 3 proposals per project arrive at a time.
 
-By default nothing is activated on its own. If an Admin turned on [automatic approval](#ayuda-auto-reglas) in Settings, **new rules** are activated in the following run and marked as **automatically approved**. Suggested changes to rules that already exist always wait for a person.
+By default nothing is activated on its own. If an Admin turned on [automatic approval](#ayuda-auto-reglas) in Settings, **new rules** are activated immediately and marked as **automatically approved**. Suggested changes to rules that already exist always wait for a person.
 
 </Seccion>
 
@@ -604,18 +615,18 @@ Each text is written **only once**, in the language in force when it was generat
 
 </Accion>
 
-<Accion id="auto-reglas" nombre="Automatically approve the rules the routine proposes" solo="Admin" breve="Switch. When on, the rules the routine proposes are activated by themselves in the following run.">
+<Accion id="auto-reglas" nombre="Automatically approve the rules the routine proposes" solo="Admin" breve="Switch. When on, the rules the routine proposes become active right away, without waiting for an Admin.">
 
 It comes **off**: every rule the routine proposes waits for an Admin to approve it.
 
 When you turn it on:
 
-- The next run approves the proposed rules, including those that were already waiting. Reject first the ones you do not want.
-- A new rule shows as **Proposed** until the run after the one that proposed it. In that interval it can still be rejected.
+- The proposed rules that were waiting are approved right away. Reject first the ones you do not want.
+- From then on, every rule the routine proposes is born active: it does not go through **Proposals to approve**.
 - Rules approved this way are marked as **automatically approved** and can be deactivated, edited or deleted like any other.
 - **Suggested changes** to rules that already exist (an exception, another severity, deactivating it) are not applied on their own.
 
-It is saved immediately and applies from the next run.
+It is saved immediately. When you turn it off, rules that are already active stay active and new ones go back to waiting for approval.
 
 </Accion>
 

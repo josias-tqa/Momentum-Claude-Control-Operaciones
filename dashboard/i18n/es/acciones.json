@@ -48,13 +48,13 @@
   "acciones.regla.guardadaRecompilar": "Regla guardada: la próxima corrida la vuelve a traducir",
   "acciones.escanear.con": "Guardado. La próxima corrida escanea la carpeta y propone los proyectos.",
   "acciones.escanear.sin": "Guardado. Sin carpeta indicada, la próxima corrida escanea todas las que puede ver.",
-  "acciones.auto.on": "Aprobación automática activada: vale desde la próxima corrida",
+  "acciones.auto.on": "Aprobación automática activada",
   "acciones.auto.off": "Aprobación automática desactivada",
   "acciones.registrarTodos.one": "{n} proyecto registrado: la rutina analiza hasta 3 por corrida",
   "acciones.registrarTodos.other": "{n} proyectos registrados: la rutina analiza hasta 3 por corrida",
   "acciones.doc.pesado": "El documento pesa {kb} KB y el máximo es {max} KB: recortalo o dejá solo las secciones útiles",
-  "acciones.doc.guardado": "{nombre} guardado en Markdown. La rutina lo usa en el próximo análisis del proyecto.",
-  "acciones.doc.quitado": "{nombre} quitado",
+  "acciones.doc.guardado": "Documento guardado en Markdown. La rutina lo usa en el próximo análisis del proyecto.",
+  "acciones.doc.quitado": "Documento quitado",
   "acciones.proyecto.detectado": "{nombre} registrado: la rutina lo analiza en la próxima corrida",
   "acciones.err.permiso": "No tenés permiso para esta acción",
   "acciones.err.guardar": "No se pudo guardar. Probá de nuevo.",
@@ -82,5 +82,9 @@
   "acciones.nota.adjust": "se ajustó la regla ({changes})",
   "acciones.nota.disable": "se desactivó la regla",
   "acciones.nota.delete": "se eliminó la regla",
-  "acciones.nota.create": "se creó una regla para este caso"
+  "acciones.nota.create": "se creó una regla para este caso",
+  "acciones.doc.pkgVuelve": "El documento vuelve a usarse desde la próxima corrida",
+  "acciones.doc.pkgOff": "Documento desactivado: la rutina no lo usa desde la próxima corrida",
+  "acciones.auto.onN.one": "Aprobación automática activada: {n} regla propuesta quedó activa",
+  "acciones.auto.onN.other": "Aprobación automática activada: {n} reglas propuestas quedaron activas"
 }
