@@ -33,7 +33,8 @@ producción.
 | Scripts deterministas | `scripts/` |
 | Bloqueo de solo lectura | `.claude/hooks/guard-solo-lectura.mjs` |
 | Tablero | `dashboard/index.html` + `dashboard/capabilities.json` |
-| Ayuda del tablero | `dashboard/ayuda/*.mdx`, compilada dentro de `dashboard/index.html` con `npm run build:ayuda` |
+| Ayuda del tablero (español e inglés) | `dashboard/ayuda/<idioma>/*.mdx`, compilada dentro de `dashboard/index.html` con `npm run build:ayuda` |
+| Textos del tablero (español e inglés) | `dashboard/i18n/<idioma>/*.json`, compilados dentro de `dashboard/index.html` con `npm run build:i18n` |
 | Modelo de datos | `docs/modelo-de-datos.md`, `schemas/` |
 | Entorno y rutina | `docs/configuracion-cloud.md` |
 | Guía para el equipo de Momentum | `docs/guia-operador.md` |
@@ -44,5 +45,6 @@ producción.
 ```bash
 npm test          # scripts: redacción de PII, checks, reglas, dedupe, lotes, discrepancias, escaneo, hook de solo lectura
 npm run test:ui   # tablero en Chromium con datos sintéticos (roles, acciones, filtros, ajustes, discrepancias, documentos, ayuda, teléfono)
-npm install && npm run build:ayuda   # regenera la ayuda después de editar dashboard/ayuda/*.mdx
+npm install && npm run build:ayuda   # regenera la ayuda después de editar dashboard/ayuda/<idioma>/*.mdx
+npm run build:i18n                    # regenera los textos después de editar dashboard/i18n/<idioma>/*.json
 ```

@@ -580,6 +580,7 @@ Aparece debajo de la lista cuando hay carpetas ignoradas.
 
 <Seccion id="ajustes" nivel="2" titulo="Ajustes" breve="Solo Admin: carpeta a escanear, criterios globales del triage, umbrales, retención y aprobación de reglas.">
 
+- **Idioma:** el [idioma del tablero](#ayuda-idioma) y de lo que escribe la rutina.
 - **Proyectos a controlar:** la [carpeta de Orchestrator a escanear](#ayuda-descubrimiento).
 - **Criterios de triage globales:** se aplican a todos los proyectos, junto con los de cada uno.
 - **Matriz de severidad:** qué es P1, P2, P3 y P4.
@@ -592,6 +593,14 @@ Aparece debajo de la lista cuando hay carpetas ignoradas.
 <Accion id="guardar-ajustes" nombre="Guardar ajustes" solo="Admin" breve="Guarda la carpeta, los criterios, los umbrales y la retención. Se usan desde la próxima corrida.">
 
 Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas. La aprobación automática no depende de este botón: se guarda al cambiar el interruptor.
+
+</Accion>
+
+<Accion id="idioma" nombre="Español / English" solo="Admin" breve="Cambia el idioma de todo el tablero y de lo que escribe la rutina desde la próxima corrida. Vale para todas las personas.">
+
+Es un ajuste **global**: lo elige un Admin y lo ven igual todas las personas. Cambia en el acto los menús, botones, mensajes y esta ayuda, y desde la próxima corrida la rutina escribe en ese idioma los títulos de los temas, los análisis, las memorias y las reglas que propone.
+
+Cada texto se escribe **una sola vez**, en el idioma vigente cuando se generó: lo que ya estaba guardado no se traduce ni se duplica. Para tener la memoria de un proyecto en el idioma nuevo, volvé a analizarlo desde el proyecto. Los textos que escribe una persona (notas, comentarios, texto de una regla) y los documentos subidos quedan como se escribieron.
 
 </Accion>
 

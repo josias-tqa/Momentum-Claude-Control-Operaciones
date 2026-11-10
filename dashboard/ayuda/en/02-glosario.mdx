@@ -1,0 +1,79 @@
+{/* Dashboard help · Glossary. Each Termino is also the tooltip of its label in the app. This is the English twin of ../es/02-glosario.mdx: update both together. After editing: npm run build:ayuda */}
+
+<Seccion id="glosario" titulo="Glossary">
+
+The terms that appear in the dashboard, in alphabetical order.
+
+<div className="ay-glos">
+
+<Termino id="aprobacion-automatica" nombre="Automatic approval">A Settings option. When it is on, the rules the routine proposes are activated on their own in the next run, without waiting for an Admin. Suggested changes to rules that already exist are always applied by a person.</Termino>
+
+<Termino id="baseline" nombre="Baseline">A project's normal behavior over the last 30 days: how many jobs it runs, how long they take and how many errors it has. It helps tell a new problem from the usual.</Termino>
+
+<Termino id="categoria" nombre="Category">The type of problem, with its icon: login or credentials, selector or UI, application down, infrastructure, configuration, scheduling, business, system, silent failure, regression, deploy or monitoring.</Termino>
+
+<Termino id="punto-de-control" nombre="Checkpoint">Each thing that is checked in a run, for example failed jobs, abandoned items or a rule. Its result is Alert, OK or Skipped.</Termino>
+
+<Termino id="decision" nombre="Decision">What the triage does with a finding. Escalated: it needs a person and goes to Needs action. Notice: worth a look, but it does not block anything. Under watch: the trend is followed without showing it. Known: the memory or a rule says it is expected.</Termino>
+
+<Termino id="discrepancia" nombre="Discrepancy">Something that does not match between a project's code, documentation and Orchestrator, for example a queue in the SDD that does not exist or a trigger with a different frequency. The project analysis finds it. You answer it, postpone it or dismiss it from the project's Discrepancies tab: it does not go to the inbox.</Termino>
+
+<Termino id="evidencia" nombre="Evidence (redacted)">The logs, queue items, jobs and rule values that back a card, after personal data has been removed. Case references are shown as a short code, never the original data.</Termino>
+
+<Termino id="incidente" nombre="Incident or card">A detected problem, with its whole history: when it was first and last seen, how many times it happened, its triage, its analysis and the team's activity.</Termino>
+
+<Termino id="inventario" nombre="Inventory">What a project's Orchestrator folder contains: processes with their version, queues, triggers and assets. For assets only the name and type are kept, never the value.</Termino>
+
+<Termino id="libreria" nombre="Library">The label with a library's name means the error happened inside an activity of that library. The detail says which other projects use it and whether they have open cards.</Termino>
+
+<Termino id="nueva-version" nombre="New version">A new version of the process was deployed after the card was opened. The routine analyzes it again and explains what changed.</Termino>
+
+<Termino id="alta" nombre="Onboarding">The first analysis of a newly registered project. The routine discovers its processes, queues, triggers and libraries, calculates the baseline and generates the process memory, the discrepancies and the proposed rules. Then an Admin reviews and activates it.</Termino>
+
+<Termino id="analisis-previo" nombre="Prior analysis">What the routine investigates before escalating a card: hypotheses with their probability, suggested actions, the related code and documentation, and what changed in the last deploy. You read it in the card detail.</Termino>
+
+<Termino id="memoria-de-proceso" nombre="Process memory">A description of the process, similar to a condensed PDD, that the routine generates during onboarding from the code and the documentation. It serves as context for the triage and the analysis.</Termino>
+
+<Termino id="memoria-de-produccion" nombre="Production memory">A project's permanent history: team responses, deploys, re-checks and new rules, plus a summary that updates itself. It is what makes the routine learn.</Termino>
+
+<Termino id="proyecto" nombre="Project">An Orchestrator folder with its processes, for example Dispatcher, Performer and Reporter. It is the unit that is registered, analyzed and controlled.</Termino>
+
+<Termino id="estado-proyecto" nombre="Project status">Waiting for analysis, Analyzing, In review, Active, Paused or With error. Only active projects are controlled in each run.</Termino>
+
+<Termino id="similitud" nombre="Proposed by similarity">When an Admin approves or edits a rule, the routine proposes the equivalent rule for other processes that use the same portal, the same application or the same library. It arrives as a proposal: an Admin approves it, unless automatic approval is on.</Termino>
+
+<Termino id="proyecto-propuesto" nombre="Proposed project">An Orchestrator folder with processes that the scan found and that is not controlled yet. An Admin registers it, and then the routine performs its onboarding, or ignores it.</Termino>
+
+<Termino id="re-control" nombre="Re-check">The Check again response with a date. The card is hidden until that day, and then the routine verifies whether the problem is still there. It is kept in the production memory as Re-check scheduled and Re-check OK.</Termino>
+
+<Termino id="reaparecio" nombre="Reappeared">A topic that had been closed came back within 30 days. The same card is reopened instead of creating a new one, so its history is not lost.</Termino>
+
+<Termino id="recurrencia" nombre="Recurrence">When a topic repeats, it adds occurrences to the same card. The label ×7 · last 12 min ago shows how many times it happened and when the last one was.</Termino>
+
+<Termino id="solicitud" nombre="Request">An order from the team to the routine, for example scan a folder, analyze a new project or analyze a card again. It is handled in the next run.</Termino>
+
+<Termino id="retencion" nombre="Retention">Runs and closed incidents are deleted after a number of days, which is set in Settings. A monthly summary is saved before they are deleted.</Termino>
+
+<Termino id="rutina" nombre="Routine">The Claude process that runs on its own, usually every hour. It is the only one that creates runs and incidents, and it never modifies anything in Orchestrator.</Termino>
+
+<Termino id="pulso" nombre="Routine pulse">Below the menu (on the phone, at the top): when the last check was. Green if it went well, amber if it had collection errors, and red if the routine stopped running; in that case the inbox also warns about it.</Termino>
+
+<Termino id="sugerencia" nombre="Routine suggestion">A change to a rule proposed by the daily review of the last 30 days: an exception or a threshold if it is almost always dismissed, a lower severity if its topics get postponed, or disabling it if it has not fired in 60 days. It shows as Suggested change.</Termino>
+
+<Termino id="regla" nombre="Rule">A checkpoint written in natural language, for example: if there are more than 10 login errors in a row, escalate. The routine translates it into a check and shows how it understood it.</Termino>
+
+<Termino id="excepcion" nombre="Rule exception">A condition in which a rule that is fine does not apply, for example: it is Monday before 9. You add it from the rule editor and it applies from the next run.</Termino>
+
+<Termino id="corrida" nombre="Run">One execution of the routine. It records which time window it reviewed in each project, each checkpoint with its observed value and the findings with their triage.</Termino>
+
+<Termino id="severidad" nombre="Severity (P1 to P4)">P1: a critical process stopped or the SLA was missed today. P2: degraded process with SLA risk. P3: isolated errors. P4: informational.</Termino>
+
+<Termino id="tema" nombre="Topic">What identifies a problem, no matter how many times it happens: the same error in the same place. A topic has a single card.</Termino>
+
+<Termino id="triage" nombre="Triage">The classification of each finding: category, severity and decision, with its why, its confidence level and the rules or memories it was based on.</Termino>
+
+<Termino id="criterios" nombre="Triage criteria">Natural-language instructions that guide the classification. There are global criteria, in Settings, and criteria specific to each project, in its Settings.</Termino>
+
+</div>
+
+</Seccion>

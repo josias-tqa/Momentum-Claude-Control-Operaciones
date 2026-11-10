@@ -10,7 +10,7 @@ TQA desarrolla y prueba la Torre de Control con su cuenta. Después Momentum pas
 4. **Entorno cloud** `momentum-operaciones` en la cuenta de Momentum, según `docs/configuracion-cloud.md`. Después, `/verificar-entorno`.
 5. **Publicar el tablero:** desde una sesión de esa cuenta, publicar `dashboard/index.html` con las capacidades de `dashboard/capabilities.json`. Se obtiene una URL nueva, con la base vacía.
    - Las capacidades incluyen las reglas de acceso de cada colección y `downloads` (bajar un documento como `.md`). Si cambia `capabilities.json`, hay que volver a publicar pasándolas: sin eso, por ejemplo, un Operador no puede responder discrepancias.
-   - La ayuda ya viene compilada dentro del archivo. Antes de publicar, `npm run check:ayuda` confirma que está al día.
+   - La ayuda ya viene compilada dentro del archivo. Antes de publicar, `npm run check:ayuda` y `npm run check:i18n` confirman que la ayuda y los textos (español e inglés) están al día.
 6. **Configurar** `OPS_ARTIFACT_URL` en el entorno con esa URL y correr `/control-mantenimiento seed`.
    - En un tablero sin migración, el primer paso del Admin es indicar en **Ajustes** la carpeta de Orchestrator a escanear: ver `docs/cliente-nuevo.md`.
 7. **Migrar** (opcional): en el tablero de TQA, `/control-mantenimiento export`. En el de Momentum, `/control-mantenimiento import`.

@@ -104,7 +104,7 @@ if (process.argv[1] && process.argv[1].endsWith('consolidar-discrepancias.mjs'))
     ahora: arg('--ahora') || new Date().toISOString(),
     ajustes: db ? desenvolver(leerJson(join(db, 'config', 'settings.json'), {})) : {},
   });
-  if (r.errores.length) { console.error(`Lista de discrepancias inválida:\n - ${r.errores.join('\n - ')}`); process.exit(1); }
+  if (r.errores.length) { console.error(`Lista de discrepancias inválida:\n - ${r.errores.join('\n - ')}`); process.exit(1); } // i18n-ok: mensaje de consola para quien opera el script
   mkdirSync(dirname(arg('--salida')), { recursive: true });
   writeFileSync(arg('--salida'), JSON.stringify(r, null, 2));
   console.log(JSON.stringify(r.resumen));

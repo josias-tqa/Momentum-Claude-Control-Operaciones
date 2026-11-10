@@ -1,0 +1,637 @@
+{/* Ayuda del tablero · Pantallas y acciones. Cada Seccion o Accion con "breve" es el tooltip de su botón en la app.
+    Todo cambio en el tablero se refleja acá (lo verifica tests/ayuda.test.mjs). Después de editar: npm run build:ayuda */}
+
+<Seccion id="pantallas" titulo="Pantallas y acciones">
+
+Cada pantalla tiene un botón **?** al lado del título que trae a su sección de esta ayuda. El link **Ayuda** del menú también abre la parte de la pantalla en la que estás. Al pasar el mouse por un botón o una etiqueta aparece una explicación breve, con un link a más detalle. Las vistas de esta página son las de la app, dibujadas con datos de ejemplo.
+
+</Seccion>
+
+<Seccion id="navegacion" nivel="2" titulo="Menú y selector de proyecto">
+
+El menú está siempre a la vista: a la izquierda en una computadora y abajo en el teléfono. Lleva a la Bandeja, Proyectos, Corridas, Reglas, Fuera de bandeja, Ajustes (Admin) y esta Ayuda. El número de la Bandeja es la cantidad de temas abiertos; el de Reglas, las propuestas que esperan aprobación.
+
+Abajo del menú está el [pulso de la rutina](#ayuda-pulso) y tu [rol](#ayuda-roles). En el teléfono el pulso y el **?** están en la barra de arriba, y Fuera de bandeja, Ajustes y Ayuda están dentro de [Más](#ayuda-mas).
+
+<Accion id="scope" nombre="Proyecto" breve="Filtra la Bandeja, Corridas, Reglas y Fuera de bandeja por un proyecto. La × quita el filtro.">
+
+Tocalo y escribí parte del nombre o de la carpeta. Elegí el proyecto con un clic, o con las flechas y Enter. Cada proyecto muestra un punto de color con su salud (verde: sin novedades; ámbar: con avisos; rojo: con problemas P1 o P2; gris: pausado o sin datos) y cuántos temas tiene abiertos. Primero aparecen los que tienen temas abiertos.
+
+El filtro queda aplicado en todas esas pantallas, y se recuerda en este navegador, hasta que lo quites con la **×**.
+
+<Vista nombre="selector" variante="abierto" />
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="bandeja" nivel="2" titulo="Bandeja" breve="La pantalla principal: lo que necesita a una persona, ordenado por severidad.">
+
+Es la pantalla de trabajo. Muestra solo los temas abiertos cuya decisión es escalar o avisar, y que nadie respondió, descartó o pospuso. Están ordenados por severidad, primero los escalados y después los más recientes. Si no hay nada pendiente, dice **Todo en orden**.
+
+- Los botones **Todo**, **Para vos**, **Requiere acción** y **Avisos** muestran solo esa parte.
+- El buscador filtra por título, proyecto, categoría, proceso o severidad.
+- Si la rutina está detenida o la última corrida tuvo errores de colecta, arriba aparece un aviso rojo.
+
+<Vista nombre="bandeja" nota="vista de Admin" />
+
+</Seccion>
+
+<Seccion id="para-revisar" nivel="3" titulo="Para revisar" breve="Solo Admin: reglas propuestas, cambios sugeridos en reglas, proyectos propuestos y proyectos que terminaron su análisis.">
+
+Solo la ven los Admin, en la vista **Todo**. Junta las tareas de configuración pendientes: [reglas propuestas](#ayuda-propuestas), reglas con un cambio sugerido, [proyectos propuestos](#ayuda-propuestos) por el escaneo, proyectos **En revisión** que esperan ser activados y proyectos **Con error**. Cada fila lleva a donde se resuelve.
+
+Las [discrepancias](#ayuda-discrepancia) de un proyecto no aparecen acá ni en el resto de la bandeja: se trabajan desde la página del proyecto.
+
+</Seccion>
+
+<Seccion id="para-vos" nivel="3" titulo="Para vos" breve="Temas que alguien te delegó.">
+
+Los temas que alguien te [delegó](#ayuda-delegar). Salen de esta lista cuando los respondés, descartás o posponés.
+
+</Seccion>
+
+<Seccion id="requiere-accion" nivel="3" titulo="Requiere acción" breve="Temas escalados: el triage decidió que necesitan a una persona.">
+
+Los temas con decisión **Escalado**. En general son P1 o P2, o algo que la rutina nunca había visto. Cada uno trae su análisis previo en el detalle.
+
+</Seccion>
+
+<Seccion id="avisos" nivel="3" titulo="Avisos" breve="Cosas para saber que no bloquean, en formato compacto.">
+
+Los temas con decisión **Aviso**, en general P3 o P4 nuevos. Se muestran compactos: sin el porqué y sin Delegar. El detalle tiene todo.
+
+<Vista nombre="tarjeta" variante="aviso" />
+
+</Seccion>
+
+<Seccion id="tarjeta" nivel="2" titulo="El tema y su detalle" breve="Un problema por tema, con su severidad, su porqué y las acciones para trabajarlo.">
+
+Cada tarjeta es un [tema](#ayuda-tema). Si el problema vuelve a ocurrir no se crea otra: la misma suma ocurrencias.
+
+- **A la izquierda:** la [severidad](#ayuda-severidad).
+- **Etiquetas:** la [categoría](#ayuda-categoria); el proyecto, cuando no hay filtro, y el proceso si el proyecto tiene varios; la [recurrencia](#ayuda-recurrencia); [Reapareció](#ayuda-reaparecio); la [librería](#ayuda-libreria) donde ocurrió el error; [Nueva versión](#ayuda-nueva-version); **Aviso**, y a quién está delegado.
+- **Texto gris:** el porqué del triage, en dos líneas.
+- **Acciones:** abajo. Un Lector no las ve.
+
+Un clic en la tarjeta, o en **Ver detalle**, abre el detalle en un panel al costado, sin perder el lugar en la lista. Se cierra con la **×**, con Esc o tocando fuera.
+
+<Vista nombre="tarjeta" />
+
+</Seccion>
+
+<Seccion id="detalle" nivel="3" titulo="El detalle de un tema" breve="Por qué está acá, el análisis previo, la evidencia y la actividad del tema.">
+
+El detalle muestra, en este orden:
+
+1. **Estado:** si el tema está delegado, pospuesto, descartado o respondido, y por quién. Si salió de la bandeja, ofrece [Devolver a la bandeja](#ayuda-reabrir).
+2. **Acciones:** las mismas de la tarjeta.
+3. **Por qué está acá:** el porqué del triage, la decisión y su confianza, las reglas y memorias en las que se basó, desde cuándo se ve y en cuántas corridas.
+4. **Análisis previo:** resumen, hipótesis con su probabilidad, acciones sugeridas, código y documentación relacionados, y qué cambió en el último deploy. Si dice Pendiente, lo completa la próxima corrida.
+5. **Librería:** si el error ocurrió en una librería, su versión, la actividad y qué otros proyectos la usan.
+6. **Evidencia (redactada):** los últimos logs, queue items y jobs, sin datos personales.
+7. **Actividad:** quién hizo qué con el tema, y un cuadro para [comentar](#ayuda-comentar).
+
+<Vista nombre="tarjeta" variante="detalle" />
+
+</Seccion>
+
+<Seccion id="acciones" nivel="2" titulo="Acciones sobre un tema">
+
+Las usan los Operadores y los Admin. Cada acción queda en la actividad del tema. Las respuestas y los descartes además le enseñan a la rutina, que los procesa en la próxima corrida. Después de posponer, descartar o responder aparece un aviso con **Deshacer**.
+
+<Accion id="responder" nombre="Responder" breve="Registra qué se encontró o qué se va a hacer. Queda en la memoria de producción.">
+
+Elegí una decisión y agregá notas:
+
+- **Requiere fix:** hay que corregir el robot. Podés cargar el ticket o la referencia del fix.
+- **Comportamiento esperado**, **Problema de datos**, **Sistema externo** o **Falso positivo / ajustar regla:** la causa es otra; la rutina lo aprende.
+- **Volver a controlar:** elegí una fecha. El tema se oculta hasta ese día y la rutina hace un [re-control](#ayuda-re-control).
+- **Derivar a desarrollo:** lo toma el equipo de desarrollo.
+
+El tema sale de la bandeja y la respuesta queda en la memoria de producción del proyecto.
+
+<Vista nombre="tarjeta" variante="responder" />
+
+</Accion>
+
+<Accion id="posponer" nombre="Posponer" breve="Oculta el tema hasta una fecha. Vuelve antes si el problema empeora.">
+
+Elegí 1 día, 3 días, 1 semana o una fecha. Mientras tanto el tema pasa a [Fuera de bandeja](#ayuda-no-reportados) como **Pospuesto**.
+
+- Si la severidad sube antes de la fecha, el tema vuelve a la bandeja solo.
+- Al vencer, vuelve a mostrarse si el problema sigue.
+- Posponer no le enseña nada a la rutina. Si el problema es esperado, conviene **Descartar** o **Responder**.
+
+<Vista nombre="tarjeta" variante="posponer" />
+
+</Accion>
+
+<Accion id="descartar" nombre="Descartar" breve="Saca el tema de la bandeja con un motivo. La rutina lo aprende y puede proponer una regla.">
+
+Elegí un motivo y, si querés, agregá una nota que explique por qué:
+
+- **Es esperado:** pasa siempre y no es un problema, por ejemplo una ventana de mantenimiento.
+- **Falso positivo:** la detección se equivocó.
+- **Dato de negocio:** es una excepción de negocio esperable, no una falla del robot.
+- **Sistema externo:** el problema está en un sistema que no depende del equipo.
+
+La rutina anota el motivo en la [memoria de producción](#ayuda-memoria-de-produccion) y puede proponer una [regla](#ayuda-regla) para no volver a avisar. Si el tema se repite, suma ocurrencias en la misma tarjeta, pero no vuelve a la bandeja como nuevo.
+
+<Vista nombre="tarjeta" variante="descartar" />
+
+</Accion>
+
+<Accion id="delegar" nombre="Delegar" breve="Asigna la revisión a una persona: el tema le aparece en Para vos.">
+
+Buscá a la persona por nombre y elegila. La tarjeta muestra a quién está delegado y sigue en la bandeja de todos, pero esa persona lo ve en **Para vos**.
+
+<Vista nombre="tarjeta" variante="delegar" />
+
+</Accion>
+
+<Accion id="ajustar-regla" nombre="Ajustar regla o Crear regla" breve="Abre el editor de la regla de este tema sin salir de la bandeja. Un Operador la ve pero no la cambia.">
+
+Si el tema salió de una regla, o una regla lo marcó como conocido, el botón dice **Ajustar regla** (o **Ver regla** para un Operador) y abre el [editor de reglas](#ayuda-editor-regla) ahí mismo.
+
+Si no salió de ninguna regla, un Admin ve **Crear regla**: escribís una para ese caso, por ejemplo "los abandonados de esta cola los lunes antes de las 9 son normales; no avisar", y vale para ese proyecto desde la próxima corrida. Con **Descartar también este tema** el incidente se cierra en el mismo paso.
+
+<Vista nombre="tarjeta" variante="regla" nota="vista de Admin" />
+
+</Accion>
+
+<Accion id="re-crear" nombre="Crear regla (desde un tema)" solo="Admin" breve="Crea una regla nueva para el proyecto de este tema. Se compila en la próxima corrida.">
+
+La regla queda **Por compilar** hasta que la rutina la traduce. Si marcaste **Descartar también este tema**, el tema sale de la bandeja como falso positivo, con **Deshacer** en el aviso.
+
+</Accion>
+
+<Accion id="comentar" nombre="Comentar" breve="Deja una nota para el equipo en la actividad del tema. No cambia su estado.">
+
+El cuadro está en la sección **Actividad** del detalle. El comentario no saca el tema de la bandeja ni le enseña nada a la rutina. Con Ctrl o Cmd + Enter se envía sin usar el mouse.
+
+</Accion>
+
+<Accion id="reanalizar-inc" nombre="Volver a analizar" breve="Pide a la próxima corrida un análisis previo nuevo de este tema.">
+
+Está junto al título **Análisis previo** del detalle (si el tema no tiene análisis, dice **Pedir análisis**). Sirve cuando el análisis quedó viejo, por ejemplo después de un cambio en el sistema o en la documentación.
+
+</Accion>
+
+<Accion id="reabrir" nombre="Devolver a la bandeja" breve="Deshace un posponer, un descarte o una respuesta: el tema vuelve a la bandeja.">
+
+Aparece en el detalle de un tema pospuesto, descartado o respondido. El tema vuelve como estaba antes y queda en su actividad.
+
+</Accion>
+
+<Accion id="deshacer" nombre="Deshacer" breve="Revierte la última acción sobre el tema (posponer, descartar o responder).">
+
+Está en el aviso que aparece abajo durante unos segundos después de la acción. Pasado ese tiempo se usa **Devolver a la bandeja** desde el detalle.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="no-reportados" nivel="2" titulo="Fuera de bandeja" breve="Temas abiertos que no se muestran en la bandeja: pospuestos, respondidos, descartados o no reportados por el triage.">
+
+Todo lo abierto que no está en la bandeja, con el motivo. Los botones de arriba filtran por **Pospuestos**, **Respondidos**, **Descartados** o **No reportados por el triage** (decisiones En observación y Conocido).
+
+Sirve para controlar el criterio de la rutina. Si algo de acá debería estar en la bandeja, abrilo y usá **Devolver a la bandeja**, respondé **Falso positivo / ajustar regla** o corregí los [criterios](#ayuda-criterios).
+
+<Vista nombre="fuera" />
+
+</Seccion>
+
+<Seccion id="corridas" nivel="2" titulo="Corridas" breve="Cada ejecución de la rutina, con lo que revisó y lo que encontró.">
+
+Las últimas 50 corridas, con su estado (Completa, Parcial o Con errores), cuántos proyectos revisó y cuántos temas nuevos, recurrentes y escalados encontró.
+
+<Vista nombre="corridas" />
+
+</Seccion>
+
+<Seccion id="corrida-detalle" nivel="3" titulo="Detalle de una corrida" breve="Qué revisó la rutina en cada proyecto y qué decidió con cada hallazgo.">
+
+Por cada proyecto muestra la ventana de tiempo revisada, un resumen de señales, la tabla de [puntos de control](#ayuda-punto-de-control) con su valor observado y los **Hallazgos y triage**: cada hallazgo con su severidad, su decisión, si es nuevo, recurrente o reabierto, y su porqué. Un clic en un hallazgo abre su tema. Si hubo errores al leer Orchestrator, aparecen en la caja del proyecto.
+
+<Vista nombre="corrida" />
+
+</Seccion>
+
+<Seccion id="proyectos" nivel="2" titulo="Proyectos" breve="Todos los proyectos controlados, con su salud, su estado y sus temas abiertos.">
+
+La lista de proyectos con su carpeta de Orchestrator, sus temas abiertos, sus [discrepancias](#ayuda-discrepancia) pendientes y su [estado](#ayuda-estado-proyecto). Primero aparecen los que tienen problemas o esperan revisión. Con más de 5 proyectos aparece un buscador. Los Admin ven **Registrar proyecto** y un aviso si la rutina [propone proyectos](#ayuda-propuestos) para agregar.
+
+Si todavía no hay proyectos, un Admin ve los [primeros pasos](#ayuda-primeros-pasos).
+
+<Vista nombre="proyectos" />
+
+</Seccion>
+
+<Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, discrepancias, documentación, reglas, inventario y configuración de un proyecto.">
+
+Arriba está la carpeta, la cantidad de procesos, el estado y cuántas discrepancias tiene pendientes, con las acciones. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen siete pestañas.
+
+<Vista nombre="proyecto" variante="memoria" />
+
+<Accion id="ver-bandeja" nombre="Ver temas abiertos" breve="Abre la bandeja filtrada por este proyecto.">
+
+Aparece cuando el proyecto tiene temas en la bandeja. Aplica el [selector de proyecto](#ayuda-scope).
+
+</Accion>
+
+<Accion id="activar" nombre="Activar el control" solo="Admin" breve="Empieza a controlar el proyecto en cada corrida. También reanuda un control pausado.">
+
+Aparece cuando el proyecto terminó su [alta](#ayuda-alta) y está **En revisión**: antes de activarlo, revisá la memoria de proceso, las reglas propuestas y el inventario. Si el proyecto está **Pausado**, el botón dice **Reanudar control**.
+
+</Accion>
+
+<Accion id="pausar" nombre="Pausar control" solo="Admin" breve="Deja de controlar el proyecto hasta que se reanude. No borra nada.">
+
+Útil durante un mantenimiento largo o mientras se rehace un proceso. Los temas abiertos quedan como están y el proyecto se ve gris.
+
+</Accion>
+
+<Accion id="reanalizar" nombre="Pedir re-análisis" solo="Admin" breve="Pide a la próxima corrida que regenere la memoria de proceso, el inventario y las reglas propuestas.">
+
+Conviene después de un cambio grande en el proceso o en su documentación. El proyecto sigue activo mientras tanto.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-memoria" nivel="3" titulo="Pestaña Memoria de proceso" breve="Qué hace el proceso, según el alta: el contexto que usa la rutina.">
+
+La [memoria de proceso](#ayuda-memoria-de-proceso): qué hace el proceso, sus pasos, sistemas, colas y excepciones conocidas. La genera el alta a partir del código y la documentación.
+
+</Seccion>
+
+<Seccion id="proyecto-produccion" nivel="3" titulo="Pestaña Memoria de producción" breve="Lo que pasó en producción: respuestas del equipo, deploys y re-controles.">
+
+La [memoria de producción](#ayuda-memoria-de-produccion): un resumen arriba y debajo el historial, del más nuevo al más viejo, con quién respondió y el ticket si lo hay.
+
+<Vista nombre="proyecto" variante="produccion" />
+
+</Seccion>
+
+<Seccion id="proyecto-discrepancias" nivel="3" titulo="Pestaña Discrepancias" breve="Lo que no coincide entre el código, la documentación y Orchestrator. Se responde, se pospone o se descarta acá: no va a la bandeja.">
+
+Las [discrepancias](#ayuda-discrepancia) que encontró el análisis del proyecto, por ejemplo:
+
+- una cola o un asset que figura en el SDD o en el código y no existe en Orchestrator, o al revés;
+- un trigger con una frecuencia distinta a la documentada;
+- el Dispatcher y el Performer que no usan la misma cola;
+- documentación que no coincide con el código;
+- un paquete que publica capturas o datos que no debería.
+
+Cada una muestra su tipo, el proceso, qué se encontró, una sugerencia y de dónde sale. Son tarjetas del proyecto: **no aparecen en la bandeja** ni cambian su salud. El número de la pestaña, y el de la lista de proyectos, cuenta las pendientes.
+
+- **Pendientes:** las que la rutina sigue detectando y nadie atendió.
+- **Atendidas:** las respondidas, pospuestas o descartadas, con quién lo hizo, y las **resueltas**, que la rutina dejó de detectar.
+
+En cada re-análisis la rutina actualiza la lista: suma las nuevas, cierra las que ya no detecta y respeta lo que respondió el equipo. Una discrepancia descartada no vuelve a aparecer como nueva. Si una que se dio por corregida vuelve a detectarse, reaparece como pendiente con la marca **Reapareció**.
+
+<Vista nombre="proyecto" variante="discrepancias" />
+
+<Accion id="disc-responder" nombre="Responder" breve="Registra qué se va a hacer con la discrepancia. Queda en la memoria de producción del proyecto.">
+
+Elegí una decisión y agregá notas:
+
+- **Corregir la documentación**, **Corregir en Orchestrator** o **Corregir el código:** hay algo para arreglar. Podés cargar el ticket o la referencia. La discrepancia pasa a Atendidas y la rutina la cierra cuando un re-análisis deja de detectarla.
+- **Es correcto así:** no hay nada que corregir. La rutina lo anota y no vuelve a preguntar.
+- **Derivar a desarrollo:** lo toma el equipo de desarrollo.
+
+</Accion>
+
+<Accion id="disc-posponer" nombre="Posponer" breve="Saca la discrepancia de las pendientes hasta una fecha.">
+
+Elegí 1 semana, 1 mes, 3 meses o una fecha. Al vencer vuelve a Pendientes, si la rutina la sigue detectando.
+
+</Accion>
+
+<Accion id="disc-descartar" nombre="Descartar" breve="Cierra la discrepancia con un motivo. La rutina no la vuelve a mostrar como nueva.">
+
+Motivos: **Es correcto así**, **La rutina se equivocó**, **Ya se corrigió** o **No es relevante**, con una nota opcional. Queda en Atendidas y en la memoria de producción.
+
+</Accion>
+
+<Accion id="disc-reabrir" nombre="Volver a abrir" breve="Deshace la respuesta, el descarte o la posposición: la discrepancia vuelve a estar pendiente.">
+
+Aparece en las discrepancias atendidas que la rutina todavía detecta.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-documentacion" nivel="3" titulo="Pestaña Documentación" breve="PDD, SDD y Runbook del proyecto, subidos a mano y guardados en Markdown.">
+
+La rutina lee sola la documentación que viene dentro de los paquetes publicados. Cuando un documento no está ahí, o está desactualizado, un Admin lo sube acá. Hay un lugar para cada uno:
+
+- **PDD:** el proceso de negocio, sus pasos y sus excepciones.
+- **SDD:** cómo está construida la solución, con sus colas, assets y triggers.
+- **Runbook:** qué hacer ante cada falla y a quién escalar.
+
+Todo se guarda **en Markdown** (.md), sin imágenes. La rutina usa estos documentos en el análisis del proyecto, para la memoria de proceso y las discrepancias, y en el análisis previo de cada tema. Después de subir uno conviene **Pedir re-análisis**.
+
+Un Lector o un Operador pueden ver y descargar los documentos; solo un Admin los sube, reemplaza o quita.
+
+<Vista nombre="proyecto" variante="documentacion" nota="vista de Admin" />
+
+<Accion id="doc-subir" nombre="Subir archivo o Reemplazar" solo="Admin" breve="Sube un .docx, .md o .txt y lo convierte a Markdown. Se revisa antes de guardar.">
+
+Un Word (.docx) se convierte en el momento: títulos, párrafos, negritas, listas y tablas. Las imágenes, los encabezados y el índice no se pasan. Un PDF o un .doc antiguo no se pueden convertir: guardalo como .docx o usá **Pegar texto**.
+
+Nada se guarda hasta tocar **Guardar**. Si ya había un documento de ese tipo, el nuevo lo reemplaza.
+
+</Accion>
+
+<Accion id="doc-pegar" nombre="Pegar texto" solo="Admin" breve="Abre un cuadro para pegar o escribir el documento, en Markdown o texto plano.">
+
+Sirve para documentos que están en una wiki, en un PDF o en otro formato.
+
+</Accion>
+
+<Accion id="doc-guardar" nombre="Guardar" solo="Admin" breve="Guarda el documento en Markdown, después de enmascarar emails, documentos y usuarios.">
+
+Antes de guardar se ve el Markdown y se puede corregir. El tablero no guarda datos personales: los emails, los números de documento y los usuarios de Windows se enmascaran solos, pero los **nombres de personas no se detectan**: quitalos a mano. Cada documento admite hasta 230 KB de texto.
+
+</Accion>
+
+<Accion id="doc-ver" nombre="Ver" breve="Muestra el documento guardado, con formato.">
+
+**Ocultar** lo cierra.
+
+</Accion>
+
+<Accion id="doc-descargar" nombre="Descargar .md" breve="Baja el documento guardado como un archivo Markdown.">
+
+Pide confirmación antes de guardar el archivo. Si esta vista no admite descargas, el botón no aparece.
+
+</Accion>
+
+<Accion id="doc-quitar" nombre="Quitar" solo="Admin" breve="Borra el documento del proyecto. Pide confirmación.">
+
+No se puede deshacer. La memoria de proceso que ya se generó con ese documento no cambia hasta el próximo re-análisis.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-reglas" nivel="3" titulo="Pestaña Reglas" breve="Las reglas de este proyecto y su estado.">
+
+Las reglas del proyecto, con las mismas acciones que la pantalla [Reglas](#ayuda-reglas).
+
+</Seccion>
+
+<Seccion id="proyecto-inventario" nivel="3" titulo="Pestaña Inventario" breve="Procesos, colas, triggers y assets de la carpeta (de los assets, solo el nombre).">
+
+El [inventario](#ayuda-inventario) de la carpeta: procesos con su versión y si son parte del proyecto, colas con sus reintentos, triggers y assets. De los assets se muestra solo el nombre y el tipo.
+
+<Vista nombre="proyecto" variante="inventario" />
+
+</Seccion>
+
+<Seccion id="proyecto-config" nivel="3" titulo="Pestaña Configuración" breve="Nombre, carpeta, procesos, documentación y criterios del proyecto. Solo Admin puede editarla.">
+
+Un Lector o un Operador ven los criterios de triage y la documentación del proyecto. Un Admin puede editar:
+
+- el nombre y la carpeta de Orchestrator;
+- en **Opciones avanzadas**: controlar solo algunos procesos, el repo de Bitbucket de respaldo de cada proceso, la documentación adicional y los criterios de triage del proyecto.
+
+**Editar configuración**, debajo de la lista de procesos, abre esta pestaña.
+
+<Vista nombre="proyecto" variante="config" />
+
+<Accion id="guardar-proyecto" nombre="Guardar y re-analizar" solo="Admin" breve="Guarda la configuración. Guardar y re-analizar además pide a la próxima corrida que regenere memoria e inventario.">
+
+Si cambiaste repos o procesos, conviene re-analizar. **Solo guardar** guarda sin pedir el análisis. Si el proyecto estaba activo, sigue activo.
+
+</Accion>
+
+<Accion id="descartar-cambios" nombre="Descartar cambios" solo="Admin" breve="Vuelve el formulario a la configuración guardada.">
+
+Deshace lo que editaste y no guardaste.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="reglas" nivel="2" titulo="Reglas" breve="Los puntos de control escritos en lenguaje natural, de todos los proyectos.">
+
+Las [reglas](#ayuda-regla) de todos los proyectos. Arriba, las **Propuestas para aprobar**; después, para un Admin, el formulario **Nueva regla**, y al final el resto. Cada una muestra su estado, su proyecto, de dónde salió (a mano, del alta, aprendida de un incidente, por similitud o de la revisión diaria), sus excepciones y cómo la entendió la rutina.
+
+- **Por compilar:** la rutina la traduce a un control en la próxima corrida.
+- **Propuesta:** la rutina la sugirió y dice por qué; un Admin la aprueba o la rechaza. Con la [aprobación automática](#ayuda-auto-reglas) activa, se aprueba sola en la corrida siguiente.
+- **Activa**, **Desactivada** o **Rechazada.**
+- **Cambio sugerido:** la revisión diaria encontró algo para ajustar en la regla.
+
+<Vista nombre="reglas" nota="vista de Admin" />
+
+<Accion id="nueva-regla" nombre="Crear regla" solo="Admin" breve="Agrega una regla escrita en lenguaje natural. Se compila en la próxima corrida.">
+
+Elegí el proyecto, o Todos los proyectos, y escribí la regla como se la dirías a una persona: qué mirar, el umbral y qué hacer. Por ejemplo: si se ven más de 10 errores de login seguidos, escalar.
+
+</Accion>
+
+<Accion id="regla-active" nombre="Aprobar o Activar" solo="Admin" breve="La regla pasa a controlarse en cada corrida.">
+
+**Aprobar** acepta una regla propuesta. **Activar** vuelve a encender una regla desactivada.
+
+</Accion>
+
+<Accion id="regla-rejected" nombre="Rechazar" solo="Admin" breve="Descarta una regla propuesta. No se controla.">
+
+La regla queda como Rechazada, para que la rutina no la vuelva a proponer igual.
+
+</Accion>
+
+<Accion id="regla-disabled" nombre="Desactivar" solo="Admin" breve="Deja de controlar una regla activa, sin borrarla.">
+
+Se puede volver a activar en cualquier momento.
+
+</Accion>
+
+<Accion id="re-abrir" nombre="Editar o Revisar" solo="Admin" breve="Abre el editor de la regla en la lista. Dice Revisar cuando la rutina sugiere un cambio.">
+
+Es el mismo [editor](#ayuda-editor-regla) que se abre desde un tema.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="editor-regla" nivel="3" titulo="Editor de reglas" breve="Cambia el texto, la severidad o las excepciones de una regla, o la desactiva o elimina.">
+
+Se abre con **Ajustar regla** desde un tema o con **Editar** en la lista de reglas. Solo los Admin pueden cambiar algo; un Operador ve la regla y sus excepciones.
+
+- **Hay una condición en la que no aplica:** escribí la **excepción**, por ejemplo "es lunes antes de las 9". Vale desde la próxima corrida.
+- **Avisa con una gravedad que no corresponde:** elegí otra **severidad**, de P1 a P4. Cambia al guardar.
+- **El umbral o la condición están mal:** corregí el **texto**. Vale desde la próxima corrida.
+- **No querés que controle por un tiempo:** **Desactivar**.
+- **La regla no sirve:** **Eliminar regla**. Pide confirmación y no se puede deshacer.
+
+Cuando cambia el texto o una excepción, la regla queda **Por compilar** y la rutina muestra después cómo la entendió. Las excepciones se pueden quitar. Desde un tema, **Descartar también este tema** cierra el incidente en el mismo paso, como falso positivo.
+
+<Vista nombre="reglas" variante="editor" nota="vista de Admin, con una sugerencia de la rutina" />
+
+<Accion id="re-guardar" nombre="Guardar cambios" solo="Admin" breve="Guarda el texto, la severidad y las excepciones. En una propuesta dice Guardar y aprobar.">
+
+En una regla desactivada o rechazada dice **Guardar y activar**. El cambio queda en la actividad del tema si se hizo desde uno.
+
+</Accion>
+
+<Accion id="re-sev" nombre="Severidad" solo="Admin" breve="Elige la severidad con la que avisa la regla, de P1 a P4. Cambia al guardar.">
+
+No aparece en reglas que marcan temas como conocidos o los ignoran, porque esas no avisan.
+
+</Accion>
+
+<Accion id="re-estado" nombre="Desactivar (editor)" solo="Admin" breve="Deja de controlar esta regla desde ya, sin borrarla.">
+
+Se puede volver a activar desde la lista de reglas.
+
+</Accion>
+
+<Accion id="re-eliminar" nombre="Eliminar regla" solo="Admin" breve="Borra la regla para siempre. Pide confirmación.">
+
+Si solo querés que deje de controlar un tiempo, conviene **Desactivar**.
+
+</Accion>
+
+<Accion id="re-sug-aplicar" nombre="Aplicar sugerencia" solo="Admin" breve="Carga en el formulario el cambio que sugiere la rutina; vos confirmás con Guardar.">
+
+Si la sugerencia es desactivar la regla, el botón dice **Desactivar** y la desactiva directamente. Ver [sugerencias de la rutina](#ayuda-sugerencia).
+
+</Accion>
+
+<Accion id="re-sug-descartar" nombre="No, gracias" solo="Admin" breve="Descarta la sugerencia de la rutina. No vuelve a sugerirla por 90 días.">
+
+La regla queda como estaba.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="propuestas" nivel="3" titulo="Propuestas de la rutina" breve="Reglas y cambios que propone la rutina. Los aprueba un Admin, salvo que la aprobación automática esté activa.">
+
+La rutina propone por su cuenta, y todo llega a **Para revisar** y a **Propuestas para aprobar**:
+
+- **Por [similitud](#ayuda-similitud):** cuando un Admin aprueba o edita una regla, la rutina la ofrece a otros procesos que usan el mismo portal, la misma aplicación o la misma librería.
+- **[Cambios sugeridos](#ayuda-sugerencia):** una vez por día revisa los últimos 30 días y marca las reglas que conviene tocar.
+- **Reglas nuevas de la revisión diaria:** si un mismo tema sin regla se descartó varias veces, o un aviso se repite sin que nadie lo mire.
+- **Aprendidas de un incidente:** a partir de los descartes y las respuestas.
+
+Llegan como máximo 3 propuestas por proyecto por vez.
+
+Por defecto nada se activa solo. Si un Admin activó la [aprobación automática](#ayuda-auto-reglas) en Ajustes, las **reglas nuevas** se activan en la corrida siguiente y quedan marcadas como **aprobada automáticamente**. Los cambios sugeridos sobre reglas que ya existen siempre esperan a una persona.
+
+</Seccion>
+
+<Seccion id="registrar" nivel="2" titulo="Registrar proyecto" breve="Solo Admin: suma una carpeta de Orchestrator al control.">
+
+Se llega desde **Proyectos → Registrar proyecto**. Un [proyecto](#ayuda-proyecto) es una carpeta de Orchestrator. La rutina detecta sola sus procesos, sus librerías y su documentación a partir de los paquetes publicados, en la versión que está en producción.
+
+1. Registrá la carpeta desde los [proyectos propuestos](#ayuda-propuestos) o con el formulario.
+2. La próxima corrida hace el [alta](#ayuda-alta).
+3. Revisá el proyecto y tocá **Activar el control de este proyecto**.
+
+Los procesos que se agreguen después a la carpeta se suman solos.
+
+<Vista nombre="registrar" />
+
+<Accion id="registrar-analizar" nombre="Registrar y analizar" solo="Admin" breve="Crea el proyecto con el nombre y la carpeta indicados y pide su análisis.">
+
+Alcanza con el nombre y la carpeta. Las **Opciones avanzadas** son las mismas que en la [Configuración](#ayuda-proyecto-config) y normalmente no hacen falta.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="propuestos" nivel="3" titulo="Proyectos propuestos" breve="Carpetas de Orchestrator con procesos que encontró el escaneo y que todavía no se controlan.">
+
+La rutina escanea la carpeta indicada en [Ajustes](#ayuda-descubrimiento): cuando un Admin lo pide y, además, una vez por día. Cada carpeta con procesos que todavía no es un proyecto aparece acá como [proyecto propuesto](#ayuda-proyecto-propuesto), con sus procesos y su actividad de los últimos 30 días.
+
+Nada se registra solo: un Admin elige qué controlar. Si no hay propuestas, la pantalla dice por qué y lleva a Ajustes.
+
+<Accion id="registrar-detectada" nombre="Registrar" solo="Admin" breve="Registra un proyecto propuesto y pide su análisis.">
+
+El proyecto toma el nombre y la carpeta propuestos. Se pueden cambiar después en su [Configuración](#ayuda-proyecto-config).
+
+</Accion>
+
+<Accion id="registrar-todos" nombre="Registrar todos" solo="Admin" breve="Registra de una vez todos los proyectos propuestos que quedan en la lista. Pide confirmación.">
+
+Conviene ignorar antes las carpetas que no son de producción. La rutina hace hasta 3 altas por corrida: con muchos proyectos, el análisis tarda varias horas.
+
+</Accion>
+
+<Accion id="ignorar-detectada" nombre="Ignorar" solo="Admin" breve="Saca la carpeta de las propuestas. No se vuelve a proponer.">
+
+Para carpetas de pruebas, de desarrollo o que no se quieren controlar.
+
+</Accion>
+
+<Accion id="restaurar-ignoradas" nombre="Volver a proponerlas" solo="Admin" breve="Vuelve a mostrar como propuestas las carpetas ignoradas.">
+
+Aparece debajo de la lista cuando hay carpetas ignoradas.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="ajustes" nivel="2" titulo="Ajustes" breve="Solo Admin: carpeta a escanear, criterios globales del triage, umbrales, retención y aprobación de reglas.">
+
+- **Proyectos a controlar:** la [carpeta de Orchestrator a escanear](#ayuda-descubrimiento).
+- **Criterios de triage globales:** se aplican a todos los proyectos, junto con los de cada uno.
+- **Matriz de severidad:** qué es P1, P2, P3 y P4.
+- **Minutos máximos en Pending:** desde cuándo un job que espera se considera un problema.
+- **Retención:** cuántos días se guardan las corridas y los incidentes cerrados.
+- **Reglas:** la [aprobación automática](#ayuda-auto-reglas).
+
+<Vista nombre="ajustes" />
+
+<Accion id="guardar-ajustes" nombre="Guardar ajustes" solo="Admin" breve="Guarda la carpeta, los criterios, los umbrales y la retención. Se usan desde la próxima corrida.">
+
+Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas. La aprobación automática no depende de este botón: se guarda al cambiar el interruptor.
+
+</Accion>
+
+<Accion id="auto-reglas" nombre="Aprobar automáticamente las reglas" solo="Admin" breve="Interruptor. Activado, las reglas que propone la rutina se activan solas en la corrida siguiente.">
+
+Viene **desactivado**: cada regla que propone la rutina espera a que un Admin la apruebe.
+
+Al activarlo:
+
+- La próxima corrida aprueba las reglas propuestas, también las que ya estaban esperando. Rechazá antes las que no quieras.
+- Una regla nueva se ve como **Propuesta** hasta la corrida siguiente a la que la propuso. En ese rato todavía se puede rechazar.
+- Las reglas aprobadas así quedan marcadas como **aprobada automáticamente** y se pueden desactivar, editar o eliminar como cualquier otra.
+- Los **cambios sugeridos** sobre reglas que ya existen (una excepción, otra severidad, desactivarla) no se aplican solos.
+
+Se guarda en el momento y vale desde la próxima corrida.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="descubrimiento" nivel="3" titulo="Proyectos a controlar" breve="La carpeta de Orchestrator que la rutina escanea para proponer proyectos. Es el primer paso en un tablero nuevo.">
+
+En Orchestrator los proyectos de producción suelen estar dentro de una misma carpeta, por ejemplo `Produccion`. Escribila acá, con su ruta completa si está dentro de otra (`Clientes/Produccion`). Se pueden indicar varias, separadas por coma.
+
+La rutina recorre todas las carpetas que están adentro. Cada una que tiene procesos y todavía no se controla pasa a [Proyectos propuestos](#ayuda-propuestos). Lo que está fuera de esa carpeta no se propone.
+
+Para que el escaneo vea las subcarpetas, la aplicación con la que la rutina lee Orchestrator tiene que poder verlas. Si no puede, debajo del campo aparece un aviso que dice qué falta.
+
+<Accion id="escanear" nombre="Guardar y escanear" solo="Admin" breve="Guarda la carpeta y pide a la próxima corrida que la escanee y proponga los proyectos.">
+
+Mientras el pedido espera, dice **Escaneo pedido**. Después muestra cuándo fue el último escaneo y cuántos proyectos propuso. Además del pedido, la rutina repite el escaneo una vez por día para encontrar carpetas nuevas.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="mas" nivel="2" titulo="Más (teléfono)" breve="En el teléfono: Fuera de bandeja, Ajustes, Registrar proyecto, Ayuda y el estado de la rutina.">
+
+En el teléfono la barra de abajo tiene lugar para Bandeja, Proyectos, Corridas y Reglas. Lo demás está en **Más**, junto con el estado de la rutina y tu acceso.
+
+<Vista nombre="mas" nota="vista de Admin" />
+
+</Seccion>

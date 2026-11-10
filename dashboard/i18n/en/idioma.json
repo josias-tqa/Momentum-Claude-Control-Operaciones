@@ -1,0 +1,10 @@
+{
+  "idioma.titulo": "Language",
+  "idioma.es": "Español",
+  "idioma.en": "English",
+  "idioma.grupo": "Dashboard language",
+  "idioma.explica": "This is the language of the whole dashboard and of everything the routine writes from the next run on (titles, analyses, memories, proposed rules). What is already saved stays in the language it was written in. An Admin chooses it and it applies to everyone.",
+  "idioma.masIdioma": "More about the language",
+  "idioma.toast": "Language changed to English",
+  "idioma.errorGuardar": "Could not change the language"
+}
