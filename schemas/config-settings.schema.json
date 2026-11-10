@@ -38,6 +38,31 @@
     "timezone": {
       "type": "string",
       "maxLength": 60
+    },
+    "autoApproveRules": {
+      "type": "boolean"
+    },
+    "discovery": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "rootFolders": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          }
+        },
+        "ignoredFolders": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      }
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",

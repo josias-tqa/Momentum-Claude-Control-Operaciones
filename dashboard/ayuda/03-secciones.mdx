@@ -37,9 +37,11 @@ Es la pantalla de trabajo. Muestra solo los temas abiertos cuya decisión es esc
 
 </Seccion>
 
-<Seccion id="para-revisar" nivel="3" titulo="Para revisar" breve="Solo Admin: reglas propuestas, cambios sugeridos en reglas y proyectos que terminaron su análisis.">
+<Seccion id="para-revisar" nivel="3" titulo="Para revisar" breve="Solo Admin: reglas propuestas, cambios sugeridos en reglas, proyectos propuestos y proyectos que terminaron su análisis.">
 
-Solo la ven los Admin, en la vista **Todo**. Junta las tareas de configuración pendientes: [reglas propuestas](#ayuda-propuestas), reglas con un cambio sugerido, proyectos **En revisión** que esperan ser activados y proyectos **Con error**. Cada fila lleva a donde se resuelve.
+Solo la ven los Admin, en la vista **Todo**. Junta las tareas de configuración pendientes: [reglas propuestas](#ayuda-propuestas), reglas con un cambio sugerido, [proyectos propuestos](#ayuda-propuestos) por el escaneo, proyectos **En revisión** que esperan ser activados y proyectos **Con error**. Cada fila lleva a donde se resuelve.
+
+Las [discrepancias](#ayuda-discrepancia) de un proyecto no aparecen acá ni en el resto de la bandeja: se trabajan desde la página del proyecto.
 
 </Seccion>
 
@@ -218,15 +220,17 @@ Por cada proyecto muestra la ventana de tiempo revisada, un resumen de señales,
 
 <Seccion id="proyectos" nivel="2" titulo="Proyectos" breve="Todos los proyectos controlados, con su salud, su estado y sus temas abiertos.">
 
-La lista de proyectos con su carpeta de Orchestrator, sus temas abiertos y su [estado](#ayuda-estado-proyecto). Primero aparecen los que tienen problemas o esperan revisión. Con más de 5 proyectos aparece un buscador. Los Admin ven **Registrar proyecto** y un aviso si hay carpetas detectadas sin registrar.
+La lista de proyectos con su carpeta de Orchestrator, sus temas abiertos, sus [discrepancias](#ayuda-discrepancia) pendientes y su [estado](#ayuda-estado-proyecto). Primero aparecen los que tienen problemas o esperan revisión. Con más de 5 proyectos aparece un buscador. Los Admin ven **Registrar proyecto** y un aviso si la rutina [propone proyectos](#ayuda-propuestos) para agregar.
+
+Si todavía no hay proyectos, un Admin ve los [primeros pasos](#ayuda-primeros-pasos).
 
 <Vista nombre="proyectos" />
 
 </Seccion>
 
-<Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, reglas, inventario y configuración de un proyecto.">
+<Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, discrepancias, documentación, reglas, inventario y configuración de un proyecto.">
 
-Arriba está la carpeta, la cantidad de procesos y el estado, con las acciones. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen cinco pestañas.
+Arriba está la carpeta, la cantidad de procesos, el estado y cuántas discrepancias tiene pendientes, con las acciones. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen siete pestañas.
 
 <Vista nombre="proyecto" variante="memoria" />
 
@@ -267,6 +271,109 @@ La [memoria de proceso](#ayuda-memoria-de-proceso): qué hace el proceso, sus pa
 La [memoria de producción](#ayuda-memoria-de-produccion): un resumen arriba y debajo el historial, del más nuevo al más viejo, con quién respondió y el ticket si lo hay.
 
 <Vista nombre="proyecto" variante="produccion" />
+
+</Seccion>
+
+<Seccion id="proyecto-discrepancias" nivel="3" titulo="Pestaña Discrepancias" breve="Lo que no coincide entre el código, la documentación y Orchestrator. Se responde, se pospone o se descarta acá: no va a la bandeja.">
+
+Las [discrepancias](#ayuda-discrepancia) que encontró el análisis del proyecto, por ejemplo:
+
+- una cola o un asset que figura en el SDD o en el código y no existe en Orchestrator, o al revés;
+- un trigger con una frecuencia distinta a la documentada;
+- el Dispatcher y el Performer que no usan la misma cola;
+- documentación que no coincide con el código;
+- un paquete que publica capturas o datos que no debería.
+
+Cada una muestra su tipo, el proceso, qué se encontró, una sugerencia y de dónde sale. Son tarjetas del proyecto: **no aparecen en la bandeja** ni cambian su salud. El número de la pestaña, y el de la lista de proyectos, cuenta las pendientes.
+
+- **Pendientes:** las que la rutina sigue detectando y nadie atendió.
+- **Atendidas:** las respondidas, pospuestas o descartadas, con quién lo hizo, y las **resueltas**, que la rutina dejó de detectar.
+
+En cada re-análisis la rutina actualiza la lista: suma las nuevas, cierra las que ya no detecta y respeta lo que respondió el equipo. Una discrepancia descartada no vuelve a aparecer como nueva. Si una que se dio por corregida vuelve a detectarse, reaparece como pendiente con la marca **Reapareció**.
+
+<Vista nombre="proyecto" variante="discrepancias" />
+
+<Accion id="disc-responder" nombre="Responder" breve="Registra qué se va a hacer con la discrepancia. Queda en la memoria de producción del proyecto.">
+
+Elegí una decisión y agregá notas:
+
+- **Corregir la documentación**, **Corregir en Orchestrator** o **Corregir el código:** hay algo para arreglar. Podés cargar el ticket o la referencia. La discrepancia pasa a Atendidas y la rutina la cierra cuando un re-análisis deja de detectarla.
+- **Es correcto así:** no hay nada que corregir. La rutina lo anota y no vuelve a preguntar.
+- **Derivar a desarrollo:** lo toma el equipo de desarrollo.
+
+</Accion>
+
+<Accion id="disc-posponer" nombre="Posponer" breve="Saca la discrepancia de las pendientes hasta una fecha.">
+
+Elegí 1 semana, 1 mes, 3 meses o una fecha. Al vencer vuelve a Pendientes, si la rutina la sigue detectando.
+
+</Accion>
+
+<Accion id="disc-descartar" nombre="Descartar" breve="Cierra la discrepancia con un motivo. La rutina no la vuelve a mostrar como nueva.">
+
+Motivos: **Es correcto así**, **La rutina se equivocó**, **Ya se corrigió** o **No es relevante**, con una nota opcional. Queda en Atendidas y en la memoria de producción.
+
+</Accion>
+
+<Accion id="disc-reabrir" nombre="Volver a abrir" breve="Deshace la respuesta, el descarte o la posposición: la discrepancia vuelve a estar pendiente.">
+
+Aparece en las discrepancias atendidas que la rutina todavía detecta.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-documentacion" nivel="3" titulo="Pestaña Documentación" breve="PDD, SDD y Runbook del proyecto, subidos a mano y guardados en Markdown.">
+
+La rutina lee sola la documentación que viene dentro de los paquetes publicados. Cuando un documento no está ahí, o está desactualizado, un Admin lo sube acá. Hay un lugar para cada uno:
+
+- **PDD:** el proceso de negocio, sus pasos y sus excepciones.
+- **SDD:** cómo está construida la solución, con sus colas, assets y triggers.
+- **Runbook:** qué hacer ante cada falla y a quién escalar.
+
+Todo se guarda **en Markdown** (.md), sin imágenes. La rutina usa estos documentos en el análisis del proyecto, para la memoria de proceso y las discrepancias, y en el análisis previo de cada tema. Después de subir uno conviene **Pedir re-análisis**.
+
+Un Lector o un Operador pueden ver y descargar los documentos; solo un Admin los sube, reemplaza o quita.
+
+<Vista nombre="proyecto" variante="documentacion" nota="vista de Admin" />
+
+<Accion id="doc-subir" nombre="Subir archivo o Reemplazar" solo="Admin" breve="Sube un .docx, .md o .txt y lo convierte a Markdown. Se revisa antes de guardar.">
+
+Un Word (.docx) se convierte en el momento: títulos, párrafos, negritas, listas y tablas. Las imágenes, los encabezados y el índice no se pasan. Un PDF o un .doc antiguo no se pueden convertir: guardalo como .docx o usá **Pegar texto**.
+
+Nada se guarda hasta tocar **Guardar**. Si ya había un documento de ese tipo, el nuevo lo reemplaza.
+
+</Accion>
+
+<Accion id="doc-pegar" nombre="Pegar texto" solo="Admin" breve="Abre un cuadro para pegar o escribir el documento, en Markdown o texto plano.">
+
+Sirve para documentos que están en una wiki, en un PDF o en otro formato.
+
+</Accion>
+
+<Accion id="doc-guardar" nombre="Guardar" solo="Admin" breve="Guarda el documento en Markdown, después de enmascarar emails, documentos y usuarios.">
+
+Antes de guardar se ve el Markdown y se puede corregir. El tablero no guarda datos personales: los emails, los números de documento y los usuarios de Windows se enmascaran solos, pero los **nombres de personas no se detectan**: quitalos a mano. Cada documento admite hasta 230 KB de texto.
+
+</Accion>
+
+<Accion id="doc-ver" nombre="Ver" breve="Muestra el documento guardado, con formato.">
+
+**Ocultar** lo cierra.
+
+</Accion>
+
+<Accion id="doc-descargar" nombre="Descargar .md" breve="Baja el documento guardado como un archivo Markdown.">
+
+Pide confirmación antes de guardar el archivo. Si esta vista no admite descargas, el botón no aparece.
+
+</Accion>
+
+<Accion id="doc-quitar" nombre="Quitar" solo="Admin" breve="Borra el documento del proyecto. Pide confirmación.">
+
+No se puede deshacer. La memoria de proceso que ya se generó con ese documento no cambia hasta el próximo re-análisis.
+
+</Accion>
 
 </Seccion>
 
@@ -314,7 +421,7 @@ Deshace lo que editaste y no guardaste.
 Las [reglas](#ayuda-regla) de todos los proyectos. Arriba, las **Propuestas para aprobar**; después, para un Admin, el formulario **Nueva regla**, y al final el resto. Cada una muestra su estado, su proyecto, de dónde salió (a mano, del alta, aprendida de un incidente, por similitud o de la revisión diaria), sus excepciones y cómo la entendió la rutina.
 
 - **Por compilar:** la rutina la traduce a un control en la próxima corrida.
-- **Propuesta:** la rutina la sugirió y dice por qué; un Admin la aprueba o la rechaza.
+- **Propuesta:** la rutina la sugirió y dice por qué; un Admin la aprueba o la rechaza. Con la [aprobación automática](#ayuda-auto-reglas) activa, se aprueba sola en la corrida siguiente.
 - **Activa**, **Desactivada** o **Rechazada.**
 - **Cambio sugerido:** la revisión diaria encontró algo para ajustar en la regla.
 
@@ -404,7 +511,7 @@ La regla queda como estaba.
 
 </Seccion>
 
-<Seccion id="propuestas" nivel="3" titulo="Propuestas de la rutina" breve="Reglas y cambios que propone la rutina. Nunca activa nada: lo aprueba un Admin.">
+<Seccion id="propuestas" nivel="3" titulo="Propuestas de la rutina" breve="Reglas y cambios que propone la rutina. Los aprueba un Admin, salvo que la aprobación automática esté activa.">
 
 La rutina propone por su cuenta, y todo llega a **Para revisar** y a **Propuestas para aprobar**:
 
@@ -415,25 +522,21 @@ La rutina propone por su cuenta, y todo llega a **Para revisar** y a **Propuesta
 
 Llegan como máximo 3 propuestas por proyecto por vez.
 
+Por defecto nada se activa solo. Si un Admin activó la [aprobación automática](#ayuda-auto-reglas) en Ajustes, las **reglas nuevas** se activan en la corrida siguiente y quedan marcadas como **aprobada automáticamente**. Los cambios sugeridos sobre reglas que ya existen siempre esperan a una persona.
+
 </Seccion>
 
 <Seccion id="registrar" nivel="2" titulo="Registrar proyecto" breve="Solo Admin: suma una carpeta de Orchestrator al control.">
 
 Se llega desde **Proyectos → Registrar proyecto**. Un [proyecto](#ayuda-proyecto) es una carpeta de Orchestrator. La rutina detecta sola sus procesos, sus librerías y su documentación a partir de los paquetes publicados, en la versión que está en producción.
 
-1. Registrá la carpeta desde la lista de detectadas o con el formulario.
+1. Registrá la carpeta desde los [proyectos propuestos](#ayuda-propuestos) o con el formulario.
 2. La próxima corrida hace el [alta](#ayuda-alta).
 3. Revisá el proyecto y tocá **Activar el control de este proyecto**.
 
 Los procesos que se agreguen después a la carpeta se suman solos.
 
 <Vista nombre="registrar" />
-
-<Accion id="registrar-detectada" nombre="Registrar" solo="Admin" breve="Registra una carpeta que la rutina detectó en Orchestrator y pide su análisis.">
-
-La lista **Carpetas detectadas sin registrar** muestra las carpetas que ve la rutina y que todavía no son proyectos, con sus procesos y su actividad de los últimos 30 días.
-
-</Accion>
 
 <Accion id="registrar-analizar" nombre="Registrar y analizar" solo="Admin" breve="Crea el proyecto con el nombre y la carpeta indicados y pide su análisis.">
 
@@ -443,18 +546,83 @@ Alcanza con el nombre y la carpeta. Las **Opciones avanzadas** son las mismas qu
 
 </Seccion>
 
-<Seccion id="ajustes" nivel="2" titulo="Ajustes" breve="Solo Admin: criterios globales del triage, severidad, umbrales y retención.">
+<Seccion id="propuestos" nivel="3" titulo="Proyectos propuestos" breve="Carpetas de Orchestrator con procesos que encontró el escaneo y que todavía no se controlan.">
 
+La rutina escanea la carpeta indicada en [Ajustes](#ayuda-descubrimiento): cuando un Admin lo pide y, además, una vez por día. Cada carpeta con procesos que todavía no es un proyecto aparece acá como [proyecto propuesto](#ayuda-proyecto-propuesto), con sus procesos y su actividad de los últimos 30 días.
+
+Nada se registra solo: un Admin elige qué controlar. Si no hay propuestas, la pantalla dice por qué y lleva a Ajustes.
+
+<Accion id="registrar-detectada" nombre="Registrar" solo="Admin" breve="Registra un proyecto propuesto y pide su análisis.">
+
+El proyecto toma el nombre y la carpeta propuestos. Se pueden cambiar después en su [Configuración](#ayuda-proyecto-config).
+
+</Accion>
+
+<Accion id="registrar-todos" nombre="Registrar todos" solo="Admin" breve="Registra de una vez todos los proyectos propuestos que quedan en la lista. Pide confirmación.">
+
+Conviene ignorar antes las carpetas que no son de producción. La rutina hace hasta 3 altas por corrida: con muchos proyectos, el análisis tarda varias horas.
+
+</Accion>
+
+<Accion id="ignorar-detectada" nombre="Ignorar" solo="Admin" breve="Saca la carpeta de las propuestas. No se vuelve a proponer.">
+
+Para carpetas de pruebas, de desarrollo o que no se quieren controlar.
+
+</Accion>
+
+<Accion id="restaurar-ignoradas" nombre="Volver a proponerlas" solo="Admin" breve="Vuelve a mostrar como propuestas las carpetas ignoradas.">
+
+Aparece debajo de la lista cuando hay carpetas ignoradas.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="ajustes" nivel="2" titulo="Ajustes" breve="Solo Admin: carpeta a escanear, criterios globales del triage, umbrales, retención y aprobación de reglas.">
+
+- **Proyectos a controlar:** la [carpeta de Orchestrator a escanear](#ayuda-descubrimiento).
 - **Criterios de triage globales:** se aplican a todos los proyectos, junto con los de cada uno.
 - **Matriz de severidad:** qué es P1, P2, P3 y P4.
 - **Minutos máximos en Pending:** desde cuándo un job que espera se considera un problema.
 - **Retención:** cuántos días se guardan las corridas y los incidentes cerrados.
+- **Reglas:** la [aprobación automática](#ayuda-auto-reglas).
 
 <Vista nombre="ajustes" />
 
-<Accion id="guardar-ajustes" nombre="Guardar ajustes" solo="Admin" breve="Guarda los ajustes. Se usan desde la próxima corrida.">
+<Accion id="guardar-ajustes" nombre="Guardar ajustes" solo="Admin" breve="Guarda la carpeta, los criterios, los umbrales y la retención. Se usan desde la próxima corrida.">
 
-Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas.
+Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas. La aprobación automática no depende de este botón: se guarda al cambiar el interruptor.
+
+</Accion>
+
+<Accion id="auto-reglas" nombre="Aprobar automáticamente las reglas" solo="Admin" breve="Interruptor. Activado, las reglas que propone la rutina se activan solas en la corrida siguiente.">
+
+Viene **desactivado**: cada regla que propone la rutina espera a que un Admin la apruebe.
+
+Al activarlo:
+
+- La próxima corrida aprueba las reglas propuestas, también las que ya estaban esperando. Rechazá antes las que no quieras.
+- Una regla nueva se ve como **Propuesta** hasta la corrida siguiente a la que la propuso. En ese rato todavía se puede rechazar.
+- Las reglas aprobadas así quedan marcadas como **aprobada automáticamente** y se pueden desactivar, editar o eliminar como cualquier otra.
+- Los **cambios sugeridos** sobre reglas que ya existen (una excepción, otra severidad, desactivarla) no se aplican solos.
+
+Se guarda en el momento y vale desde la próxima corrida.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="descubrimiento" nivel="3" titulo="Proyectos a controlar" breve="La carpeta de Orchestrator que la rutina escanea para proponer proyectos. Es el primer paso en un tablero nuevo.">
+
+En Orchestrator los proyectos de producción suelen estar dentro de una misma carpeta, por ejemplo `Produccion`. Escribila acá, con su ruta completa si está dentro de otra (`Clientes/Produccion`). Se pueden indicar varias, separadas por coma.
+
+La rutina recorre todas las carpetas que están adentro. Cada una que tiene procesos y todavía no se controla pasa a [Proyectos propuestos](#ayuda-propuestos). Lo que está fuera de esa carpeta no se propone.
+
+Para que el escaneo vea las subcarpetas, la aplicación con la que la rutina lee Orchestrator tiene que poder verlas. Si no puede, debajo del campo aparece un aviso que dice qué falta.
+
+<Accion id="escanear" nombre="Guardar y escanear" solo="Admin" breve="Guarda la carpeta y pide a la próxima corrida que la escanee y proponga los proyectos.">
+
+Mientras el pedido espera, dice **Escaneo pedido**. Después muestra cuándo fue el último escaneo y cuántos proyectos propuso. Además del pedido, la rutina repite el escaneo una vez por día para encontrar carpetas nuevas.
 
 </Accion>
 

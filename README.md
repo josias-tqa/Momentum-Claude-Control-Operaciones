@@ -29,7 +29,7 @@ producción.
 | Qué | Dónde |
 |---|---|
 | Reglas de operación de la rutina | `CLAUDE.md` |
-| Skills | `.claude/skills/` (`control-corrida`, `control-alta-proyecto`, `control-analisis`, `control-aprendizaje`, `control-mantenimiento`, `verificar-entorno`) |
+| Skills | `.claude/skills/` (`control-corrida`, `control-alta-proyecto`, `control-descubrir`, `control-analisis`, `control-aprendizaje`, `control-reglas`, `control-mantenimiento`, `verificar-entorno`) |
 | Scripts deterministas | `scripts/` |
 | Bloqueo de solo lectura | `.claude/hooks/guard-solo-lectura.mjs` |
 | Tablero | `dashboard/index.html` + `dashboard/capabilities.json` |
@@ -37,11 +37,12 @@ producción.
 | Modelo de datos | `docs/modelo-de-datos.md`, `schemas/` |
 | Entorno y rutina | `docs/configuracion-cloud.md` |
 | Guía para el equipo de Momentum | `docs/guia-operador.md` |
+| Puesta en marcha con un cliente nuevo | `docs/cliente-nuevo.md` |
 
 ## Tests
 
 ```bash
-npm test          # scripts: redacción de PII, checks, reglas, dedupe, lotes, hook de solo lectura
-npm run test:ui   # tablero en Chromium con datos sintéticos (roles, acciones, filtros, ayuda, teléfono)
+npm test          # scripts: redacción de PII, checks, reglas, dedupe, lotes, discrepancias, escaneo, hook de solo lectura
+npm run test:ui   # tablero en Chromium con datos sintéticos (roles, acciones, filtros, ajustes, discrepancias, documentos, ayuda, teléfono)
 npm install && npm run build:ayuda   # regenera la ayuda después de editar dashboard/ayuda/*.mdx
 ```

@@ -19,6 +19,19 @@ El tablero es donde el equipo trabaja: ve lo que requiere atención, lo responde
 
 </Seccion>
 
+<Seccion id="primeros-pasos" nivel="2" titulo="Primeros pasos en un tablero nuevo">
+
+Un tablero recién publicado no tiene proyectos. Un Admin lo pone en marcha así:
+
+1. **Indicá la carpeta a escanear.** En [Ajustes](#ayuda-descubrimiento), escribí la carpeta de Orchestrator donde están los proyectos de producción y tocá **Guardar y escanear**.
+2. **Revisá los proyectos propuestos.** La próxima corrida recorre esa carpeta y propone como proyecto cada carpeta que tiene procesos. Aparecen en [Registrar proyecto](#ayuda-propuestos).
+3. **Registrá los que quieras controlar** e ignorá el resto. La rutina hace el [alta](#ayuda-alta) de cada uno, hasta 3 por corrida.
+4. **Revisá y activá.** Cada proyecto queda En revisión con su memoria de proceso, sus discrepancias y sus reglas propuestas. Cuando esté bien, activá el control.
+
+Mientras no hay proyectos, la Bandeja y Proyectos muestran estos pasos.
+
+</Seccion>
+
 <Seccion id="solo-lectura" nivel="2" titulo="Lo que la Torre de Control nunca hace">
 
 - **No cambia nada en Orchestrator.** No inicia, detiene ni reintenta jobs, y no toca colas, assets ni procesos.
@@ -35,8 +48,8 @@ Tu rol se ve abajo del menú, como **Acceso de Operador** (en el teléfono, dent
 <thead><tr><th>Rol</th><th>Acceso en Compartir</th><th>Puede</th></tr></thead>
 <tbody>
 <tr><td>Lector</td><td>Viewer</td><td>Ver todo, incluida esta ayuda.</td></tr>
-<tr><td>Operador</td><td>Contributor</td><td>Delegar, posponer, descartar, responder y comentar tarjetas, y pedir un nuevo análisis.</td></tr>
-<tr><td>Admin</td><td>Editor</td><td>Además: registrar y configurar proyectos, activar o pausar el control, aprobar, ajustar y eliminar reglas y editar los ajustes.</td></tr>
+<tr><td>Operador</td><td>Contributor</td><td>Delegar, posponer, descartar, responder y comentar tarjetas, pedir un nuevo análisis, y responder, posponer o descartar las discrepancias de un proyecto.</td></tr>
+<tr><td>Admin</td><td>Editor</td><td>Además: indicar la carpeta a escanear, registrar y configurar proyectos, subir su documentación, activar o pausar el control, aprobar, ajustar y eliminar reglas y editar los ajustes.</td></tr>
 </tbody>
 </table>
 

@@ -34,7 +34,11 @@ export function demoSeed({ vacio = false } = {}) {
   const login = Object.entries(seed).find(([k, v]) => k.startsWith('incidents/') && v.category === 'login');
   login[1].library = { name: 'LIB_Sap', version: '2.2.0', activity: 'LoginSap' };
   login[1].deploy = { version: '1.4.0', previous: '1.3.2', at: iso(20) };
-  seed['config/discovery'] = { at: iso(60), folders: [{ folderPath: 'Produccion/Tesoreria/Pagos', name: 'Pagos', procesos: ['TES_Pagos_Dispatcher', 'TES_Pagos_Performer'], jobs30d: 412 }] };
+  // Escaneo de la carpeta raíz: tres carpetas con procesos que todavía no son proyectos (una, de pruebas).
+  seed['config/discovery'] = { at: iso(60), roots: ['Produccion'], folders: [
+    { folderPath: 'Produccion/Tesoreria/Pagos', name: 'Pagos', procesos: ['TES_Pagos_Dispatcher', 'TES_Pagos_Performer'], jobs30d: 412, root: 'Produccion' },
+    { folderPath: 'Produccion/Compras/Ordenes', name: 'Ordenes', procesos: ['COM_Ordenes'], jobs30d: 96, root: 'Produccion' },
+    { folderPath: 'Produccion/Pruebas', name: 'Pruebas', procesos: ['PRU_Demo'], jobs30d: 3, root: 'Produccion' }] };
   login[1].occurrences = 7; login[1].recurrences = [{ runId: 'run-demo-0', at: iso(72), count: 3 }, { runId, at: iso(12), count: 4 }];
   login[1].analysis = { status: 'done', summary: 'Desde hace 70 minutos el Performer falla al iniciar sesión en SAP en todos los jobs. El lote completo queda sin procesar.',
     hypotheses: [{ text: 'La credencial C_180_FIN_FAC_SapCredentials venció o fue bloqueada en SAP', likelihood: 'alta', evidence: '12 errores "invalid credentials" seguidos, en las 3 ejecuciones, desde la misma máquina.' }, { text: 'Cambio en la pantalla de login de SAP', likelihood: 'baja', evidence: 'No hay errores de selector; el mensaje viene de SAP.' }],
@@ -58,5 +62,17 @@ export function demoSeed({ vacio = false } = {}) {
   seed['history/h-1'] = { projectId: 'facturacion', type: 'onboarding', at: iso(9000), summary: 'Alta del proyecto: 2 procesos, 1 cola, 2 assets.', by: 'rutina' };
   seed['history/h-2'] = { projectId: 'facturacion', type: 'expected_behavior', at: iso(4000), summary: 'Items abandonados del lunes: mantenimiento programado de SAP. Es normal.', by: 'u_oper0000000000000000002' };
   seed['config/settings'] = JSON.parse(readFileSync(join(RAIZ, 'seed/settings.json'), 'utf8'));
+  // Discrepancias del alta: tarjetas a nivel proyecto (no van a la bandeja), con su lado humano.
+  const disc = (projectId, kind, title, extra = {}) => ({ projectId, key: `${kind}:${title}`.toLowerCase().slice(0, 60), kind, title, status: 'open', firstSeenAt: iso(9000), lastSeenAt: iso(600), seenCount: 2, createdBy: 'rutina', ...extra });
+  seed['discrepancies/disc-facturacion-trigger'] = disc('facturacion', 'trigger', 'El Dispatcher corre cada hora y el SDD dice cada 30 minutos', { detail: 'El trigger de tiempo dispara el Dispatcher cada 60 minutos. El SDD indica una frecuencia de 30 minutos.',
+    suggestion: 'Confirmar la frecuencia correcta y corregir el trigger o el documento.', refs: [{ source: 'docs/SDD.md · Triggers', note: 'cada 30 minutos' }, { source: 'Orchestrator · trigger de tiempo', note: 'cada 60 minutos' }] });
+  seed['discrepancies/disc-facturacion-asset'] = disc('facturacion', 'orchestrator', 'El asset de tolerancia que lee el código no existe en Orchestrator', { detail: 'El Performer lee un asset de tolerancia en la inicialización y la carpeta no lo tiene.', suggestion: 'Crear el asset o quitar la lectura del código.' });
+  seed['discrepancies/disc-facturacion-capturas'] = disc('facturacion', 'hygiene', 'El paquete del Performer publica capturas de pantalla');
+  seed['discrepancyWork/disc-facturacion-capturas'] = { projectId: 'facturacion', state: 'responded', response: { decision: 'escalate_dev', notes: 'Se quita la carpeta en la próxima versión.' }, updatedAt: iso(2000), updatedBy: 'u_oper0000000000000000002' };
+  seed['discrepancies/disc-facturacion-vieja'] = disc('facturacion', 'docs', 'El PDD no menciona la excepción BE002', { status: 'resolved', resolvedAt: iso(700), resolvedReason: 'Ya no se detecta en el análisis del proyecto.' });
+  seed['discrepancies/disc-nomina-cola'] = disc('nomina', 'orchestrator', 'La cola RRHH_NOV_Items del SDD no existe en Orchestrator');
+  // Documentación subida a mano, ya en Markdown.
+  seed['documents/facturacion_runbook'] = { projectId: 'facturacion', kind: 'runbook', fileName: 'Runbook Facturación.docx', source: 'docx', chars: 118, masked: 1, uploadedBy: 'u_admin000000000000000001', uploadedAt: iso(3000),
+    markdown: '# Runbook de Facturación\n\n## Login fallido\n\n1. Verificar si el usuario del robot está bloqueado.\n2. Avisar a soporte: [EMAIL]' };
   return seed;
 }

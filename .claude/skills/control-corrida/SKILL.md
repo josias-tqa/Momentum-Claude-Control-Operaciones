@@ -25,12 +25,14 @@ Todo lo intermedio va en `work/$RUN/`.
 ## 2. Exportar la base a `work/$RUN/db`
 
 Usá `ArtifactData` con `out_dir: work/$RUN/db`:
-- `list` de `projects`, `rules`, `incidentWork`, `config`, `memory` y `libraries`.
+- `list` de `projects`, `rules`, `incidentWork`, `config`, `memory`, `libraries`, `discrepancies` y `discrepancyWork`.
 - `query` de `incidents` con `where: [["status","==","open"]]`.
 - `query` de `incidents` con `where: [["status","==","closed"],["closedAt",">=",<hace 30 días>]]`.
 - `query` de `requests` con `where: [["status","==","pending"]]`.
 
 Pasá `query.limit: 1000` en todos y paginá con `cursor` si hace falta.
+
+`documents` (PDD, SDD y Runbook subidos a mano, en Markdown) **no** se exporta acá: pesa. Lo leen `/control-alta-proyecto` y `/control-analisis`, solo del proyecto que están mirando.
 
 Cada resultado lista la `version` de cada documento. **Registralas** en `work/$RUN/db/_versiones.json` como `{"incidents/inc-…": 3, "projects/facturacion": 7, …}`. Sin esto no se puede escribir.
 
@@ -40,14 +42,27 @@ Por cada `requests` pendiente:
 - `onboard_project` o `reanalyze_project`: ejecutá `/control-alta-proyecto` para ese proyecto.
 - `reanalyze_incident`: juntá los `incidentId` y pasalos a `consolidar.mjs --reanalizar <ids>` en el paso 7. Marcá la solicitud `done` al publicar.
 - `recompile_rule`: compilá esa regla (paso 4).
+- `discover_projects`: un Admin indicó en Ajustes la carpeta de Orchestrator a escanear y pidió el escaneo. Ejecutá `/control-descubrir` en modo **proponer**: actualiza `config/discovery` y no registra nada. Poné en `resultNote` cuántos proyectos propuso, o qué acceso falta. Si hay varias solicitudes de este tipo, un solo escaneo las atiende a todas.
 
 Al terminar, `update` de la solicitud con `{status: "done"|"error", resultNote, processedAt}` y su `if_version`.
 
 **Máximo 3 altas (`onboard_project` / `reanalyze_project`) por corrida**, las más antiguas primero. Cada alta tarda varios minutos y el lock dura 50. Las demás quedan `pending` para la corrida siguiente; decilo en el resumen.
 
-## 4. Compilar reglas
+## 4. Aprobación automática y compilación de reglas
 
-Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natural) a `compiled`:
+**Aprobación automática.** Antes de compilar:
+
+```bash
+node scripts/aprobar-reglas.mjs --db work/$RUN/db --ahora <ISO> --salida work/$RUN/aprobacion-plan.json
+```
+
+- Solo hace algo si un Admin activó en Ajustes "Aprobar automáticamente las reglas que propone la rutina" (`config/settings.autoApproveRules: true`). Si `activa` es `false` o `aprobadas` está vacío, seguí de largo.
+- Pasa a `active` las reglas `proposed` que había **al empezar la corrida**, con `approvedBy: "rutina"` y `autoApproved: true`, y deja el rastro en `history`. Una regla que proponés en esta corrida se aprueba en la siguiente: mientras tanto un Admin puede rechazarla.
+- Validá y publicá: `node scripts/build-writes.mjs --plan work/$RUN/aprobacion-plan.json --salida work/$RUN/lotes-aprobacion` y `ArtifactData batch`. Anotá las versiones nuevas en `_versiones.json`.
+- Para el resto de la corrida, tratá esas reglas como activas: entran en `reglas.json` (paso 5). Si alguna quedó `pending_compile` (no traía `compiled`), compilala ahora y fusioná el resultado en esa misma escritura: un lote no puede tocar dos veces el mismo documento.
+- Nunca apruebes una regla a mano ni escribas `autoApproved` por tu cuenta: lo decide ese script. Los **cambios sugeridos** (`suggestion`) no se aplican solos en ningún caso.
+
+**Compilación.** Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natural) a `compiled`:
 
 ```json
 { "signal": "logs|jobs|queueItems", "filter": { "process": "", "queue": "", "level": ["Error","Fatal"], "state": [], "status": [],
@@ -61,7 +76,7 @@ Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natura
 - `rate`: el denominador son los registros del mismo alcance (`process`/`queue`), y la condición (`state`, `level`, `messageRegex`) define el numerador. Con menos de `minSample` registros (3 por defecto) no alerta.
 - Si la regla no se puede expresar así, usá `{"mode":"llm", "severity", "action"}`. La evaluás vos en el paso 6.
 - Escribí `compileNote` con una frase en español que diga cómo se entendió la regla. El tablero la muestra.
-- Pasá la regla a `status: "active"`. Las reglas `proposed` no se tocan: las aprueba un Admin.
+- Pasá la regla a `status: "active"`. Las reglas `proposed` no se tocan: las aprueba un Admin, o `aprobar-reglas.mjs` si la aprobación automática está activa.
 
 **Reglas editadas desde el tablero.** Un Admin puede cambiar el texto, la severidad o las excepciones de una regla desde la tarjeta de un incidente o desde la lista de reglas. Si cambió el texto o las excepciones, la regla vuelve a `pending_compile` y trae su `compiled` anterior:
 - Volvé a traducir `text`, pero **conservá `compiled.severity`** (la eligió una persona) salvo que el texto nuevo diga otra severidad. Conservá también `action`, `category` y `title` si el texto no los cambia.
@@ -156,9 +171,9 @@ Si un lote falla por versión (otro escribió el documento):
 
 ## 10. Aprendizaje y re-controles
 
-Ejecutá `/control-aprendizaje`. Procesa las respuestas humanas nuevas y los re-controles vencidos.
+Ejecutá `/control-aprendizaje`. Procesa las respuestas humanas nuevas (a incidentes y a discrepancias de proyecto) y los re-controles vencidos.
 
-Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos cuando una regla se aprobó o editó, y una vez por día revisa las reglas con los últimos 30 días. Su primer paso es un script: si no hay candidatos termina en segundos.
+Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos cuando una regla se aprobó o editó, y una vez por día revisa las reglas con los últimos 30 días. Su primer paso es un script: si no hay candidatos termina en segundos. Siempre propone: la aprobación automática, si está activa, es el paso 4 de la corrida siguiente.
 
 ## 11. Salud y cierre
 
@@ -170,6 +185,7 @@ Al final respondé con un resumen breve en español:
 - proyectos revisados;
 - incidentes nuevos y recurrentes;
 - escalados;
+- reglas aprobadas automáticamente y proyectos propuestos por un escaneo, si hubo;
 - errores de colecta.
 
 Si algo falló, decilo con el comando y el motivo. No ocultes fallas parciales.

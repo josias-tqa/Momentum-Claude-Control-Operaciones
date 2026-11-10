@@ -38,10 +38,12 @@ test('ayuda: cada botón tiene tooltip y cada "?" apunta a una sección', () => 
   const faltan = [];
   const pedir = (id, de) => { if (!tips[id]) faltan.push(`${id} (${de})`); };
   for (const act of todos(/data-act="([\w-]+)"/g)) {
-    if (sin.includes(act) || ['panel', 'regla', 'tab'].includes(act)) continue;
+    if (sin.includes(act) || ['panel', 'disc-panel', 'regla', 'tab'].includes(act)) continue;
     pedir(alias[act] || act, `data-act="${act}"`);
   }
-  for (const p of todos(/bt\('([\w-]+)'/g)) pedir(alias['panel-' + p] || p, `panel ${p}`);
+  for (const p of todos(/\bbt\('([\w-]+)'/g)) pedir(alias['panel-' + p] || p, `panel ${p}`);
+  // Paneles de una discrepancia (pestaña Discrepancias de un proyecto): su tooltip es disc-<panel>.
+  for (const p of todos(/\bdbt\('([\w-]+)'/g)) pedir('disc-' + p, `panel de discrepancia ${p}`);
   for (const s of todos(/data-act="regla"[^>]*data-s="(\w+)"/g)) pedir('regla-' + s, `regla ${s}`);
   const tabs = app.slice(app.indexOf('function viewProyecto(')).match(/const tabs = \[(.*?)\];/)[1];
   for (const [, t] of tabs.matchAll(/\['(\w+)'/g)) pedir('proyecto-' + t, `pestaña ${t}`);

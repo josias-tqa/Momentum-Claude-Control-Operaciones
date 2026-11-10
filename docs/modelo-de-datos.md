@@ -13,19 +13,22 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 
 | Colección | Escribe | Contenido |
 |---|---|---|
-| `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria |
+| `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria. `autoApproveRules`: aprobación automática de reglas (apagada por defecto). `discovery`: carpetas de Orchestrator a escanear (`rootFolders`) y carpetas propuestas que un Admin ignoró (`ignoredFolders`) |
 | `config/health`, `config/runlock` | Rutina | Última corrida, fallas consecutivas, uso de la base, marcas de la revisión de reglas (`rulesReview`); lock entre corridas |
 | `projects/{id}` | Admin (alta y configuración) y rutina (salud, watermarks, inventario, emparejamiento) | Carpeta de Orchestrator, **procesos** (cada uno con su repo, su rol, su nombre en Orchestrator y, opcionalmente, su carpeta y su documentación), documentación común, `status`, criterios del proyecto, baseline. Detalle: `scripts/lib/proyecto.mjs` |
 | `memory/{projectId}` | Rutina (Admin puede corregir) | `process`: memoria de proceso (mini-PDD). `productionSummary`: resumen rodante de la memoria de producción |
 | `history/{id}` | Rutina | **Memoria de producción**, append-only y permanente |
-| `rules/{id}` | Admin (crear, aprobar, editar, eliminar) y rutina (compilar, proponer) | Regla en lenguaje natural, sus `exceptions` ("no aplica cuando…", escritas por personas), su `compiled`, `status` y `origin` |
+| `rules/{id}` | Admin (crear, aprobar, editar, eliminar) y rutina (compilar, proponer y, con la aprobación automática activa, aprobar) | Regla en lenguaje natural, sus `exceptions` ("no aplica cuando…", escritas por personas), su `compiled`, `status` y `origin`. `autoApproved` marca las que aprobó la rutina |
 | `runs/{runId}` | Solo rutina | Una corrida. Por proyecto trae la ventana, los conteos, cada check con su valor observado y los hallazgos con su triage |
 | `incidents/{id}` | Solo rutina | Una tarjeta por tema. Guarda fingerprints, ocurrencias, recurrencias, evidencia redactada, triage (con su porqué) y análisis previo |
 | `incidentWork/{incidentId}` | Operador o Admin | Lado humano: `state` (delegated, snoozed, dismissed, responded), asignado, motivo del descarte, respuesta |
 | `activity/{id}` | Operador o Admin | Comentarios y acciones sobre una tarjeta, incluidos los cambios de regla hechos desde ella (`type: "rule"`) |
-| `requests/{id}` | Operador o Admin | `onboard_project`, `reanalyze_project`, `recompile_rule` |
+| `requests/{id}` | Operador o Admin | `onboard_project`, `reanalyze_project`, `reanalyze_incident`, `recompile_rule`, `discover_projects` (escanear la carpeta de Ajustes) |
 | `libraries/{slug}` | Solo rutina | Catálogo de librerías propias: versiones en uso, actividades de cada una, si trae fuentes |
-| `config/discovery` | Rutina | Carpetas con procesos que todavía no son un proyecto (se actualiza una vez por día) |
+| `config/discovery` | Rutina | **Proyectos propuestos**: carpetas con procesos, dentro de las carpetas a escanear, que todavía no son un proyecto. Trae las raíces usadas (`roots`) y, si hubo un problema de acceso, un aviso (`note`). Se actualiza cuando un Admin pide el escaneo y una vez por día |
+| `discrepancies/{id}` | Solo rutina | Una tarjeta por **discrepancia** de un proyecto: lo que no coincide entre código, documentación y Orchestrator. `status` dice si la rutina la sigue detectando (`open`) o no (`resolved`) |
+| `discrepancyWork/{discrepancyId}` | Operador o Admin | Lado humano de una discrepancia: `state` (snoozed, dismissed, responded, open), motivo del descarte, respuesta |
+| `documents/{projectId}_{kind}` | Admin | PDD, SDD o Runbook de un proyecto subido a mano, **en Markdown** (`markdown`), con el archivo de origen y cuántos datos se enmascararon. Un documento por tipo y por proyecto, de hasta 230 KB |
 | `rollups/{projectId}_{AAAA-MM}` | Solo rutina | Resumen mensual que queda cuando la retención depura |
 | `data/users/{id}/…` | Cada persona, lo suyo | Preferencias (no se usa todavía) |
 
@@ -45,6 +48,38 @@ Las personas se guardan **solo** como IDs opacos (`u_…`). Los nombres los resu
    - no está pospuesta, salvo que la severidad haya subido después de posponerla.
 4. `/control-aprendizaje` convierte la respuesta humana en una entrada de `history`. Según la respuesta, cierra el incidente o lo deja abierto (fix pendiente, re-control) y puede proponer una regla.
 
+## Discrepancias de un proyecto
+
+Son otro tipo de tarjeta: viven en la página del proyecto (pestaña **Discrepancias**) y **no pasan por la bandeja** ni cambian la salud del proyecto.
+
+1. `/control-alta-proyecto` (alta o re-análisis) lista lo que no coincide, con una `key` estable por discrepancia.
+2. `scripts/consolidar-discrepancias.mjs` lo une con lo que ya hay. El id es `disc-<proyecto>-<hash de la key>`:
+   - nueva: se crea `open`;
+   - ya conocida: suma una detección (`seenCount`, `lastSeenAt`);
+   - `open` que el análisis ya no encuentra: pasa a `resolved` ("ya no se detecta");
+   - `resolved` que vuelve a detectarse: vuelve a `open`. Si nadie la había dado por cerrada, además lleva `reopenedAt`.
+3. El equipo la responde, la descarta o la pospone: el tablero escribe `discrepancyWork/{id}`. La rutina nunca escribe ese documento.
+4. Una discrepancia está **pendiente** en el tablero si está `open` y no tiene una respuesta, un descarte o una posposición vigente, o si reapareció (`reopenedAt`) después de esa respuesta. Una discrepancia descartada, o respondida "es correcto así", no vuelve a mostrarse como nueva.
+5. `/control-aprendizaje` anota cada respuesta en `history` (`type: "discrepancy"`) y marca `learning` en la discrepancia. El siguiente re-análisis la tiene en cuenta en la memoria de proceso.
+
+| Respuesta (`response.decision`) | Descarte (`dismissReason`) |
+|---|---|
+| `fix_docs`, `fix_orchestrator`, `fix_code`, `expected`, `escalate_dev` | `expected`, `false_positive`, `already_fixed`, `not_relevant` |
+
+## Documentos subidos a mano
+
+Un Admin sube el PDD, el SDD o el Runbook desde la pestaña **Documentación** del proyecto. El tablero convierte el `.docx` a Markdown en el navegador (títulos, párrafos, negritas, listas y tablas; sin imágenes), o toma un `.md`, un `.txt` o texto pegado, y lo guarda en `documents/{projectId}_{kind}`.
+
+- **PII:** antes de guardar se enmascaran emails, números de documento, CUIT/NIT y usuarios de Windows, con los mismos patrones de `config/patrones-pii.json` (los verifica `tests/scripts.test.mjs`). Los nombres de personas no se pueden detectar: el Admin revisa el Markdown antes de confirmar.
+- La rutina los lee en `/control-alta-proyecto` y `/control-analisis`, solo del proyecto que está mirando, y **no copia** a la memoria ni a los análisis nada que identifique a una persona.
+- En un `import`, pasan por `build-writes` como cualquier otro documento.
+
+## Proyectos propuestos (escaneo de carpetas)
+
+1. Un Admin escribe en Ajustes la carpeta de Orchestrator a escanear (`config/settings.discovery.rootFolders`) y toca **Guardar y escanear**: el tablero crea una solicitud `discover_projects`.
+2. La próxima corrida ejecuta `/control-descubrir` en modo proponer (`scripts/descubrir.mjs --ajustes … --plan-tablero …`) y escribe `config/discovery`. El descubrimiento diario lo repite.
+3. El tablero muestra como **proyecto propuesto** cada carpeta de `config/discovery.folders` que no esté registrada ni en `discovery.ignoredFolders`. El Admin registra (una o todas) o ignora. Nada se registra solo.
+
 ## Editar una regla
 
 Un Admin edita una regla desde la tarjeta del incidente que la disparó o desde la lista de reglas. El tablero escribe en `rules/{id}`:
@@ -61,7 +96,9 @@ Guardar una regla `proposed`, `disabled` o `rejected` la aprueba o reactiva. Un 
 
 ## Propuestas de la rutina sobre reglas
 
-`/control-reglas` propone, y un Admin decide. Nada se activa solo.
+`/control-reglas` propone, y un Admin decide. Por defecto nada se activa solo.
+
+**Aprobación automática.** Si `config/settings.autoApproveRules` es `true` (interruptor de Ajustes), `scripts/aprobar-reglas.mjs` pasa a `active` las reglas `proposed` al empezar cada corrida, con `approvedBy: "rutina"` y `autoApproved: true`, y deja una entrada en `history`. Como la corrida lee la base al inicio, una regla se aprueba en la corrida siguiente a la que la propuso: en ese rato un Admin puede rechazarla. Los cambios sugeridos (`suggestion`) nunca se aplican solos.
 
 | Cuándo | Qué busca | Qué deja |
 |---|---|---|
@@ -83,6 +120,8 @@ Guardar una regla `proposed`, `disabled` o `rejected` la aprueba o reactiva. Un 
 | `runs` | 24 por día | 60 días: alrededor de 1.440 |
 | `incidents` + `incidentWork` + `activity` | Depende de la estabilidad; el dedupe evita repetidos | Cerrados a los 180 días: unos pocos miles |
 | `history` | Solo eventos relevantes | Permanente: cientos por año |
+| `discrepancies` + `discrepancyWork` | Unas pocas por proyecto | Las resueltas se borran a los 180 días |
+| `documents` | Hasta 3 por proyecto | Permanente: 30 |
 | `rollups` | 1 por proyecto y por mes | 120 por año |
 
 Si el total pasa 15.000 documentos, `/control-mantenimiento` avisa en `config/health` y achica la retención.

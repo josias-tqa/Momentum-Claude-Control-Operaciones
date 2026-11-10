@@ -45,6 +45,8 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
    - Known Issues and Resolutions;
    - pasos To-Be del proceso.
    Un `.docx` se convierte con `pandoc <archivo> -t gfm`.
+   - **Documentos subidos al tablero.** Si el proyecto tiene PDD, SDD o Runbook subidos a mano (pestaña Documentación), están en `documents`, ya en Markdown: `ArtifactData query` de `documents` con `where: [["projectId","==","<id>"]]` y `out_dir: work/$RUN/documentos/<id>`. Leelos una sola vez por proyecto y por corrida. Para lo operativo (qué hacer ante la falla, a quién escalar) mirá primero el Runbook. En `docRefs`, citá `file` como `PDD subido al tablero`, `SDD subido al tablero` o `Runbook subido al tablero`.
+   - Pueden traer nombres de personas: no los copies al análisis. Los contactos van por rol.
 4. **Contrastar:**
    - ¿Es una regresión? Mirá si la versión es nueva respecto de `history` (`deploy_detected`).
    - ¿Es un dato de negocio o un sistema externo?

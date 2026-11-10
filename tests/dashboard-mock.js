@@ -1,4 +1,4 @@
-// Simulación de window.claude (capacidades db y user) para probar el tablero fuera de claude.ai.
+// Simulación de window.claude (capacidades db, user y downloads) para probar el tablero fuera de claude.ai.
 // Implementa solo el subconjunto que usa dashboard/index.html. Datos: window.__SEED__ = { "coleccion/doc": {...} }.
 (function () {
   const seed = window.__SEED__ || {};
@@ -11,8 +11,8 @@
   const canWrite = (path) => {
     if (role === 'lector') return false;
     const col = path.split('/')[0];
-    if (role === 'operador') return ['incidentWork', 'activity', 'requests', 'data'].includes(col);
-    return !['runs', 'incidents', 'rollups'].includes(col);
+    if (role === 'operador') return ['incidentWork', 'activity', 'discrepancyWork', 'requests', 'data'].includes(col);
+    return !['runs', 'incidents', 'rollups', 'discrepancies'].includes(col);
   };
   const deny = () => Promise.reject({ code: 'invalid_argument', message: 'denegado' });
   function query(col, filters = [], ord = null, lim = null) {
@@ -55,5 +55,8 @@
     profiles: async (ids) => Object.fromEntries([].concat(ids).map((id) => [id, prof(id)])),
     search: async (q) => Object.keys(people).filter((id) => !q || people[id].toLowerCase().includes(q.toLowerCase())).map(prof),
   };
-  window.claude = { use: async (n) => (window.__NODB__ && n === 'db' ? null : n === 'db' ? db : n === 'user' ? user : null) };
+  // Descargas: se registran en window.__DOWNLOADS__ en vez de guardar un archivo.
+  window.__DOWNLOADS__ = [];
+  const downloads = { save: async (req) => { window.__DOWNLOADS__.push({ filename: req.filename, data: String(req.data) }); return { status: 'saved' }; } };
+  window.claude = { use: async (n) => (window.__NODB__ && n === 'db' ? null : n === 'db' ? db : n === 'user' ? user : n === 'downloads' ? downloads : null) };
 })();

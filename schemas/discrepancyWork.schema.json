@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "discrepancyWork",
+  "type": "object",
+  "required": [
+    "state"
+  ],
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "open",
+        "snoozed",
+        "dismissed",
+        "responded"
+      ]
+    },
+    "snoozeUntil": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "dismissReason": {
+      "type": "string",
+      "enum": [
+        "expected",
+        "false_positive",
+        "already_fixed",
+        "not_relevant"
+      ]
+    },
+    "response": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "fix_docs",
+            "fix_orchestrator",
+            "fix_code",
+            "expected",
+            "escalate_dev"
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "ticket": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    },
+    "updatedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "updatedBy": {
+      "type": "string",
+      "maxLength": 200
+    }
+  }
+}

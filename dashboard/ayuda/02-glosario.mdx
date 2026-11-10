@@ -6,9 +6,11 @@ Los términos que aparecen en el tablero, en orden alfabético.
 
 <div className="ay-glos">
 
-<Termino id="alta" nombre="Alta">El primer análisis de un proyecto recién registrado. La rutina descubre sus procesos, colas, triggers y librerías, calcula el baseline y genera la memoria de proceso y las reglas propuestas. Después un Admin lo revisa y lo activa.</Termino>
+<Termino id="alta" nombre="Alta">El primer análisis de un proyecto recién registrado. La rutina descubre sus procesos, colas, triggers y librerías, calcula el baseline y genera la memoria de proceso, las discrepancias y las reglas propuestas. Después un Admin lo revisa y lo activa.</Termino>
 
 <Termino id="analisis-previo" nombre="Análisis previo">Lo que la rutina investiga antes de escalar una tarjeta: hipótesis con su probabilidad, acciones sugeridas, el código y la documentación relacionados, y qué cambió en el último deploy. Se lee en el detalle de la tarjeta.</Termino>
+
+<Termino id="aprobacion-automatica" nombre="Aprobación automática">Una opción de Ajustes. Cuando está activa, las reglas que propone la rutina se activan solas en la corrida siguiente, sin esperar a un Admin. Los cambios sugeridos sobre reglas que ya existen siempre los aplica una persona.</Termino>
 
 <Termino id="baseline" nombre="Baseline">El comportamiento normal de un proyecto en los últimos 30 días: cuántos jobs corre, cuánto tardan y cuántos errores tiene. Sirve para distinguir un problema nuevo de lo habitual.</Termino>
 
@@ -19,6 +21,8 @@ Los términos que aparecen en el tablero, en orden alfabético.
 <Termino id="criterios" nombre="Criterios de triage">Instrucciones en lenguaje natural que guían la clasificación. Hay criterios globales, en Ajustes, y criterios propios de cada proyecto, en su Configuración.</Termino>
 
 <Termino id="decision" nombre="Decisión">Qué hace el triage con un hallazgo. Escalado: necesita a una persona y va a Requiere acción. Aviso: conviene verlo, pero no bloquea. En observación: se sigue la tendencia sin mostrarlo. Conocido: la memoria o una regla dicen que es esperado.</Termino>
+
+<Termino id="discrepancia" nombre="Discrepancia">Algo que no coincide entre el código, la documentación y Orchestrator de un proyecto, por ejemplo una cola del SDD que no existe o un trigger con otra frecuencia. La encuentra el análisis del proyecto. Se responde, se pospone o se descarta desde la pestaña Discrepancias del proyecto: no va a la bandeja.</Termino>
 
 <Termino id="estado-proyecto" nombre="Estado del proyecto">Esperando análisis, Analizando, En revisión, Activo, Pausado o Con error. Solo los proyectos activos se controlan en cada corrida.</Termino>
 
@@ -40,6 +44,8 @@ Los términos que aparecen en el tablero, en orden alfabético.
 
 <Termino id="proyecto" nombre="Proyecto">Una carpeta de Orchestrator con sus procesos, por ejemplo Dispatcher, Performer y Reporter. Es la unidad que se registra, se analiza y se controla.</Termino>
 
+<Termino id="proyecto-propuesto" nombre="Proyecto propuesto">Una carpeta de Orchestrator con procesos que encontró el escaneo y que todavía no se controla. Un Admin la registra, y entonces la rutina hace su alta, o la ignora.</Termino>
+
 <Termino id="pulso" nombre="Pulso de la rutina">Abajo del menú (en el teléfono, arriba): cuándo fue el último control. Verde si salió bien, ámbar si tuvo errores de colecta, y rojo si la rutina dejó de correr; en ese caso la bandeja también lo avisa.</Termino>
 
 <Termino id="punto-de-control" nombre="Punto de control">Cada cosa que se revisa en una corrida, por ejemplo jobs fallidos, items abandonados o una regla. Su resultado es alerta, ok u omitido.</Termino>
@@ -58,9 +64,9 @@ Los términos que aparecen en el tablero, en orden alfabético.
 
 <Termino id="severidad" nombre="Severidad (P1 a P4)">P1: un proceso crítico se detuvo o se incumplió el SLA hoy. P2: proceso degradado con riesgo de SLA. P3: errores aislados. P4: informativo.</Termino>
 
-<Termino id="similitud" nombre="Propuesta por similitud">Cuando un Admin aprueba o edita una regla, la rutina propone la regla equivalente a otros procesos que usan el mismo portal, la misma aplicación o la misma librería. Llega como propuesta: nunca se activa sola.</Termino>
+<Termino id="similitud" nombre="Propuesta por similitud">Cuando un Admin aprueba o edita una regla, la rutina propone la regla equivalente a otros procesos que usan el mismo portal, la misma aplicación o la misma librería. Llega como propuesta: la aprueba un Admin, salvo que esté activa la aprobación automática.</Termino>
 
-<Termino id="solicitud" nombre="Solicitud">Un pedido del equipo a la rutina, por ejemplo analizar un proyecto nuevo o volver a analizar una tarjeta. Se atiende en la próxima corrida.</Termino>
+<Termino id="solicitud" nombre="Solicitud">Un pedido del equipo a la rutina, por ejemplo escanear una carpeta, analizar un proyecto nuevo o volver a analizar una tarjeta. Se atiende en la próxima corrida.</Termino>
 
 <Termino id="sugerencia" nombre="Sugerencia de la rutina">Un cambio en una regla que propone la revisión diaria de los últimos 30 días: una excepción o un umbral si casi siempre se descarta, una severidad más baja si sus temas se posponen, o desactivarla si no dispara hace 60 días. Se ve como Cambio sugerido.</Termino>
 

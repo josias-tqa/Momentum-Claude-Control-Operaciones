@@ -24,11 +24,14 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
    - Tampoco el `SpecificContent`/`SpecificData`/`Output` de queue items ni capturas de pantalla.
    - Las personas se guardan solo como IDs opacos de la plataforma.
    - Si un texto generado por Claude (análisis, memoria) necesita citar un dato de un caso, se cita la referencia hasheada o el link a Orchestrator, nunca el dato.
+   - Los documentos que sube un Admin (`documents`: PDD, SDD, Runbook) pasan por un enmascarado básico en el tablero, pero pueden traer nombres de personas: se leen, y nunca se copia a la memoria, a un análisis ni a una discrepancia nada que identifique a alguien.
 4. **Todo se escribe validado.** Las escrituras al tablero salen de `scripts/build-writes.mjs`, que valida contra `schemas/` y busca PII residual.
    - No se escriben documentos "a mano" con ArtifactData salvo los casos que indica cada skill.
    - Esos casos también respetan los esquemas.
 5. **Las respuestas humanas mandan.** Un incidente descartado, pospuesto o respondido por un humano no se vuelve a mostrar como nuevo.
    - Su recurrencia se acumula en la misma tarjeta.
+   - Vale igual para las discrepancias de un proyecto: la rutina nunca escribe `discrepancyWork`.
+   - Las reglas las aprueba un Admin. La rutina solo las activa por su cuenta con `scripts/aprobar-reglas.mjs`, y solo si un Admin encendió la aprobación automática en Ajustes (`config/settings.autoApproveRules`).
 6. **Todo cambio en el tablero actualiza su ayuda.** La ayuda vive en `dashboard/ayuda/*.mdx` y se compila dentro de `dashboard/index.html`.
    - Una pantalla, pestaña, botón o etiqueta nueva o cambiada se explica en su `.mdx`: sección, `Accion` o `Termino`. El `breve` es el tooltip.
    - Después: `npm run build:ayuda` y `npm test`. `tests/ayuda.test.mjs` falla si falta una sección o un tooltip, o si el bloque generado quedó viejo.
@@ -42,7 +45,9 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 |---|---|
 | Corrida programada | skill `/control-corrida` |
 | Alta de un proyecto (análisis inicial, memoria de proceso) | skill `/control-alta-proyecto` |
-| Descubrir y registrar todos los proyectos de Orchestrator | skill `/control-descubrir` |
+| Escanear la carpeta de Ajustes y proponer proyectos (primer paso con un cliente nuevo), o registrar todos | skill `/control-descubrir` · `docs/cliente-nuevo.md` |
+| Discrepancias de un proyecto (tarjetas a nivel proyecto, fuera de la bandeja) | `scripts/consolidar-discrepancias.mjs`, desde `/control-alta-proyecto` |
+| Aprobación automática de reglas (interruptor de Ajustes) | `scripts/aprobar-reglas.mjs`, desde `/control-corrida` |
 | Análisis previo a escalar (código + docs) | skill `/control-analisis` |
 | Aprendizaje de respuestas humanas (memoria de producción, reglas propuestas) | skill `/control-aprendizaje` |
 | Propuestas de reglas: similitud entre procesos y revisión diaria (nunca activa nada) | skill `/control-reglas` |

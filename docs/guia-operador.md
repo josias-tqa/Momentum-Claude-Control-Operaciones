@@ -9,8 +9,8 @@ Los roles se asignan desde el menú **Compartir** del tablero.
 | Rol | Acceso en Compartir | Puede |
 |---|---|---|
 | Lector | Viewer | Ver todo |
-| Operador | Contributor | Responder, delegar, posponer, descartar y comentar incidentes |
-| Admin | Editor | Además: registrar proyectos, aprobar, ajustar y eliminar reglas, editar criterios y ajustes |
+| Operador | Contributor | Responder, delegar, posponer, descartar y comentar incidentes; responder, posponer y descartar discrepancias de un proyecto |
+| Admin | Editor | Además: indicar la carpeta a escanear, registrar proyectos, subir su documentación, aprobar, ajustar y eliminar reglas, editar criterios y ajustes |
 
 ## Cómo moverse
 
@@ -19,11 +19,11 @@ El menú está siempre a la vista: a la izquierda en una computadora, abajo en e
 | Sección | Para qué |
 |---|---|
 | **Bandeja** | Lo que hay que mirar ahora. El número indica cuántos temas hay abiertos. |
-| **Proyectos** | Estado, memoria, reglas e inventario de cada proyecto. Desde acá se registran proyectos nuevos (Admin). |
+| **Proyectos** | Estado, memoria, discrepancias, documentación, reglas e inventario de cada proyecto. Desde acá se registran proyectos nuevos (Admin). |
 | **Corridas** | Cada ejecución de la rutina: qué revisó y qué encontró. |
 | **Reglas** | Puntos de control en lenguaje natural. El número indica cuántas propuestas esperan aprobación. |
 | **Fuera de bandeja** | Temas abiertos que no se muestran en la bandeja: pospuestos, respondidos, descartados y los que el triage decidió no reportar. En el teléfono está dentro de **Más**. |
-| **Ajustes** (Admin) | Criterios de triage, umbrales y retención. En el teléfono está dentro de **Más**. |
+| **Ajustes** (Admin) | Carpeta de Orchestrator a escanear, criterios de triage, umbrales, retención y aprobación automática de reglas. En el teléfono está dentro de **Más**. |
 
 Abajo del menú se ve el **estado de la rutina** y cuándo fue el último control. Si la rutina dejó de correr, se marca en rojo y la bandeja lo avisa arriba.
 
@@ -77,12 +77,20 @@ Si el tema está pospuesto, respondido o descartado, el detalle lo dice arriba y
 
 **La Torre de Control nunca cambia nada en Orchestrator ni en el código.** Sugiere qué hacer, y lo hace una persona.
 
+## Primeros pasos en un tablero nuevo (Admin)
+
+1. **Ajustes** → **Proyectos a controlar**: escribí la carpeta de Orchestrator donde están los proyectos de producción (por ejemplo `Produccion`; si son varias, separadas por coma) y tocá **Guardar y escanear**.
+2. La próxima corrida recorre todo lo que hay adentro y **propone como proyecto** cada carpeta que tiene procesos. Las propuestas aparecen en **Proyectos → Registrar proyecto** y en **Para revisar**.
+3. Registrá los que quieras controlar e ignorá el resto (ver abajo).
+
+Mientras no hay proyectos, la Bandeja y Proyectos muestran estos pasos. La rutina repite el escaneo una vez por día, así que las carpetas nuevas se proponen solas.
+
 ## Registrar un proyecto (Admin)
 
 Un **proyecto es una carpeta de Orchestrator**. La rutina detecta sola sus procesos (Dispatcher, Performer, Reporter…), las librerías que usan y la documentación. Todo sale de los paquetes publicados, en la versión que está en producción.
 
 1. **Proyectos** → **Registrar proyecto**. Hay dos formas:
-   - En **Carpetas detectadas sin registrar**, tocá **Registrar** en la carpeta que quieras.
+   - En **Proyectos propuestos**, tocá **Registrar** en el que quieras, o **Registrar los N** para registrar todos de una vez. **Ignorar** saca una carpeta de las propuestas (pruebas, desarrollo); **Volver a proponerlas** las recupera.
    - O escribí el nombre y la carpeta a mano.
 2. La próxima corrida lo analiza y genera la **memoria de proceso** y reglas propuestas.
 3. Revisá todo y tocá **Activar el control de este proyecto**.
@@ -95,6 +103,24 @@ En **Opciones avanzadas** se puede:
 - agregar documentación adicional.
 
 Normalmente no hace falta.
+
+## Discrepancias de un proyecto
+
+Al analizar un proyecto, la rutina compara el código, la documentación y Orchestrator. Lo que no coincide es una **discrepancia**: una cola del SDD que no existe, un trigger con otra frecuencia, un asset que el código lee y no está, un paquete que publica capturas.
+
+- Están en la pestaña **Discrepancias** de cada proyecto. **No van a la bandeja** ni cambian la salud del proyecto. La lista de proyectos y el título del proyecto dicen cuántas hay pendientes.
+- Cada una se puede **Responder** (corregir la documentación, corregir en Orchestrator, corregir el código, es correcto así, derivar a desarrollo; con notas y ticket), **Posponer** o **Descartar** (es correcto así, la rutina se equivocó, ya se corrigió, no es relevante).
+- **Atendidas** muestra las respondidas, pospuestas y descartadas, con quién lo hizo, y las **resueltas**, que la rutina dejó de detectar. **Volver a abrir** deshace la respuesta.
+- La rutina respeta lo respondido: una discrepancia descartada no vuelve como nueva. Si una que se dio por corregida se vuelve a detectar, reaparece como pendiente.
+
+## Documentación de un proyecto (Admin)
+
+La rutina lee sola la documentación que viene en los paquetes. Si el PDD, el SDD o el Runbook no están ahí, o están viejos, se suben desde la pestaña **Documentación** del proyecto:
+
+1. **Subir archivo** (`.docx`, `.md` o `.txt`) o **Pegar texto**. Un Word se convierte a Markdown en el momento; un PDF hay que guardarlo antes como `.docx` o pegar su texto.
+2. Revisá el Markdown. Los emails, números de documento y usuarios se enmascaran solos; **los nombres de personas no**: quitalos a mano.
+3. **Guardar**. El documento queda guardado en Markdown, sin imágenes. Se puede **Ver**, **Descargar .md**, **Reemplazar** o **Quitar**.
+4. **Pedir re-análisis** para que la memoria de proceso y las discrepancias tomen el documento nuevo.
 
 ## Tarjetas con librería o con deploy
 
@@ -121,6 +147,15 @@ Se escriben en lenguaje natural, por ejemplo: "si se ven más de 10 errores de l
 
 Las reglas que nacen de respuestas a incidentes llegan como **propuestas**. Un Admin las aprueba o rechaza.
 
+### Aprobación automática (Admin)
+
+En **Ajustes → Reglas** hay un interruptor: **Aprobar automáticamente las reglas que propone la rutina**. Viene apagado.
+
+- Encendido, las reglas propuestas se activan solas en la corrida siguiente a la que las propuso. En ese rato se ven como propuestas y todavía se pueden rechazar.
+- Al encenderlo, la próxima corrida aprueba también las propuestas que ya estaban esperando: rechazá antes las que no quieras.
+- Quedan marcadas como **aprobada automáticamente** y se pueden desactivar, editar o eliminar como cualquier otra.
+- Los **cambios sugeridos** sobre reglas que ya existen nunca se aplican solos.
+
 ### Ajustar una regla desde la tarjeta (Admin)
 
 Si un incidente salió de una regla, o una regla lo marcó como conocido, la tarjeta tiene el botón **Ajustar regla**. El editor se abre ahí mismo, sin salir de la bandeja:
@@ -144,7 +179,7 @@ En Ver más → **Reglas**, el botón **Editar** abre el mismo editor para cualq
 
 ### Propuestas de la rutina (Admin)
 
-La rutina también propone por su cuenta. Nunca activa nada: todo aparece en **Para revisar**.
+La rutina también propone por su cuenta. Todo aparece en **Para revisar**, y nada se activa solo salvo que la aprobación automática esté encendida.
 
 - **Reglas por similitud.** Cuando aprobás o editás una regla, la rutina busca otros procesos que usan el mismo portal, la misma aplicación o la misma librería, y les propone la regla equivalente. La propuesta dice por qué ("usa el mismo portal que…"). Se aprueba, se rechaza o se ajusta con **Editar** antes de aprobar.
 - **Cambios sugeridos.** Una vez por día la rutina revisa los últimos 30 días y marca con **Cambio sugerido** las reglas que conviene tocar: una excepción o un umbral distinto si la regla avisa y casi siempre se descarta, una severidad más baja si sus tarjetas se posponen, o desactivarla si no dispara hace 60 días. **Revisar** abre el editor con la sugerencia; **Aplicar** la carga en el formulario y vos confirmás con Guardar. **No, gracias** la descarta y no vuelve por 90 días.

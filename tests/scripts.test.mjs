@@ -533,3 +533,165 @@ test('índice de código: cada proceso trae los sistemas de su paquete y de sus 
   delete process.env.OPS_FIXTURES;
   assert.ok(r.procesos.length && r.procesos.every((p) => Array.isArray(p.systems)));
 });
+
+// ---------- carpeta a escanear, aprobación automática, discrepancias y documentos ----------
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { listaDeCarpetas, raizDe, dentroDe } from '../scripts/lib/carpetas.mjs';
+import { aprobarAutomatico } from '../scripts/aprobar-reglas.mjs';
+import { consolidarDiscrepancias, idDiscrepancia, claveDiscrepancia } from '../scripts/consolidar-discrepancias.mjs';
+import { pendientesDiscrepancias } from '../scripts/pendientes-aprendizaje.mjs';
+
+test('carpetas a escanear: rutas limpias y pertenencia a una raíz', () => {
+  assert.deepEqual(listaDeCarpetas(' /Produccion/ , Clientes\\Produccion\nproduccion'), ['Produccion', 'Clientes/Produccion'], 'sin barras sobrantes ni repetidos');
+  assert.equal(raizDe('Produccion/Finanzas/Pagos', ['Produccion', 'Produccion/Finanzas']), 'Produccion/Finanzas', 'la raíz más específica');
+  assert.equal(raizDe('produccion', ['Produccion']), 'Produccion', 'la raíz misma, sin distinguir mayúsculas');
+  assert.equal(raizDe('ProduccionVieja/X', ['Produccion']), null, 'un prefijo de nombre no es una subcarpeta');
+  assert.ok(dentroDe('Cualquiera', []), 'sin raíces no hay filtro');
+});
+
+test('descubrimiento: con una carpeta raíz solo se propone lo que está adentro, y nunca lo ignorado', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'raiz-'));
+  const correrDesc = (extra) => {
+    execFileSync('node', [join(RAIZ, 'scripts/descubrir.mjs'), '--salida', join(dir, 'c.json'), '--plan-tablero', join(dir, 'p.json'), '--sin-bitbucket', ...extra], { env: { ...process.env, OPS_FIXTURES: join(FIX, 'uip') } });
+    return { c: JSON.parse(readFileSync(join(dir, 'c.json'), 'utf8')), tablero: JSON.parse(readFileSync(join(dir, 'p.json'), 'utf8')).writes[0].data };
+  };
+  // Raíz "Produccion": las dos carpetas con procesos son propuestas (acá no hay proyectos registrados).
+  let r = correrDesc(['--raices', 'Produccion']);
+  assert.deepEqual(r.tablero.folders.map((f) => f.folderPath).sort(), ['Produccion/Finanzas', 'Produccion/Otro']);
+  assert.deepEqual(r.tablero.roots, ['Produccion']);
+  assert.ok(r.tablero.folders.every((f) => f.root === 'Produccion'));
+  assert.equal(r.tablero.note, undefined, 'sin avisos cuando el listado funciona');
+  assert.deepEqual(prepararLotes([{ op: 'set', collection: 'config', doc_id: 'discovery', data: r.tablero }]).errores, []);
+  // Raíz más acotada: lo que queda afuera se marca y no se propone ni se registra solo.
+  r = correrDesc(['--raices', 'Produccion/Otro']);
+  assert.deepEqual(r.tablero.folders.map((f) => f.folderPath), ['Produccion/Otro']);
+  assert.ok(r.c.candidatos.every((x) => x.folderPath !== 'Produccion/Finanzas'), 'ni siquiera se consulta lo que está fuera de la raíz');
+  assert.equal(r.c.orchestrator.fuenteCarpetas.fueraDeLasRaices, 2);
+  // Los ajustes del tablero mandan: carpeta raíz e ignoradas. Un proyecto registrado fuera de la raíz se sigue reconociendo.
+  writeFileSync(join(dir, 'settings.json'), JSON.stringify({ id: 'settings', version: 3, data: { triageCriteria: '', retention: {}, discovery: { rootFolders: ['Produccion/Otro'], ignoredFolders: ['produccion/otro/'] } } }));
+  r = correrDesc(['--ajustes', join(dir, 'settings.json'), '--registrados', join(FIX, 'db/projects')]);
+  const otro = r.c.candidatos.find((x) => x.folderPath === 'Produccion/Otro');
+  assert.ok(otro.ignorada, 'la carpeta ignorada se marca aunque cambie la forma de escribirla');
+  assert.equal(r.c.candidatos.find((x) => x.folderPath === 'Produccion/Finanzas').registradoComo, 'facturacion');
+  assert.deepEqual(r.tablero.folders.map((f) => f.folderPath), ['Produccion/Otro'], 'el tablero recibe la ignorada: la oculta con su propia lista');
+  const plan = planDescubrimiento(r.c, { ahora: '2026-11-10T12:00:00Z' });
+  assert.deepEqual(plan.creados, [], 'una carpeta ignorada no se registra sola');
+  assert.ok(plan.omitidos.some((o) => /ignorada/.test(o.motivo)));
+  // Una raíz donde no hay nada: el tablero recibe un aviso que dice qué revisar.
+  r = correrDesc(['--raices', 'NoExiste']);
+  assert.deepEqual(r.tablero.folders, []);
+  assert.match(r.tablero.note, /No se encontraron procesos dentro de NoExiste/);
+});
+
+test('aprobación automática: solo con el interruptor activo, solo propuestas, con rastro en la memoria', () => {
+  const reglas = [
+    { id: 'p-1', __version: 4, projectId: 'p', text: 'a', status: 'proposed', origin: 'learned', compiled: { severity: 'P2' } },
+    { id: 'p-2', projectId: 'p', text: 'b', status: 'proposed', origin: 'similar' },
+    { id: 'p-3', projectId: 'p', text: 'c', status: 'rejected', origin: 'review', compiled: {} },
+    { id: 'p-4', projectId: 'p', text: 'd', status: 'active', origin: 'manual', compiled: {}, suggestion: { kind: 'severity', value: 'P4', why: 'x' } },
+  ];
+  for (const ajustes of [null, {}, { autoApproveRules: false }, { autoApproveRules: 'true' }]) {
+    const r = aprobarAutomatico({ reglas, ajustes, ahora: AHORA });
+    assert.equal(r.activa, false); assert.deepEqual(r.writes, [], 'apagado por defecto: nada se activa solo');
+  }
+  const r = aprobarAutomatico({ reglas, ajustes: { autoApproveRules: true }, ahora: AHORA });
+  assert.deepEqual(r.aprobadas, ['p-1', 'p-2'], 'ni las rechazadas ni las que tienen un cambio sugerido');
+  const w1 = r.writes.find((w) => w.doc_id === 'p-1');
+  assert.deepEqual(w1.data, { status: 'active', approvedBy: 'rutina', approvedAt: AHORA, autoApproved: true });
+  assert.equal(w1.if_version, 4);
+  assert.equal(r.writes.find((w) => w.doc_id === 'p-2').data.status, 'pending_compile', 'sin traducir: la compila esta corrida');
+  const h = r.writes.find((w) => w.collection === 'history');
+  assert.ok(h.data.projectId === 'p' && /se activaron 2 reglas/.test(h.data.summary));
+  assert.equal(r.writes.length, 3);
+  assert.deepEqual(prepararLotes(r.writes).errores, []);
+});
+
+test('discrepancias: una tarjeta por discrepancia entre análisis; las respuestas humanas mandan', () => {
+  const T1 = '2026-11-01T10:00:00Z'; const T2 = '2026-11-08T10:00:00Z'; const T3 = '2026-11-15T10:00:00Z';
+  const encontradas = [
+    { key: 'Orchestrator: cola: RRHH_NOV Items', kind: 'orchestrator', title: 'La cola RRHH_NOV_Items del SDD no existe en Orchestrator', detail: 'El SDD la lista en Handover.', suggestion: 'Crear la cola o corregir el SDD.', processId: 'performer', refs: [{ source: 'SDD.docx · Handover', note: 'Work Queues' }, { note: 'sin fuente: se descarta' }] },
+    { key: 'trigger:nov_diario', kind: 'trigger', title: 'El trigger corre a las 8 y el SDD dice a las 6' },
+    { key: 'hygiene:nov_performer', kind: 'inventado', title: 'El paquete publica capturas' },
+  ];
+  assert.equal(claveDiscrepancia('Orchestrator: cola: RRHH_NOV Items'), claveDiscrepancia('orchestrator:cola:rrhh-nov-items'), 'la clave no depende de mayúsculas ni separadores');
+  const id = (k) => idDiscrepancia('nomina', k);
+  // Primer análisis: todas nuevas y abiertas.
+  let r = consolidarDiscrepancias({ projectId: 'nomina', encontradas, ahora: T1 });
+  assert.deepEqual(r.resumen, { nuevas: 3, actualizadas: 0, reabiertas: 0, resueltas: 0, sinCambios: 0 });
+  assert.ok(r.writes.every((w) => w.op === 'set' && w.collection === 'discrepancies' && w.data.status === 'open' && w.data.seenCount === 1));
+  const cola = r.writes.find((w) => w.doc_id === id('orchestrator:cola:rrhh_nov_items'));
+  assert.deepEqual(cola.data.refs, [{ source: 'SDD.docx · Handover', note: 'Work Queues' }]);
+  assert.equal(r.writes.find((w) => w.doc_id === id('hygiene:nov_performer')).data.kind, 'other', 'un tipo desconocido no rompe el esquema');
+  assert.deepEqual(prepararLotes(r.writes).errores, []);
+  const comoDocs = (writes, previos = []) => { const m = new Map(previos.map((d) => [d.id, d])); for (const w of writes) m.set(w.doc_id, { ...(m.get(w.doc_id) || {}), id: w.doc_id, __version: 2, ...w.data }); return [...m.values()]; };
+  let docs = comoDocs(r.writes);
+  docs.push({ id: 'disc-otro-x', projectId: 'otro', key: 'x', kind: 'docs', title: 'De otro proyecto', status: 'open' });
+  // Segundo análisis: el trigger ya no se detecta; la cola sigue y está descartada por una persona; las capturas, con fix pendiente.
+  const trabajo = [
+    { id: id('orchestrator:cola:rrhh_nov_items'), state: 'dismissed', dismissReason: 'expected', updatedAt: '2026-11-02T09:00:00Z' },
+    { id: id('hygiene:nov_performer'), state: 'responded', response: { decision: 'fix_code' }, updatedAt: '2026-11-02T09:00:00Z' },
+  ];
+  r = consolidarDiscrepancias({ projectId: 'nomina', encontradas: [encontradas[0], encontradas[2]], existentes: docs, trabajo, ahora: T2 });
+  assert.deepEqual(r.resumen, { nuevas: 0, actualizadas: 2, reabiertas: 0, resueltas: 1, sinCambios: 0 });
+  const trig = r.writes.find((w) => w.doc_id === id('trigger:nov_diario'));
+  assert.deepEqual(trig.data, { status: 'resolved', resolvedAt: T2, resolvedReason: 'Ya no se detecta en el análisis del proyecto.' });
+  assert.equal(trig.if_version, 2);
+  assert.equal(r.writes.find((w) => w.doc_id === id('orchestrator:cola:rrhh_nov_items')).data.seenCount, 2);
+  assert.ok(!r.writes.some((w) => w.doc_id === 'disc-otro-x'), 'no toca las discrepancias de otros proyectos');
+  assert.deepEqual(prepararLotes(r.writes).errores, []);
+  docs = comoDocs(r.writes, docs);
+  // Tercer análisis: no se detecta nada. Lo abierto se cierra; lo ya resuelto queda como está.
+  r = consolidarDiscrepancias({ projectId: 'nomina', encontradas: [], existentes: docs, trabajo, ahora: T2 });
+  assert.deepEqual(r.resumen, { nuevas: 0, actualizadas: 0, reabiertas: 0, resueltas: 2, sinCambios: 1 });
+  docs = comoDocs(r.writes, docs);
+  // Cuarto análisis: vuelven las tres. La descartada por una persona no reaparece como pendiente; las otras dos sí.
+  r = consolidarDiscrepancias({ projectId: 'nomina', encontradas, existentes: docs, trabajo, ahora: T3 });
+  assert.deepEqual(r.resumen, { nuevas: 0, actualizadas: 1, reabiertas: 2, resueltas: 0, sinCambios: 0 });
+  const descartada = r.writes.find((w) => w.doc_id === id('orchestrator:cola:rrhh_nov_items')).data;
+  assert.ok(descartada.status === 'open' && descartada.reopenedAt === undefined, 'se sigue detectando, pero la respuesta humana se respeta');
+  const conFix = r.writes.find((w) => w.doc_id === id('hygiene:nov_performer')).data;
+  assert.ok(conFix.status === 'open' && conFix.reopenedAt === T3 && conFix.reopenCount === 1, 'el fix informado no alcanzó: reaparece');
+  // Una lista mal formada no escribe nada a medias.
+  assert.ok(consolidarDiscrepancias({ projectId: 'nomina', encontradas: [{ title: 'sin clave' }], ahora: T1 }).errores.length);
+});
+
+test('aprendizaje: respuestas a discrepancias pendientes de anotar en la memoria', () => {
+  const discs = [
+    { id: 'd1', projectId: 'p', title: 'A', kind: 'docs', status: 'open' },
+    { id: 'd2', projectId: 'p', title: 'B', kind: 'trigger', status: 'open', learning: { workUpdatedAt: '2026-11-05T00:00:00Z' } },
+    { id: 'd3', projectId: 'p', title: 'C', kind: 'queue', status: 'open' },
+    { id: 'd4', projectId: 'p', title: 'D', kind: 'code', status: 'open' },
+  ];
+  const trabajo = [
+    { id: 'd1', state: 'responded', response: { decision: 'fix_docs', ticket: 'DOC-1' }, updatedAt: '2026-11-06T00:00:00Z', updatedBy: 'u_1' },
+    { id: 'd2', state: 'dismissed', dismissReason: 'expected', updatedAt: '2026-11-04T00:00:00Z' }, // ya procesada
+    { id: 'd3', state: 'snoozed', snoozeUntil: '2026-12-01T00:00:00Z', updatedAt: '2026-11-06T00:00:00Z' }, // posponer no enseña nada
+    { id: 'd4', state: 'responded', response: { decision: 'expected' }, updatedAt: '2026-11-06T00:00:00Z' },
+    { id: 'huerfana', state: 'dismissed', updatedAt: '2026-11-06T00:00:00Z' },
+  ];
+  const r = pendientesDiscrepancias(discs, trabajo);
+  assert.deepEqual(r.map((x) => [x.discrepancyId, x.cierra]), [['d1', false], ['d4', true]]);
+  assert.equal(r[0].response.ticket, 'DOC-1');
+});
+
+test('esquemas: documentos en Markdown, lado humano de una discrepancia, ajustes y pedido de escaneo', () => {
+  const ok = (collection, doc_id, data) => assert.deepEqual(prepararLotes([{ op: 'set', collection, doc_id, data }]).errores, [], `${collection}/${doc_id}`);
+  const mal = (collection, doc_id, data, re) => assert.ok(prepararLotes([{ op: 'set', collection, doc_id, data }]).errores.some((e) => re.test(e)), `${collection}/${doc_id} debería fallar`);
+  ok('documents', 'p_sdd', { projectId: 'p', kind: 'sdd', markdown: '# SDD\n\n| Cola | Uso |\n| --- | --- |\n| C1 | Entrada |', fileName: 'SDD.docx', source: 'docx', chars: 40, masked: 0, uploadedBy: 'u_1', uploadedAt: AHORA });
+  mal('documents', 'p_otro', { projectId: 'p', kind: 'manual', markdown: 'x' }, /fuera de/);
+  mal('documents', 'p_pdd', { projectId: 'p', kind: 'pdd', markdown: 'Contacto: persona@cliente.com' }, /PII/);
+  ok('discrepancyWork', 'd1', { projectId: 'p', state: 'responded', response: { decision: 'fix_orchestrator', notes: 'Se crea la cola', ticket: 'OPS-9' }, updatedAt: AHORA, updatedBy: 'u_1' });
+  mal('discrepancyWork', 'd1', { state: 'delegated' }, /fuera de/);
+  ok('config', 'settings', { ...JSON.parse(readFileSync(join(RAIZ, 'seed/settings.json'), 'utf8')), autoApproveRules: true, discovery: { rootFolders: ['Produccion'], ignoredFolders: ['Produccion/Pruebas'] } });
+  mal('config', 'settings', { triageCriteria: '', retention: {}, autoApproveRules: 'si' }, /boolean/);
+  ok('requests', 'r1', { type: 'discover_projects', roots: ['Produccion'], requestedBy: 'u_1', requestedAt: AHORA, status: 'pending' });
+  ok('history', 'h1', { projectId: 'p', type: 'discrepancy', at: AHORA, summary: 'Discrepancia respondida: se corrige el SDD.', discrepancyId: 'd1', by: 'u_1' });
+});
+
+test('tablero: los patrones que enmascaran un documento subido son los de config/patrones-pii.json', () => {
+  const html = readFileSync(join(RAIZ, 'dashboard/index.html'), 'utf8');
+  const enTablero = JSON.parse(html.match(/const PII_DOC = (.*?);\n/)[1]);
+  const config = JSON.parse(readFileSync(join(RAIZ, 'config/patrones-pii.json'), 'utf8')).patrones;
+  assert.deepEqual(enTablero.map((p) => p.nombre), ['documento_etiquetado', 'nit', 'email', 'cuit_cuil', 'ruta_usuario']);
+  for (const p of enTablero) assert.deepEqual(p, config.find((x) => x.nombre === p.nombre), `el patrón ${p.nombre} del tablero se desvió de la configuración`);
+});

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Convierte los candidatos de descubrir.mjs en un plan de escrituras para el tablero:
 // por cada carpeta ACTIVA y NO registrada, un proyecto (status pending_analysis) y su solicitud de alta.
+// Con carpetas raíz configuradas en Ajustes, solo las que están adentro; nunca las que un Admin ignoró.
 //
 // Uso: node scripts/plan-descubrimiento.mjs --candidatos <candidatos.json> --salida <plan.json> [--incluir-inactivos] [--solo id1,id2]
 // Después: node scripts/build-writes.mjs --plan <plan.json> --salida <dir> y publicar los lotes con ArtifactData batch.
@@ -15,6 +16,8 @@ export function planDescubrimiento(candidatos, { incluirInactivos = false, solo 
   const ids = new Set(existentes);
   for (const c of candidatos.candidatos || []) {
     if (c.registradoComo) { omitidos.push({ folderPath: c.folderPath, motivo: `ya registrado como ${c.registradoComo}` }); continue; }
+    if (c.fueraDeLasRaices) { omitidos.push({ folderPath: c.folderPath, motivo: 'fuera de las carpetas a escanear de Ajustes' }); continue; }
+    if (c.ignorada) { omitidos.push({ folderPath: c.folderPath, motivo: 'ignorada por un Admin en el tablero' }); continue; }
     if (!c.activo && !incluirInactivos) { omitidos.push({ folderPath: c.folderPath, motivo: `sin jobs en ${candidatos.dias || 30} días` }); continue; }
     if (c.folderPath === '(sin carpeta)') { omitidos.push({ folderPath: c.folderPath, motivo: 'procesos sin carpeta' }); continue; }
     if (solo && !solo.includes(c.id)) continue;
