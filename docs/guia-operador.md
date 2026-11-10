@@ -151,8 +151,8 @@ Las reglas que nacen de respuestas a incidentes llegan como **propuestas**. Un A
 
 En **Ajustes → Reglas** hay un interruptor: **Aprobar automáticamente las reglas que propone la rutina**. Viene apagado.
 
-- Encendido, las reglas propuestas se activan solas en la corrida siguiente a la que las propuso. En ese rato se ven como propuestas y todavía se pueden rechazar.
-- Al encenderlo, la próxima corrida aprueba también las propuestas que ya estaban esperando: rechazá antes las que no quieras.
+- Encendido, cada regla que propone la rutina nace activa, sin pasar por una persona.
+- Al encenderlo, las propuestas que ya estaban esperando se aprueban en ese momento: rechazá antes las que no quieras.
 - Quedan marcadas como **aprobada automáticamente** y se pueden desactivar, editar o eliminar como cualquier otra.
 - Los **cambios sugeridos** sobre reglas que ya existen nunca se aplican solos.
 

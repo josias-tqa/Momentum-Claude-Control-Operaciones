@@ -695,3 +695,32 @@ test('tablero: los patrones que enmascaran un documento subido son los de config
   assert.deepEqual(enTablero.map((p) => p.nombre), ['documento_etiquetado', 'nit', 'email', 'cuit_cuil', 'ruta_usuario']);
   for (const p of enTablero) assert.deepEqual(p, config.find((x) => x.nombre === p.nombre), `el patrón ${p.nombre} del tablero se desvió de la configuración`);
 });
+
+import { aprobarEnPlan } from '../scripts/aprobar-reglas.mjs';
+import { buscarAjustes } from '../scripts/build-writes.mjs';
+
+test('aprobación automática inmediata: build-writes activa las reglas que un plan propone', () => {
+  const plan = () => [
+    { op: 'set', collection: 'rules', doc_id: 'p-a', data: { projectId: 'p', text: 'a', status: 'proposed', origin: 'learned', compiled: { severity: 'P2' } } },
+    { op: 'set', collection: 'rules', doc_id: 'p-b', data: { projectId: 'p', text: 'b', status: 'proposed', origin: 'review' } },
+    { op: 'update', collection: 'rules', doc_id: 'p-c', data: { suggestion: { kind: 'retire', why: 'x' } } },
+    { op: 'set', collection: 'rules', doc_id: 'p-d', data: { projectId: 'p', text: 'd', status: 'pending_compile', origin: 'manual' } },
+  ];
+  let w = plan();
+  assert.deepEqual(aprobarEnPlan(w, { autoApproveRules: false }, AHORA), []);
+  assert.equal(w[0].data.status, 'proposed', 'apagado: nada cambia');
+  assert.deepEqual(aprobarEnPlan(w, { autoApproveRules: true }, AHORA), ['p-a', 'p-b']);
+  assert.deepEqual(w[0].data, { projectId: 'p', text: 'a', status: 'active', origin: 'learned', compiled: { severity: 'P2' }, approvedBy: 'rutina', approvedAt: AHORA, autoApproved: true });
+  assert.equal(w[1].data.status, 'pending_compile');
+  assert.equal(w[2].data.status, undefined, 'un cambio sugerido no se aplica solo');
+  assert.equal(w[3].data.autoApproved, undefined);
+  // Por línea de comandos: los ajustes se encuentran solos desde la carpeta del plan.
+  const dir = mkdtempSync(join(tmpdir(), 'auto-'));
+  mkdirSync(join(dir, 'db/config'), { recursive: true }); mkdirSync(join(dir, 'alta/p'), { recursive: true });
+  writeFileSync(join(dir, 'db/config/settings.json'), JSON.stringify({ triageCriteria: '', retention: {}, autoApproveRules: true }));
+  writeFileSync(join(dir, 'alta/p/plan.json'), JSON.stringify({ writes: plan() }));
+  assert.equal(buscarAjustes(join(dir, 'alta/p/plan.json')), join(dir, 'db/config/settings.json'));
+  const out = JSON.parse(execFileSync('node', [join(RAIZ, 'scripts/build-writes.mjs'), '--plan', join(dir, 'alta/p/plan.json'), '--salida', join(dir, 'lotes')], { encoding: 'utf8' }));
+  assert.deepEqual(out.reglasAprobadasAutomaticamente, ['p-a', 'p-b']);
+  assert.equal(JSON.parse(readFileSync(join(dir, 'lotes/docs/rules__p-a.json'), 'utf8')).status, 'active');
+});

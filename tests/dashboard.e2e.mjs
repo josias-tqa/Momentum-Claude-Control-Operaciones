@@ -413,14 +413,19 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForTimeout(150);
   let w = (await writes()).filter((x) => x.path === 'config/settings').pop();
   assert.deepEqual(w.data, { autoApproveRules: true }, 'solo cambia ese ajuste');
+  // Las propuestas que estaban esperando se aprueban en el momento, sin esperar a la rutina.
+  const apr = (await writes()).filter((x) => x.path.startsWith('rules/') && x.data.autoApproved === true);
+  assert.deepEqual(apr.map((x) => x.path).sort(), ['rules/conciliacion-login-sap', 'rules/facturacion-abandonados']);
+  assert.ok(apr.every((x) => x.data.approvedBy.startsWith('u_') && x.data.approvedAt));
+  assert.equal(apr.find((x) => x.path === 'rules/conciliacion-login-sap').data.status, 'active');
+  assert.equal(apr.find((x) => x.path === 'rules/facturacion-abandonados').data.status, 'pending_compile', 'sin traducir: la compila la rutina');
   assert.equal(await page.getAttribute('#aj-auto', 'aria-checked'), 'true');
   assert.equal(await page.evaluate(() => document.activeElement.id), 'aj-auto', 'el foco queda en el interruptor');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'ajustes.png'), fullPage: true });
   await page.click('#nav a[href="#reglas"]');
-  assert.ok(await visible(page, 'text=Se aprueba sola en la próxima corrida'), 'las propuestas avisan que se aprueban solas');
-  assert.ok(await visible(page, 'text=Aprobación automática activa'));
-  await page.click('#nav a[href="#inicio"]');
-  assert.ok(await visible(page, 'text=reglas propuestas por aprobarse'));
+  await page.waitForSelector('h1 >> text=Reglas de control', { timeout: 3000 });
+  assert.equal(await page.locator('text=Propuestas para aprobar').count(), 0, 'no quedan propuestas');
+  assert.ok(await visible(page, 'text=aprobada automáticamente'));
   // Carpeta a escanear: "Guardar ajustes" también la guarda; "Guardar y escanear" además pide el escaneo.
   await page.click('#nav a[href="#ajustes"]');
   await page.fill('#aj-raices', 'Produccion, Clientes/Produccion');

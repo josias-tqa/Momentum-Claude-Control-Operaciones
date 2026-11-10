@@ -98,7 +98,7 @@ Guardar una regla `proposed`, `disabled` o `rejected` la aprueba o reactiva. Un 
 
 `/control-reglas` propone, y un Admin decide. Por defecto nada se activa solo.
 
-**Aprobación automática.** Si `config/settings.autoApproveRules` es `true` (interruptor de Ajustes), `scripts/aprobar-reglas.mjs` pasa a `active` las reglas `proposed` al empezar cada corrida, con `approvedBy: "rutina"` y `autoApproved: true`, y deja una entrada en `history`. Como la corrida lee la base al inicio, una regla se aprueba en la corrida siguiente a la que la propuso: en ese rato un Admin puede rechazarla. Los cambios sugeridos (`suggestion`) nunca se aplican solos.
+**Aprobación automática.** Si `config/settings.autoApproveRules` es `true` (interruptor de Ajustes), las reglas se activan en el momento. `scripts/build-writes.mjs` convierte en `active` toda regla que un plan crea como `proposed` (con `approvedBy: "rutina"` y `autoApproved: true`), así que vale para cualquier skill. Al encender el interruptor, el tablero aprueba las que estaban esperando, y `scripts/aprobar-reglas.mjs` barre al empezar cada corrida las que hayan quedado. Los cambios sugeridos (`suggestion`) nunca se aplican solos.
 
 | Cuándo | Qué busca | Qué deja |
 |---|---|---|

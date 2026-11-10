@@ -122,4 +122,4 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
 
 Todo lo escrito pasa por `build-writes`: armá un plan `{writes:[…]}` en `work/$RUN/alta/<id>/plan.json` (con las escrituras de `discrepancias-plan.json`) y ejecutá `node scripts/build-writes.mjs`. Después publicá los lotes con `ArtifactData batch`.
 
-Al terminar, el proyecto queda en **review**. Un Admin lo pasa a `active` desde el tablero, después de revisar la memoria, las discrepancias y las reglas propuestas. Las reglas nacen siempre `proposed`: si la aprobación automática está activa, las aprueba la corrida siguiente (`/control-corrida`, paso 4).
+Al terminar, el proyecto queda en **review**. Un Admin lo pasa a `active` desde el tablero, después de revisar la memoria, las discrepancias y las reglas propuestas. Escribí las reglas siempre como `proposed`: si la aprobación automática está activa, `build-writes` las convierte en `active` al armar los lotes.

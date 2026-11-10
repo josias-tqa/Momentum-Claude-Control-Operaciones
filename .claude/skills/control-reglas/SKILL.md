@@ -9,7 +9,7 @@ Leé primero `CLAUDE.md`. Entrada: lo exportado en `work/$RUN/db` (`projects`, `
 
 **Este skill solo propone.** Una regla nueva nace `proposed`; un cambio sobre una regla existente queda como `suggestion` en esa regla. Los aprueba o descarta un Admin desde el tablero.
 
-Si un Admin activó en Ajustes la **aprobación automática** (`config/settings.autoApproveRules`), las reglas `proposed` las aprueba la corrida siguiente con `scripts/aprobar-reglas.mjs` (`/control-corrida`, paso 4). Acá no cambia nada: seguí escribiendo `proposed`, nunca `active`. Los cambios sugeridos (`suggestion`) no se aplican solos en ningún caso. Con la aprobación automática activa sé todavía más estricto con las reglas `known`: nadie las va a mirar antes de que empiecen a tapar hallazgos.
+Si un Admin activó en Ajustes la **aprobación automática** (`config/settings.autoApproveRules`), `build-writes` convierte en `active` las reglas que este skill escribe como `proposed`, en el mismo lote (lo informa en `reglasAprobadasAutomaticamente`). Acá no cambia nada: seguí escribiendo `proposed`, nunca `active`. En el resumen decí cuántas quedaron activas. Los cambios sugeridos (`suggestion`) no se aplican solos en ningún caso. Con la aprobación automática activa sé todavía más estricto con las reglas `known`: nadie las va a mirar antes de que empiecen a tapar hallazgos.
 
 ## 1. Candidatos (determinista)
 
