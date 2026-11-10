@@ -31,6 +31,10 @@
       "type": "string",
       "maxLength": 4000
     },
+    "params": {
+      "type": "object",
+      "description": "Datos neutros al idioma de la entrada (motivo o decisión, fecha ISO, nombre de la regla, lista de códigos de cambio, nota escrita por una persona). El tablero arma la frase al mostrarla en el idioma activo; `text` queda como respaldo para la rutina y para las entradas viejas."
+    },
     "by": {
       "type": "string",
       "maxLength": 200
