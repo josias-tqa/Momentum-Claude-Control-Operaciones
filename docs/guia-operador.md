@@ -1,6 +1,6 @@
 # Guía del tablero para el equipo de Grupo Momentum
 
-> La ayuda completa está dentro del tablero: **Ayuda** en el menú (en el teléfono, dentro de **Más**), o el botón **?** de cada pantalla. Su fuente es `dashboard/ayuda/*.mdx`. Esta guía es un resumen.
+> La ayuda completa está dentro del tablero: **Ayuda** en el menú (en el teléfono, dentro de **Más**), o el botón **?** de cada pantalla. Su fuente es `dashboard/ayuda/<idioma>/*.mdx`. Esta guía es un resumen.
 
 ## Roles
 

@@ -1,0 +1,663 @@
+{/* Dashboard help · Screens and actions. Every Seccion or Accion with "breve" is the tooltip of its button in the app.
+    Every change to the dashboard is reflected here (checked by tests/ayuda.test.mjs). After editing: npm run build:ayuda.
+    The Spanish twin lives in ../es/03-secciones.mdx: both files must be updated together. */}
+
+<Seccion id="pantallas" titulo="Screens and actions" breve="Every screen, tab and button of the dashboard, with sample views.">
+
+Every screen has a **?** button next to its title that takes you to its section of this help. The **Help** link in the menu also opens the part for the screen you are on. Hovering over a button or a label shows a short explanation, with a link to more detail. The views on this page are the app's own, drawn with sample data.
+
+</Seccion>
+
+<Seccion id="navegacion" nivel="2" titulo="Menu and project selector">
+
+The menu is always in view: on the left on a computer and at the bottom on a phone. It leads to Inbox, Projects, Runs, Rules, Outside the inbox, Settings (Admin) and this Help. The number on Inbox is the count of open topics; the one on Rules is the proposals waiting for approval.
+
+Below the menu are the [routine pulse](#ayuda-pulso) and your [role](#ayuda-roles). On a phone the pulse and the **?** are in the top bar, and Outside the inbox, Settings and Help are inside [More](#ayuda-mas).
+
+<Accion id="scope" nombre="Project" breve="Filters Inbox, Runs, Rules and Outside the inbox by one project. The × removes the filter.">
+
+Tap it and type part of the name or the folder. Pick the project with a click, or with the arrow keys and Enter. Each project shows a colored dot with its health (green: no news; amber: with notices; red: with P1 or P2 problems; gray: paused or no data) and how many topics it has open. Projects with open topics come first.
+
+The filter stays applied on all those screens, and is remembered in this browser, until you remove it with the **×**.
+
+<Vista nombre="selector" variante="abierto" />
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="bandeja" nivel="2" titulo="Inbox" breve="The main screen: what needs a person, sorted by severity.">
+
+This is the work screen. It shows only the open topics whose decision is to escalate or notify, and that nobody has replied to, dismissed or snoozed. They are sorted by severity, escalated first and then the most recent. If nothing is pending, it says **All clear**.
+
+- The **All**, **For you**, **Needs action** and **Notices** buttons show only that part.
+- The search box filters by title, project, category, process or severity.
+- If the routine is stopped or the last run had collection errors, a red warning appears at the top.
+
+<Vista nombre="bandeja" nota="Admin view" />
+
+</Seccion>
+
+<Seccion id="para-revisar" nivel="3" titulo="To review" breve="Admin only: proposed rules, suggested rule changes, proposed projects and projects that finished their analysis.">
+
+Only Admins see it, in the **All** view. It gathers the pending configuration tasks: [proposed rules](#ayuda-propuestas), rules with a suggested change, [projects proposed](#ayuda-propuestos) by the scan, projects **In review** waiting to be activated and projects **With error**. Each row leads to where it is resolved.
+
+A project's [discrepancies](#ayuda-discrepancia) do not appear here or in the rest of the inbox: they are handled from the project page.
+
+</Seccion>
+
+<Seccion id="para-vos" nivel="3" titulo="For you" breve="Topics someone delegated to you.">
+
+The topics someone [delegated](#ayuda-delegar) to you. They leave this list when you reply, dismiss or snooze them.
+
+</Seccion>
+
+<Seccion id="requiere-accion" nivel="3" titulo="Needs action" breve="Escalated topics: the triage decided they need a person.">
+
+The topics with the **Escalated** decision. They are usually P1 or P2, or something the routine had never seen. Each one carries its prior analysis in the detail.
+
+</Seccion>
+
+<Seccion id="avisos" nivel="3" titulo="Notices" breve="Things worth knowing that do not block anything, in compact form.">
+
+The topics with the **Notice** decision, usually new P3 or P4. They are shown compactly: without the why and without Delegate. The detail has everything.
+
+<Vista nombre="tarjeta" variante="aviso" />
+
+</Seccion>
+
+<Seccion id="tarjeta" nivel="2" titulo="The topic and its detail" breve="One problem per topic, with its severity, its why and the actions to work on it.">
+
+Each card is a [topic](#ayuda-tema). If the problem happens again, no new card is created: the same one adds occurrences.
+
+- **On the left:** the [severity](#ayuda-severidad).
+- **Labels:** the [category](#ayuda-categoria); the project, when there is no filter, and the process if the project has several; the [recurrence](#ayuda-recurrencia); [Reappeared](#ayuda-reaparecio); the [library](#ayuda-libreria) where the error happened; [New version](#ayuda-nueva-version); **Notice**, and who it is delegated to.
+- **Gray text:** the triage's why, in two lines.
+- **Actions:** at the bottom. A Reader does not see them.
+
+A click on the card, or on **View details**, opens the detail in a side panel, without losing your place in the list. It closes with the **×**, with Esc or by clicking outside.
+
+<Vista nombre="tarjeta" />
+
+</Seccion>
+
+<Seccion id="detalle" nivel="3" titulo="A topic's detail" breve="Why it is here, the prior analysis, the evidence and the topic's activity.">
+
+The detail shows, in this order:
+
+1. **Status:** whether the topic is delegated, snoozed, dismissed or replied to, and by whom. If it left the inbox, it offers [Return to inbox](#ayuda-reabrir).
+2. **Actions:** the same as on the card.
+3. **Why it is here:** the triage's why, the decision and its confidence, the rules and memories it was based on, since when it has been seen and in how many runs.
+4. **Prior analysis:** summary, hypotheses with their probability, suggested actions, related code and documentation, and what changed in the last deploy. If it says Pending, the next run completes it.
+5. **Library:** if the error happened in a library, its version, its activity and which other projects use it.
+6. **Evidence (redacted):** the latest logs, queue items and jobs, without personal data.
+7. **Activity:** who did what with the topic, and a box to [comment](#ayuda-comentar).
+
+<Vista nombre="tarjeta" variante="detalle" />
+
+</Seccion>
+
+<Seccion id="acciones" nivel="2" titulo="Actions on a topic">
+
+Operators and Admins use them. Every action is recorded in the topic's activity. Replies and dismissals also teach the routine, which processes them in the next run. After snoozing, dismissing or replying, a notice with **Undo** appears.
+
+<Accion id="responder" nombre="Reply" breve="Records what was found or what will be done. It goes into the production memory.">
+
+Pick a decision and add notes:
+
+- **Fix required:** the robot has to be corrected. You can enter the ticket or the fix reference.
+- **Expected behavior**, **Data issue**, **External system** or **False positive / adjust rule:** the cause is something else; the routine learns it.
+- **Check again:** pick a date. The topic is hidden until that day and the routine does a [re-check](#ayuda-re-control).
+- **Hand over to development:** the development team takes it.
+
+The topic leaves the inbox and the reply goes into the project's production memory.
+
+<Vista nombre="tarjeta" variante="responder" />
+
+</Accion>
+
+<Accion id="posponer" nombre="Snooze" breve="Hides the topic until a date. It comes back sooner if the problem gets worse.">
+
+Pick 1 day, 3 days, 1 week or a date. In the meantime the topic moves to [Outside the inbox](#ayuda-no-reportados) as **Snoozed**.
+
+- If the severity goes up before the date, the topic returns to the inbox by itself.
+- When it expires, it is shown again if the problem persists.
+- Snoozing teaches the routine nothing. If the problem is expected, it is better to **Dismiss** or **Reply**.
+
+<Vista nombre="tarjeta" variante="posponer" />
+
+</Accion>
+
+<Accion id="descartar" nombre="Dismiss" breve="Takes the topic out of the inbox with a reason. The routine learns from it and may propose a rule.">
+
+Pick a reason and, if you want, add a note explaining why:
+
+- **It is expected:** it always happens and is not a problem, for example a maintenance window.
+- **False positive:** the detection got it wrong.
+- **Business data:** it is an expected business exception, not a robot failure.
+- **External system:** the problem is in a system the team does not control.
+
+The routine records the reason in the [production memory](#ayuda-memoria-de-produccion) and may propose a [rule](#ayuda-regla) so it does not warn again. If the topic repeats, it adds occurrences to the same card, but it does not return to the inbox as new.
+
+<Vista nombre="tarjeta" variante="descartar" />
+
+</Accion>
+
+<Accion id="delegar" nombre="Delegate" breve="Assigns the review to a person: the topic shows up in For you for them.">
+
+Search for the person by name and pick them. The card shows who it is delegated to and stays in everyone's inbox, but that person sees it in **For you**.
+
+<Vista nombre="tarjeta" variante="delegar" />
+
+</Accion>
+
+<Accion id="ajustar-regla" nombre="Adjust rule or Create rule" breve="Opens the editor for this topic's rule without leaving the inbox. An Operator sees it but cannot change it.">
+
+If the topic came from a rule, or a rule marked it as known, the button says **Adjust rule** (or **View rule** for an Operator) and opens the [rule editor](#ayuda-editor-regla) right there.
+
+If it did not come from any rule, an Admin sees **Create rule**: you write one for that case, for example "abandoned items in this queue on Mondays before 9 are normal; do not notify", and it applies to that project from the next run. With **Also dismiss this topic** the incident is closed in the same step.
+
+<Vista nombre="tarjeta" variante="regla" nota="Admin view" />
+
+</Accion>
+
+<Accion id="re-crear" nombre="Create rule (from a topic)" solo="Admin" breve="Creates a new rule for this topic's project. It is compiled in the next run.">
+
+The rule stays **To compile** until the routine translates it. If you checked **Also dismiss this topic**, the topic leaves the inbox as a false positive, with **Undo** in the notice.
+
+</Accion>
+
+<Accion id="comentar" nombre="Comment" breve="Leaves a note for the team in the topic's activity. It does not change its status.">
+
+The box is in the **Activity** section of the detail. The comment does not take the topic out of the inbox and teaches the routine nothing. With Ctrl or Cmd + Enter it is sent without using the mouse.
+
+</Accion>
+
+<Accion id="reanalizar-inc" nombre="Analyze again" breve="Asks the next run for a new prior analysis of this topic.">
+
+It is next to the **Prior analysis** heading in the detail (if the topic has no analysis, it says **Request analysis**). It is useful when the analysis got old, for example after a change in the system or in the documentation.
+
+</Accion>
+
+<Accion id="reabrir" nombre="Return to inbox" breve="Undoes a snooze, a dismissal or a reply: the topic goes back to the inbox.">
+
+It appears in the detail of a snoozed, dismissed or replied topic. The topic returns as it was before and it is recorded in its activity.
+
+</Accion>
+
+<Accion id="deshacer" nombre="Undo" breve="Reverts the last action on the topic (snooze, dismiss or reply).">
+
+It is in the notice that appears at the bottom for a few seconds after the action. After that time, use **Return to inbox** from the detail.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="no-reportados" nivel="2" titulo="Outside the inbox" breve="Open topics not shown in the inbox: snoozed, replied to, dismissed or not reported by the triage.">
+
+Everything open that is not in the inbox, with the reason. The buttons at the top filter by **Snoozed**, **Responded**, **Dismissed** or **Not reported by the triage** (Under observation and Known decisions).
+
+It is useful for checking the routine's criteria. If something here should be in the inbox, open it and use **Return to inbox**, reply **False positive / adjust rule** or fix the [criteria](#ayuda-criterios).
+
+<Vista nombre="fuera" />
+
+</Seccion>
+
+<Seccion id="corridas" nivel="2" titulo="Runs" breve="Each execution of the routine, with what it reviewed and what it found.">
+
+The last 50 runs, with their status (Complete, Partial or With errors), how many projects they reviewed and how many new, recurring and escalated topics they found.
+
+<Vista nombre="corridas" />
+
+</Seccion>
+
+<Seccion id="corrida-detalle" nivel="3" titulo="A run's detail" breve="What the routine reviewed in each project and what it decided for each finding.">
+
+For each project it shows the time window reviewed, a summary of signals, the table of [checkpoints](#ayuda-punto-de-control) with their observed value and the **Findings and triage**: each finding with its severity, its decision, whether it is new, recurring or reopened, and its why. A click on a finding opens its topic. If there were errors reading Orchestrator, they appear in the project's box.
+
+<Vista nombre="corrida" />
+
+</Seccion>
+
+<Seccion id="proyectos" nivel="2" titulo="Projects" breve="All monitored projects, with their health, their status and their open topics.">
+
+The list of projects with their Orchestrator folder, their open topics, their pending [discrepancies](#ayuda-discrepancia) and their [status](#ayuda-estado-proyecto). Those with problems or waiting for review come first. With more than 5 projects a search box appears. Admins see **Register project** and a notice if the routine [proposes projects](#ayuda-propuestos) to add.
+
+If there are no projects yet, an Admin sees the [first steps](#ayuda-primeros-pasos).
+
+<Vista nombre="proyectos" />
+
+<Accion id="proyecto-eliminar" nombre="Delete" solo="Admin" breve="Removes the project from the dashboard: its settings, memory, rules and documentation. Asks for confirmation.">
+
+It is on each row of the list. It cannot be undone and it changes nothing in Orchestrator. The project's topics and runs are not deleted: they stay until [retention](#ayuda-retencion) cleans them up. If the folder is still inside the folder to scan, the next scan [proposes](#ayuda-propuestos) it again; to stop that, ignore it.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="pagina-proyecto" nivel="2" titulo="A project's page" breve="Processes, memory, discrepancies, documentation, rules, inventory and settings of a project.">
+
+At the top are the folder, the number of processes, the status and how many discrepancies are pending, with the actions. Below, each process with its role, its name in Orchestrator, the package and the deployed version, and its libraries. If the last analysis failed, a red notice says which access or data was missing. Then come seven tabs. The notes from the last analysis (what it found and the criteria it suggests) are collapsed at the top of the Process memory tab.
+
+<Vista nombre="proyecto" variante="memoria" />
+
+<Accion id="ver-bandeja" nombre="View open topics" breve="Opens the inbox filtered by this project.">
+
+It appears when the project has topics in the inbox. It applies the [project selector](#ayuda-scope).
+
+</Accion>
+
+<Accion id="activar" nombre="Activate monitoring" solo="Admin" breve="Starts monitoring the project on every run. It also resumes paused monitoring.">
+
+It appears when the project finished its [onboarding](#ayuda-alta) and is **In review**: before activating it, review the process memory, the proposed rules and the inventory. If the project is **Paused**, the button says **Resume monitoring**.
+
+</Accion>
+
+<Accion id="pausar" nombre="Pause monitoring" solo="Admin" breve="Stops monitoring the project until it is resumed. It deletes nothing.">
+
+Useful during a long maintenance or while a process is being rebuilt. Open topics stay as they are and the project looks gray.
+
+</Accion>
+
+<Accion id="reanalizar" nombre="Request re-analysis" solo="Admin" breve="Asks the next run to regenerate the process memory, the inventory and the proposed rules.">
+
+It is worth doing after a big change in the process or its documentation. The project stays active in the meantime.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-memoria" nivel="3" titulo="Process memory tab" breve="What the process does, according to the onboarding: the context the routine uses.">
+
+The [process memory](#ayuda-memoria-de-proceso): what the process does, its steps, systems, queues and known exceptions. The onboarding generates it from the code and the documentation.
+
+</Seccion>
+
+<Seccion id="proyecto-produccion" nivel="3" titulo="Production memory tab" breve="What happened in production: team replies, deploys and re-checks.">
+
+The [production memory](#ayuda-memoria-de-produccion): a summary at the top and below it the history, newest to oldest, with who replied and the ticket if there is one.
+
+<Vista nombre="proyecto" variante="produccion" />
+
+</Seccion>
+
+<Seccion id="proyecto-discrepancias" nivel="3" titulo="Discrepancies tab" breve="What does not match between the code, the documentation and Orchestrator. It is replied to, snoozed or dismissed here: it does not go to the inbox.">
+
+The [discrepancies](#ayuda-discrepancia) found by the project's analysis, for example:
+
+- a queue or an asset that appears in the SDD or in the code and does not exist in Orchestrator, or the other way around;
+- a trigger with a different frequency than documented;
+- the Dispatcher and the Performer not using the same queue;
+- documentation that does not match the code;
+- a package that publishes screenshots or data it should not.
+
+Each one shows its type, the process, what was found, a suggestion and where it comes from. They are project cards: they **do not appear in the inbox** and do not change its health. The number on the tab, and the one in the project list, counts the pending ones.
+
+- **Pending:** the ones the routine keeps detecting and nobody has handled.
+- **Handled:** the ones replied to, snoozed or dismissed, with who did it, and the **resolved** ones, which the routine stopped detecting.
+
+On each re-analysis the routine updates the list: it adds the new ones, closes the ones it no longer detects and respects what the team replied. A dismissed discrepancy does not appear again as new. If one that was considered fixed is detected again, it reappears as pending with the **Reappeared** mark.
+
+<Vista nombre="proyecto" variante="discrepancias" />
+
+<Accion id="disc-responder" nombre="Respond" breve="Records what will be done about the discrepancy. It goes into the project's production memory.">
+
+Pick a decision and add notes:
+
+- **Fix the documentation**, **Fix in Orchestrator** or **Fix the code:** there is something to repair. You can enter the ticket or the reference. The discrepancy moves to Handled and the routine closes it when a re-analysis stops detecting it.
+- **It is correct as is:** there is nothing to fix. The routine records it and does not ask again.
+- **Hand over to development:** the development team takes it.
+
+</Accion>
+
+<Accion id="disc-posponer" nombre="Snooze" breve="Takes the discrepancy out of the pending ones until a date.">
+
+Pick 1 week, 1 month, 3 months or a date. When it expires it goes back to Pending, if the routine still detects it.
+
+</Accion>
+
+<Accion id="disc-descartar" nombre="Dismiss" breve="Closes the discrepancy with a reason. The routine does not show it again as new.">
+
+Reasons: **It is correct as is**, **The routine got it wrong**, **Already fixed** or **Not relevant**, with an optional note. It stays in Handled and in the production memory.
+
+</Accion>
+
+<Accion id="disc-reabrir" nombre="Reopen" breve="Undoes the reply, the dismissal or the snooze: the discrepancy is pending again.">
+
+It appears on handled discrepancies that the routine still detects.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-documentacion" nivel="3" titulo="Documentation tab" breve="The project's documents (PDD, SDD, Runbook and others), uploaded by hand and stored as Markdown.">
+
+The routine reads on its own the documentation that comes inside the published packages. When a document is not there, or is out of date, an Admin uploads it here. You can upload **as many documents as needed**. Each one has a category and, if you like, a title or a description:
+
+- **PDD:** the business process, its steps and its exceptions.
+- **SDD:** how the solution is built, with its queues, assets and triggers.
+- **Runbook:** what to do for each failure and whom to escalate to.
+- **Other:** manuals, how-to guides, service agreements or any other useful document.
+
+There can be several of the same category, for example one SDD per process. Everything is stored **as Markdown** (.md), without images. The routine uses these documents in the project analysis, for the process memory and the discrepancies, and in the prior analysis of each topic. After uploading one it is worth using **Request re-analysis**.
+
+A Reader or an Operator can view and download the documents; only an Admin uploads them, removes them or deactivates the ones that come with the package. To change a document, upload the new one and remove the old one.
+
+<Vista nombre="proyecto" variante="documentacion" nota="Admin view" />
+
+<Accion id="doc-pkg" nombre="Deactivate or Use again" solo="Admin" breve="Makes the routine stop using, or use again, a document that comes inside the published package.">
+
+Below the documents uploaded by hand, **In the published packages** lists the documents the routine found inside each package, with the process and the version. They are **In use** unless an Admin deactivates them.
+
+It is useful when the package document is old or about something else: deactivate it and, if needed, upload the right one. It applies from the next run; it is worth using **Request re-analysis** to rebuild the process memory without that document. If a new version of the package brings the document with the same path, it stays deactivated.
+
+</Accion>
+
+<Accion id="doc-subir" nombre="Upload file" solo="Admin" breve="Uploads a Word (.docx), a PDF, a .md or a .txt and converts it to Markdown. It is reviewed before saving.">
+
+- **Word (.docx):** headings, paragraphs, bold, lists and tables are converted. Images, headers and the table of contents are not carried over.
+- **PDF:** the text is recovered. A PDF does not keep its structure, so headings are inferred from the font size and tables come out as running text: it is worth reviewing. A scanned PDF has no text to read. If the original Word file exists, it gives a better result.
+- **.md or .txt:** taken as they are.
+
+The category is suggested from the file name and can be changed. Nothing is saved until you click **Save document**.
+
+</Accion>
+
+<Accion id="doc-pegar" nombre="Paste text" solo="Admin" breve="Opens a box to paste or write the document, in Markdown or plain text.">
+
+It is useful for documents that are in a wiki or in a format that cannot be uploaded.
+
+</Accion>
+
+<Accion id="doc-guardar" nombre="Save document" solo="Admin" breve="Saves the document as Markdown, with its category and title, after masking emails, IDs and usernames.">
+
+Before saving you choose the category, you can write a title or a description, and you can see the Markdown and correct it. The dashboard does not store personal data: emails, ID numbers and Windows usernames are masked automatically, but **people's names are not detected**: remove them by hand. Each document accepts up to 230 KB of text.
+
+</Accion>
+
+<Accion id="doc-ver" nombre="View" breve="Shows the saved document, formatted.">
+
+**Hide** closes it.
+
+</Accion>
+
+<Accion id="doc-descargar" nombre="Download .md" breve="Downloads the saved document as a Markdown file.">
+
+It asks for confirmation before saving the file. If this view does not support downloads, the button does not appear.
+
+</Accion>
+
+<Accion id="doc-quitar" nombre="Remove" solo="Admin" breve="Deletes the document from the project. It asks for confirmation.">
+
+It cannot be undone. The process memory already generated with that document does not change until the next re-analysis.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-reglas" nivel="3" titulo="Rules tab" breve="This project's rules and their status.">
+
+The project's rules, with the same actions as the [Rules](#ayuda-reglas) screen.
+
+</Seccion>
+
+<Seccion id="proyecto-inventario" nivel="3" titulo="Inventory tab" breve="Processes, queues, triggers and assets of the folder (for assets, only the name).">
+
+The folder's [inventory](#ayuda-inventario): processes with their version and whether they are part of the project, queues with their retries, triggers and assets. For assets only the name and type are shown.
+
+<Vista nombre="proyecto" variante="inventario" />
+
+</Seccion>
+
+<Seccion id="proyecto-config" nivel="3" titulo="Settings tab" breve="The project's name, folder, processes, documentation and criteria. Only an Admin can edit it.">
+
+A Reader or an Operator sees the project's triage criteria and documentation. An Admin can edit:
+
+- the name and the Orchestrator folder;
+- under **Advanced options**: monitoring only some processes, each process's backup Bitbucket repo, the additional documentation and the project's triage criteria.
+
+**Edit settings**, below the list of processes, opens this tab.
+
+<Vista nombre="proyecto" variante="config" />
+
+<Accion id="guardar-proyecto" nombre="Save and re-analyze" solo="Admin" breve="Saves the settings. Save and re-analyze also asks the next run to regenerate the memory and the inventory.">
+
+If you changed repos or processes, it is worth re-analyzing. **Save only** saves without requesting the analysis. If the project was active, it stays active.
+
+</Accion>
+
+<Accion id="descartar-cambios" nombre="Discard changes" solo="Admin" breve="Returns the form to the saved settings.">
+
+It undoes what you edited and did not save.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="reglas" nivel="2" titulo="Rules" breve="The checkpoints written in natural language, for all projects.">
+
+The [rules](#ayuda-regla) of all projects. At the top, the **Proposals to approve**; then, for an Admin, the **New rule** form, and at the end the rest. Each one shows its status, its project, where it came from (by hand, from onboarding, learned from an incident, by similarity or from the daily review), its exceptions and how the routine understood it.
+
+- **To compile:** the routine translates it into a check in the next run.
+- **Proposed:** the routine suggested it and says why; an Admin approves or rejects it. With [automatic approval](#ayuda-auto-reglas) on there are no proposals: rules are born active.
+- **Active**, **Disabled** or **Rejected.**
+- **Suggested change:** the daily review found something to adjust in the rule.
+
+<Vista nombre="reglas" nota="Admin view" />
+
+<Accion id="nueva-regla" nombre="Create rule" solo="Admin" breve="Adds a rule written in natural language. It is compiled in the next run.">
+
+Pick the project, or All projects, and write the rule the way you would tell it to a person: what to look at, the threshold and what to do. For example: if more than 10 login errors in a row are seen, escalate.
+
+</Accion>
+
+<Accion id="regla-active" nombre="Approve or Activate" solo="Admin" breve="The rule starts being checked on every run.">
+
+**Approve** accepts a proposed rule. **Activate** turns a disabled rule back on.
+
+</Accion>
+
+<Accion id="regla-rejected" nombre="Reject" solo="Admin" breve="Discards a proposed rule. It is not checked.">
+
+The rule stays as Rejected, so the routine does not propose it again in the same form.
+
+</Accion>
+
+<Accion id="regla-disabled" nombre="Deactivate" solo="Admin" breve="Stops checking an active rule, without deleting it.">
+
+It can be activated again at any time.
+
+</Accion>
+
+<Accion id="re-abrir" nombre="Edit or Review" solo="Admin" breve="Opens the rule editor in the list. It says Review when the routine suggests a change.">
+
+It is the same [editor](#ayuda-editor-regla) that opens from a topic.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="editor-regla" nivel="3" titulo="Rule editor" breve="Changes a rule's text, severity or exceptions, or deactivates or deletes it.">
+
+It opens with **Adjust rule** from a topic or with **Edit** in the rules list. Only Admins can change anything; an Operator sees the rule and its exceptions.
+
+- **There is a condition in which it does not apply:** write the **exception**, for example "it is Monday before 9". It applies from the next run.
+- **It warns with a severity that does not fit:** pick another **severity**, from P1 to P4. It changes when you save.
+- **The threshold or the condition is wrong:** fix the **text**. It applies from the next run.
+- **You do not want it to check for a while:** **Deactivate**.
+- **The rule is useless:** **Delete rule**. It asks for confirmation and cannot be undone.
+
+When the text or an exception changes, the rule becomes **To compile** and the routine then shows how it understood it. Exceptions can be removed. From a topic, **Also dismiss this topic** closes the incident in the same step, as a false positive.
+
+<Vista nombre="reglas" variante="editor" nota="Admin view, with a suggestion from the routine" />
+
+<Accion id="re-guardar" nombre="Save changes" solo="Admin" breve="Saves the text, the severity and the exceptions. On a proposal it says Save and approve.">
+
+On a disabled or rejected rule it says **Save and activate**. The change is recorded in the topic's activity if it was made from one.
+
+</Accion>
+
+<Accion id="re-sev" nombre="Severity" solo="Admin" breve="Picks the severity the rule warns with, from P1 to P4. It changes when you save.">
+
+It does not appear on rules that mark topics as known or ignore them, because those do not warn.
+
+</Accion>
+
+<Accion id="re-estado" nombre="Deactivate (editor)" solo="Admin" breve="Stops checking this rule right away, without deleting it.">
+
+It can be activated again from the rules list.
+
+</Accion>
+
+<Accion id="re-eliminar" nombre="Delete rule" solo="Admin" breve="Deletes the rule for good. It asks for confirmation.">
+
+If you only want it to stop checking for a while, it is better to **Deactivate**.
+
+</Accion>
+
+<Accion id="re-sug-aplicar" nombre="Apply suggestion" solo="Admin" breve="Loads the change the routine suggests into the form; you confirm with Save.">
+
+If the suggestion is to deactivate the rule, the button says **Deactivate** and deactivates it directly. See [routine suggestions](#ayuda-sugerencia).
+
+</Accion>
+
+<Accion id="re-sug-descartar" nombre="No, thanks" solo="Admin" breve="Dismisses the routine's suggestion. It is not suggested again for 90 days.">
+
+The rule stays as it was.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="propuestas" nivel="3" titulo="Routine proposals" breve="Rules and changes the routine proposes. An Admin approves them, unless automatic approval is on.">
+
+The routine proposes on its own, and everything arrives in **To review** and in **Proposals to approve**:
+
+- **By [similarity](#ayuda-similitud):** when an Admin approves or edits a rule, the routine offers it to other processes that use the same portal, the same application or the same library.
+- **[Suggested changes](#ayuda-sugerencia):** once a day it reviews the last 30 days and flags the rules that are worth touching.
+- **New rules from the daily review:** if the same topic without a rule was dismissed several times, or a notice repeats without anyone looking at it.
+- **Learned from an incident:** from dismissals and replies.
+
+At most 3 proposals per project arrive at a time.
+
+By default nothing is activated on its own. If an Admin turned on [automatic approval](#ayuda-auto-reglas) in Settings, **new rules** are activated immediately and marked as **automatically approved**. Suggested changes to rules that already exist always wait for a person.
+
+</Seccion>
+
+<Seccion id="registrar" nivel="2" titulo="Register project" breve="Admin only: adds an Orchestrator folder to monitoring.">
+
+You get there from **Projects → Register project**. A [project](#ayuda-proyecto) is an Orchestrator folder. The routine detects its processes, its libraries and its documentation on its own from the published packages, in the version that is in production.
+
+1. Register the folder from the [proposed projects](#ayuda-propuestos) or with the form.
+2. The next run does the [onboarding](#ayuda-alta).
+3. Review the project and click **Activate monitoring for this project**.
+
+Processes added to the folder later are picked up automatically.
+
+<Vista nombre="registrar" />
+
+<Accion id="registrar-analizar" nombre="Register and analyze" solo="Admin" breve="Creates the project with the given name and folder and requests its analysis.">
+
+The name and the folder are enough. The **Advanced options** are the same as in [Settings](#ayuda-proyecto-config) and are normally not needed.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="propuestos" nivel="3" titulo="Proposed projects" breve="Orchestrator folders with processes that the scan found and that are not monitored yet.">
+
+The routine scans the folder set in [Settings](#ayuda-descubrimiento): when an Admin requests it and, in addition, once a day. Each folder with processes that is not yet a project appears here as a [proposed project](#ayuda-proyecto-propuesto), with its processes and its activity over the last 30 days.
+
+Nothing is registered on its own: an Admin chooses what to monitor. If there are no proposals, the screen says why and leads to Settings.
+
+<Accion id="registrar-detectada" nombre="Register" solo="Admin" breve="Registers a proposed project and requests its analysis.">
+
+The project takes the proposed name and folder. They can be changed later in its [Settings](#ayuda-proyecto-config).
+
+</Accion>
+
+<Accion id="registrar-todos" nombre="Register all" solo="Admin" breve="Registers at once all the proposed projects left in the list. It asks for confirmation.">
+
+It is better to ignore the non-production folders first. The routine does up to 3 onboardings per run: with many projects, the analysis takes several hours.
+
+</Accion>
+
+<Accion id="ignorar-detectada" nombre="Ignore" solo="Admin" breve="Takes the folder out of the proposals. It is not proposed again.">
+
+For test or development folders, or ones you do not want to monitor.
+
+</Accion>
+
+<Accion id="restaurar-ignoradas" nombre="Propose them again" solo="Admin" breve="Shows the ignored folders as proposals again.">
+
+It appears below the list when there are ignored folders.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="ajustes" nivel="2" titulo="Settings" breve="Admin only: folder to scan, global triage criteria, thresholds, retention and rule approval.">
+
+- **Projects to monitor:** the [Orchestrator folder to scan](#ayuda-descubrimiento).
+- **Global triage criteria:** they apply to all projects, together with each project's own.
+- **Severity matrix:** what P1, P2, P3 and P4 are.
+- **Maximum minutes in Pending:** from when a waiting job is considered a problem.
+- **Retention:** how many days runs and closed incidents are kept.
+- **Rules:** the [automatic approval](#ayuda-auto-reglas).
+
+<Vista nombre="ajustes" />
+
+<Accion id="guardar-ajustes" nombre="Save settings" solo="Admin" breve="Saves the folder, the criteria, the thresholds and the retention. They are used from the next run.">
+
+Changes to the criteria do not reclassify what is already on the dashboard: they apply to the findings of upcoming runs. Automatic approval does not depend on this button: it is saved when you change the switch.
+
+</Accion>
+
+<Accion id="idioma" nombre="Español / English" solo="Admin" breve="Changes the language of the whole dashboard and of what the routine writes from the next run. It applies to everyone.">
+
+It is a **global** setting: an Admin picks it and everyone sees the same. Menus, buttons, messages and this help change immediately, and from the next run the routine writes the topic titles, the analyses, the memories and the rules it proposes in that language.
+
+Each text is written **only once**, in the language in force when it was generated: what was already stored is neither translated nor duplicated. To get a project's memory in the new language, re-analyze it from the project. Texts written by a person (notes, comments, rule text) and uploaded documents stay as they were written.
+
+</Accion>
+
+<Accion id="auto-reglas" nombre="Automatically approve the rules the routine proposes" solo="Admin" breve="Switch. When on, the rules the routine proposes become active right away, without waiting for an Admin.">
+
+It comes **off**: every rule the routine proposes waits for an Admin to approve it.
+
+When you turn it on:
+
+- The proposed rules that were waiting are approved right away. Reject first the ones you do not want.
+- From then on, every rule the routine proposes is born active: it does not go through **Proposals to approve**.
+- Rules approved this way are marked as **automatically approved** and can be deactivated, edited or deleted like any other.
+- **Suggested changes** to rules that already exist (an exception, another severity, deactivating it) are not applied on their own.
+
+It is saved immediately. When you turn it off, rules that are already active stay active and new ones go back to waiting for approval.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="descubrimiento" nivel="3" titulo="Projects to monitor" breve="The Orchestrator folder the routine scans to propose projects. It is the first step on a new dashboard.">
+
+In Orchestrator, production projects are usually inside a single folder, for example `Produccion`. Type it here, with its full path if it is inside another (`Clientes/Produccion`). You can enter several, separated by commas.
+
+The routine goes through all the folders inside. Each one that has processes and is not monitored yet moves to [Proposed projects](#ayuda-propuestos). Whatever is outside that folder is not proposed.
+
+For the scan to see the subfolders, the application the routine uses to read Orchestrator has to be able to see them. If it cannot, a notice below the field says what is missing.
+
+<Accion id="escanear" nombre="Save and scan" solo="Admin" breve="Saves the folder and asks the next run to scan it and propose the projects.">
+
+While the request is waiting, it says **Scan requested**. Afterwards it shows when the last scan was and how many projects it proposed. Besides the request, the routine repeats the scan once a day to find new folders.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="mas" nivel="2" titulo="More (phone)" breve="On the phone: Outside the inbox, Settings, Register project, Help and the routine's status.">
+
+On the phone the bottom bar has room for Inbox, Projects, Runs and Rules. Everything else is in **More**, together with the routine's status and your access.
+
+<Vista nombre="mas" nota="Admin view" />
+
+</Seccion>

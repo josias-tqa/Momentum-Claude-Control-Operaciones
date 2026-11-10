@@ -1,0 +1,229 @@
+{/* Dashboard help · Initial setup (access, environment, routine and first steps).
+    English set. Its Spanish twin is ../es/02-configuracion-inicial.mdx: both files must be updated together (same component ids).
+    The technical details live in docs/validacion-uip-cloud.md and docs/configuracion-cloud.md: if they change, update this file.
+    After editing: npm run build:ayuda */}
+
+<Seccion id="configuracion-inicial" titulo="Initial setup" breve="The one-time start-up: UiPath and Bitbucket access, Claude environment, routine and first scan.">
+
+This is done once, before the first run. It is done by whoever installs the Control Tower, together with a UiPath Automation Cloud administrator and, if used, a Bitbucket one. If the dashboard already shows runs, this is done: this part is then useful to [renew a credential](#ayuda-config-credenciales) or add folders.
+
+The Tower needs two accesses, both **read-only**: one to [Orchestrator](#ayuda-config-uipath), required, and one to [Bitbucket](#ayuda-config-bitbucket), optional. Both are loaded into the [Claude environment](#ayuda-config-entorno) where the routine runs.
+
+<table>
+<thead><tr><th>Step</th><th>Where it is done</th><th>Who</th></tr></thead>
+<tbody>
+<tr><td><a href="#ayuda-config-uipath">1. External App</a> and <a href="#ayuda-config-uipath-carpetas">folder access</a></td><td>UiPath Automation Cloud and Orchestrator</td><td>UiPath organization administrator</td></tr>
+<tr><td><a href="#ayuda-config-bitbucket">2. Bitbucket token</a> (optional)</td><td>Bitbucket</td><td>Repository or workspace administrator</td></tr>
+<tr><td><a href="#ayuda-config-entorno">3. Environment</a></td><td>Claude</td><td>Whoever installs the Tower</td></tr>
+<tr><td><a href="#ayuda-config-verificar">4. Verification</a></td><td>A Claude session in that environment</td><td>Whoever installs the Tower</td></tr>
+<tr><td><a href="#ayuda-config-tablero">5. Dashboard and routine</a></td><td>Claude</td><td>The account that owns the dashboard</td></tr>
+<tr><td><a href="#ayuda-primeros-pasos">6. First steps</a></td><td>This dashboard</td><td>A dashboard Admin</td></tr>
+</tbody>
+</table>
+
+<Nota titulo="Secrets are not shared">
+
+The External App secret and the Bitbucket token are copied only once, from the screen where they are created to the environment configuration. Do not paste them into a chat, an email or this dashboard.
+
+</Nota>
+
+</Seccion>
+
+<Seccion id="config-uipath" nivel="2" titulo="1. External App in UiPath Cloud" breve="The identity the routine uses to read Orchestrator: a confidential application with read-only permissions.">
+
+The routine does not sign in to UiPath as a person. It signs in as its own **External Application**, which can only read. Create it like this:
+
+1. Go to `cloud.uipath.com` with an organization administrator account and open **Admin**.
+2. Select the organization in the left panel and go to **External Applications**. If there are tabs, use **OAuth Applications**.
+3. Click **Add application** and fill in:
+   - **Application name:** a name that identifies it, for example `Torre de Control Operaciones`.
+   - **Application type:** **Confidential application**.
+4. Under **Resources**, click **Add scopes**. Choose the **Orchestrator API Access** resource and switch to the **Application scope(s)** tab, not User scope(s). Check only these eight:
+   - `OR.Folders.Read`
+   - `OR.Jobs.Read`
+   - `OR.Queues.Read`
+   - `OR.Assets.Read`
+   - `OR.Execution.Read`
+   - `OR.Monitoring.Read`
+   - `OR.Robots.Read`
+   - `OR.Machines.Read`
+5. Leave **Redirect URL** empty: nobody signs in with this application.
+6. Click **Add**. UiPath shows the **App Secret** only once: copy it right then. The **App ID** stays visible in the applications list.
+
+Menu names may vary slightly depending on the Automation Cloud version.
+
+This screen gives you four values for the [environment](#ayuda-config-entorno):
+
+<table>
+<thead><tr><th>Value</th><th>Where to find it</th><th>Variable</th></tr></thead>
+<tbody>
+<tr><td>App ID</td><td>The External Applications list</td><td><code>UIPATH_CLIENT_ID</code></td></tr>
+<tr><td>App Secret</td><td>Only in the notice shown when the application is created</td><td><code>UIPATH_APP_SECRET</code></td></tr>
+<tr><td>Organization</td><td>The first part of the address after <code>cloud.uipath.com/</code></td><td><code>UIPATH_ORG</code></td></tr>
+<tr><td>Tenant</td><td>The name of the production tenant, as it appears in the tenant selector</td><td><code>UIPATH_TENANT</code></td></tr>
+</tbody>
+</table>
+
+<Nota titulo="Read scopes only">
+
+Do not check any scope that does not end in `.Read`. The routine never writes to Orchestrator, and without write scopes UiPath itself prevents it.
+
+</Nota>
+
+</Seccion>
+
+<Seccion id="config-uipath-carpetas" nivel="3" titulo="Access to production folders" breve="The External App only sees the Orchestrator folders it is assigned to, with a read-only role.">
+
+Scopes define which type of data the application can read. Which folders it sees is defined separately, in Orchestrator. Without this step, reads come back empty or with a 403 error.
+
+1. **Create a read-only folder role.** In Orchestrator, **Tenant → Manage Access → Roles**, add a role of type **Folder**, for example `Monitor Operaciones`, with the **View** permission and no other on Jobs, Logs, Queues, Transactions, Assets, Processes and Triggers.
+2. **Assign the application to each production folder.** In **Tenant → Folders**, choose the folder, click **Assign Account/Group/External App**, look up the application by name and give it the role from the previous step. Subfolders inherit access from the folder that contains them.
+3. **For the scan, give it a tenant role.** In **Tenant → Manage Access → Assign roles → External app**, assign it a tenant role that has **View** on Folders. With that, the [scan](#ayuda-descubrimiento) can walk through the subfolders. Without it, it only reads the folder set in Settings, and the dashboard warns you.
+
+When a new production folder is added, repeat step 2 for that folder.
+
+</Seccion>
+
+<Seccion id="config-bitbucket" nivel="2" titulo="2. Bitbucket token (optional)" breve="A read-only token to clone a project's repository. It is a fallback: the code comes from the packages published in Orchestrator.">
+
+The routine reads the code and documentation from the **packages published in Orchestrator**, in the deployed version. Bitbucket is used only when a package does not include the sources or the documentation and the process has a repository set in its [configuration](#ayuda-proyecto-config). If no token is loaded, that fallback does not exist and everything else works the same.
+
+The Tower uses **a single token**, so it must reach every repository you want to read. There are two ways to create it:
+
+**Repository, project or workspace access token (recommended).** It does not depend on a person's account.
+
+1. In Bitbucket, open the repository and go to **Repository settings → Security → Access tokens**.
+2. Click **Create Repository Access Token**.
+3. Give it a name, for example `torre-control-lectura`, and check a single permission: **Repositories → Read**.
+4. Click **Create** and copy the token: Bitbucket shows it only once.
+
+To cover several repositories with one token, create it the same way from the project or workspace settings (**Workspace settings → Security → Access tokens**). Those two levels require a Bitbucket Premium plan.
+
+**Atlassian account API token.** Use it when workspace access tokens are not available. A service account is preferable to a person's account.
+
+1. With that account, go to `id.atlassian.com/manage-profile/security/api-tokens`.
+2. Click **Create API token with scopes**, choose the **Bitbucket** application and check only the repository read scope (`read:repository:bitbucket`).
+3. Choose the expiration, create the token and copy it.
+
+<table>
+<thead><tr><th>Token type</th><th><code>BITBUCKET_TOKEN</code></th><th><code>BITBUCKET_USER</code></th></tr></thead>
+<tbody>
+<tr><td>Access token</td><td>The token</td><td>Empty</td></tr>
+<tr><td>Atlassian API token</td><td>The token</td><td>The email of the account that created it</td></tr>
+</tbody>
+</table>
+
+<Nota titulo="Read-only here too">
+
+Do not check write, pull request or administration permissions. The Tower never commits, pushes or opens a PR: if a problem requires a fix, it reports it so a person can take it. Bitbucket App passwords are being retired: do not use them.
+
+</Nota>
+
+</Seccion>
+
+<Seccion id="config-entorno" nivel="2" titulo="3. Environment in Claude" breve="The cloud environment where the routine runs: limited network, variables with the credentials and the script that installs the UiPath CLI.">
+
+The routine runs in a Claude Code cloud environment, which at Momentum is called `momentum-operaciones`. It is created from Claude Code on the web, in the environment settings, with three parts:
+
+**Network.** **Limited** access, with **Allow package managers** checked and these domains allowed:
+
+- `cloud.uipath.com`
+- `bitbucket.org`
+- `api.bitbucket.org`
+
+**Variables.** They are loaded in the environment configuration.
+
+<table>
+<thead><tr><th>Variable</th><th>Value</th><th>Secret</th></tr></thead>
+<tbody>
+<tr><td><code>UIPATH_ORG</code></td><td>Automation Cloud organization</td><td>No</td></tr>
+<tr><td><code>UIPATH_TENANT</code></td><td>Production tenant</td><td>No</td></tr>
+<tr><td><code>UIPATH_CLIENT_ID</code></td><td>External App ID</td><td>Yes</td></tr>
+<tr><td><code>UIPATH_APP_SECRET</code></td><td>External App secret</td><td>Yes</td></tr>
+<tr><td><code>BITBUCKET_TOKEN</code></td><td>Read-only token. Optional.</td><td>Yes</td></tr>
+<tr><td><code>BITBUCKET_USER</code></td><td>Only with an Atlassian API token</td><td>No</td></tr>
+<tr><td><code>OPS_ARTIFACT_URL</code></td><td>The address of this dashboard</td><td>No</td></tr>
+<tr><td><code>UIPATH_TELEMETRY_DISABLED</code></td><td><code>true</code></td><td>No</td></tr>
+<tr><td><code>UIPATH_CLI_DISABLE_VERSION_SYNC</code></td><td><code>true</code></td><td>No</td></tr>
+<tr><td><code>UIPATH_CARPETA_PRUEBA</code></td><td>A production folder with activity in the last 24 hours. For verification only.</td><td>No</td></tr>
+<tr><td><code>BITBUCKET_REPO_PRUEBA</code></td><td>A repository, such as <code>workspace/repo</code> or its address. For verification only.</td><td>No</td></tr>
+</tbody>
+</table>
+
+**Setup script.** The contents of `scripts/setup-entorno.sh`, from the Tower repository. It installs the UiPath CLI at a pinned version. It does not read any secret.
+
+A change to the variables applies only to new sessions: sessions that are already open keep the previous values.
+
+</Seccion>
+
+<Seccion id="config-verificar" nivel="2" titulo="4. Verify access" breve="A read-only test that confirms the environment reaches Orchestrator, Bitbucket and the dashboard.">
+
+Open a **new session** in Claude in the environment, with the Tower repository, and ask:
+
+`/verificar-entorno`
+
+The test signs in with the External App, performs one read of each type, clones the test repository and writes and deletes a test document on the dashboard. The report contains counts and field names, never data. It ends with a verdict:
+
+- **GO:** login and reads work with the CLI. You can continue.
+- **GO CON FALLBACK:** the CLI fails but the Orchestrator API responds. The routine uses the API.
+- **NO-GO:** neither responds. The report says which access is missing.
+
+<table>
+<thead><tr><th>If the report says</th><th>Probable cause</th><th>What to do</th></tr></thead>
+<tbody>
+<tr><td><code>invalid_client</code> on sign-in</td><td>App ID or secret copied incorrectly, or the application is disabled</td><td>Check the <a href="#ayuda-config-uipath">External App</a> and the variables</td></tr>
+<tr><td>Login succeeds and a read returns a 403 error</td><td>A scope is missing, or the application is not assigned to the folder</td><td>Add the scope named in the report or <a href="#ayuda-config-uipath-carpetas">assign the folder</a></td></tr>
+<tr><td>Empty list in a folder with activity</td><td>The folder name is misspelled, or the application cannot see it</td><td>Check <code>UIPATH_CARPETA_PRUEBA</code> and the folder assignment</td></tr>
+<tr><td>A package or library could not be downloaded</td><td>The role is missing permission to view packages</td><td>Add <strong>View</strong> on Packages to the folder role, and on Libraries to the tenant role</td></tr>
+<tr><td>Host blocked</td><td>The domain is not among the allowed ones</td><td>Add it to the <a href="#ayuda-config-entorno">environment</a> network</td></tr>
+<tr><td><code>Authentication failed</code> on Bitbucket</td><td>Token expired or without repository read, or <code>BITBUCKET_USER</code> is missing with an API token</td><td>Create the <a href="#ayuda-config-bitbucket">token</a> again</td></tr>
+</tbody>
+</table>
+
+</Seccion>
+
+<Seccion id="config-tablero" nivel="2" titulo="5. Dashboard and routine" breve="Publish the dashboard, load its initial configuration, schedule the hourly run and share it with the team.">
+
+1. **Publish the dashboard.** It is the `dashboard/index.html` file in the repository, published as an artifact with the capabilities from `dashboard/capabilities.json`. It gets its own address and an empty database.
+2. **Load that address** into the `OPS_ARTIFACT_URL` variable of the environment.
+3. **Seed the initial configuration.** In a new session of the environment, ask for `/control-mantenimiento seed`. It loads the triage criteria, thresholds and retention that you later see in [Settings](#ayuda-ajustes).
+4. **Schedule the routine.** A scheduled Claude task that opens a new session in the environment every hour, during business hours, with the request `Ejecutá /control-corrida.` The time of each run is shown in the [routine pulse](#ayuda-pulso).
+5. **Share the dashboard** with the team and give each person their [role](#ayuda-roles).
+
+The routine runs as the account that owns the dashboard. That is why it is the only one that writes runs and topics.
+
+</Seccion>
+
+<Seccion id="primeros-pasos" nivel="2" titulo="6. First steps on a new dashboard" breve="With the routine running, an Admin sets the folder to scan and registers the projects.">
+
+A newly published dashboard has no projects. An Admin gets it going like this:
+
+1. **Set the folder to scan.** In [Settings](#ayuda-descubrimiento), enter the Orchestrator folder where the production projects are and click **Save and scan**.
+2. **Review the proposed projects.** The next run walks through that folder and proposes as a project each folder that has processes. They appear in [Register project](#ayuda-propuestos).
+3. **Register the ones you want to monitor** and ignore the rest. The routine performs the [onboarding](#ayuda-alta) of each one, up to 3 per run.
+4. **Review and activate.** Each project is left In review with its process memory, its discrepancies and its proposed rules. When it looks right, activate monitoring.
+
+While there are no projects, the Inbox and Projects show these steps.
+
+</Seccion>
+
+<Seccion id="config-credenciales" nivel="2" titulo="Renew credentials and troubleshoot" breve="What to do when the UiPath secret or the Bitbucket token expires or changes, and what to check if the routine stops reading.">
+
+**External App secret.** In **Admin → External Applications**, edit the application and generate a new secret. Load it into `UIPATH_APP_SECRET`. The previous secret stops working.
+
+**Bitbucket token.** Revoke the old one, create a new one with the [same permissions](#ayuda-config-bitbucket) and load it into `BITBUCKET_TOKEN`. Atlassian API tokens expire: it is a good idea to note the date.
+
+After any change, run `/verificar-entorno` in a new session. The next run already uses the new value.
+
+<table>
+<thead><tr><th>What you see on the dashboard</th><th>What to check</th></tr></thead>
+<tbody>
+<tr><td><strong>Routine stopped</strong>, in red</td><td>The scheduled task is paused or fails to start. Check its run history in Claude.</td></tr>
+<tr><td>A Monitoring category topic saying it could not sign in</td><td>The External App secret expired or was changed. Renew it and verify.</td></tr>
+<tr><td>A project <strong>With error</strong></td><td>The project note gives the reason. Most commonly the External App is not <a href="#ayuda-config-uipath-carpetas">assigned to that folder</a>.</td></tr>
+<tr><td>The scan finds no subfolders</td><td>The External App is missing the tenant role with View on Folders.</td></tr>
+<tr><td>A pre-escalation analysis with no related code</td><td>The package does not include the sources and there is no Bitbucket repository or token for that process.</td></tr>
+</tbody>
+</table>
+
+</Seccion>

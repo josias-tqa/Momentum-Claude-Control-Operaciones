@@ -1,0 +1,43 @@
+{/* Dashboard help · Introduction (English). After editing, run: npm run build:ayuda. The Spanish twin is in ../es and both must be updated together. */}
+
+<Seccion id="introduccion" titulo="What the Control Tower is" breve="What it does, how it works, what it never does and what each role can do.">
+
+The Control Tower watches over the UiPath robots that Grupo Momentum runs in production. Every hour a Claude **routine** reviews Orchestrator, detects what is going wrong, decides how serious it is and leaves it on this dashboard, explained and sorted.
+
+The dashboard is where the team works: you see what needs attention, then answer it, delegate it or dismiss it. With every answer the routine learns: next time it knows what is normal in each project and what is not.
+
+</Seccion>
+
+<Seccion id="como-funciona" nivel="2" titulo="How it works">
+
+1. **Monitors.** The routine reads the jobs, logs, queues and triggers of each active project, and evaluates its [rules](#ayuda-regla).
+2. **Groups.** Each distinct problem is a [topic](#ayuda-tema) and has a single card. If it recurs, the card adds occurrences instead of being duplicated.
+3. **Classifies.** The [triage](#ayuda-triage) assigns a category, a [severity](#ayuda-severidad) and a [decision](#ayuda-decision): escalate, notify, watch or mark as known. It always says why.
+4. **Analyzes.** Before escalating, it cross-checks the error against the code of the deployed package and its documentation. The result is the [prior analysis](#ayuda-analisis-previo).
+5. **Publishes.** Whatever needs a person appears in the [Inbox](#ayuda-bandeja). The rest stays in [Not reported by the triage](#ayuda-no-reportados).
+6. **Learns.** The team's answers are saved in the [production memory](#ayuda-memoria-de-produccion) and can become proposed rules.
+
+</Seccion>
+
+<Seccion id="solo-lectura" nivel="2" titulo="What the Control Tower never does">
+
+- **It changes nothing in Orchestrator.** It does not start, stop or retry jobs, and does not touch queues, assets or processes.
+- **It changes no code.** If a problem needs a fix, it suggests one with the evidence. A person makes it.
+- **It shows no personal data.** Everything coming from Orchestrator goes through PII redaction before reaching the dashboard. Asset values and the contents of queue items are never read.
+
+</Seccion>
+
+<Seccion id="roles" nivel="2" titulo="Roles" breve="Your role defines what you can do: Reader views, Operator works the cards, and Admin also configures projects, rules and settings.">
+
+Your role appears below the menu, as **Operator access** (on the phone, inside **More**). It is assigned from the dashboard's **Share** menu.
+
+<table>
+<thead><tr><th>Role</th><th>Access in Share</th><th>Can</th></tr></thead>
+<tbody>
+<tr><td>Reader</td><td>Viewer</td><td>View everything, including this help.</td></tr>
+<tr><td>Operator</td><td>Contributor</td><td>Delegate, postpone, dismiss, answer and comment on cards, request a new analysis, and answer, postpone or dismiss a project's discrepancies.</td></tr>
+<tr><td>Admin</td><td>Editor</td><td>Also: set the folder to scan, register and configure projects, upload their documentation, activate or pause monitoring, approve, adjust and delete rules, and edit the settings.</td></tr>
+</tbody>
+</table>
+
+</Seccion>

@@ -7,19 +7,21 @@
 // Después: node scripts/build-writes.mjs --plan <plan.json> --salida <dir> y publicar los lotes con ArtifactData batch.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { arg, bandera, leerJson } from './lib/args.mjs';
+import { arg, bandera, leerJson, desenvolver } from './lib/args.mjs';
+import { idiomaDe, m } from './lib/idioma.mjs';
 
-export function planDescubrimiento(candidatos, { incluirInactivos = false, solo = null, ahora = new Date().toISOString(), existentes = [] } = {}) {
+export function planDescubrimiento(candidatos, { incluirInactivos = false, solo = null, ahora = new Date().toISOString(), existentes = [], ajustes = {} } = {}) {
+  const lang = idiomaDe(ajustes);
   const writes = [];
   const creados = [];
   const omitidos = [];
   const ids = new Set(existentes);
   for (const c of candidatos.candidatos || []) {
-    if (c.registradoComo) { omitidos.push({ folderPath: c.folderPath, motivo: `ya registrado como ${c.registradoComo}` }); continue; }
-    if (c.fueraDeLasRaices) { omitidos.push({ folderPath: c.folderPath, motivo: 'fuera de las carpetas a escanear de Ajustes' }); continue; }
-    if (c.ignorada) { omitidos.push({ folderPath: c.folderPath, motivo: 'ignorada por un Admin en el tablero' }); continue; }
-    if (!c.activo && !incluirInactivos) { omitidos.push({ folderPath: c.folderPath, motivo: `sin jobs en ${candidatos.dias || 30} días` }); continue; }
-    if (c.folderPath === '(sin carpeta)') { omitidos.push({ folderPath: c.folderPath, motivo: 'procesos sin carpeta' }); continue; }
+    if (c.registradoComo) { omitidos.push({ folderPath: c.folderPath, motivo: m(lang, 'plan.yaRegistrado', { id: c.registradoComo }) }); continue; }
+    if (c.fueraDeLasRaices) { omitidos.push({ folderPath: c.folderPath, motivo: m(lang, 'plan.fuera') }); continue; }
+    if (c.ignorada) { omitidos.push({ folderPath: c.folderPath, motivo: m(lang, 'plan.ignorada') }); continue; }
+    if (!c.activo && !incluirInactivos) { omitidos.push({ folderPath: c.folderPath, motivo: m(lang, 'plan.sinJobs', { dias: candidatos.dias || 30 }) }); continue; }
+    if (c.folderPath === '(sin carpeta)') { omitidos.push({ folderPath: c.folderPath, motivo: m(lang, 'plan.sinCarpeta') }); continue; }
     if (solo && !solo.includes(c.id)) continue;
     let id = c.id || 'proyecto';
     while (ids.has(id)) id = `${c.id}-${ids.size}`;
@@ -44,7 +46,7 @@ export function planDescubrimiento(candidatos, { incluirInactivos = false, solo 
 
 if (process.argv[1] && process.argv[1].endsWith('plan-descubrimiento.mjs')) {
   const cand = leerJson(arg('--candidatos'));
-  const plan = planDescubrimiento(cand, { incluirInactivos: bandera('--incluir-inactivos'), solo: arg('--solo') ? arg('--solo').split(',') : null });
+  const plan = planDescubrimiento(cand, { incluirInactivos: bandera('--incluir-inactivos'), solo: arg('--solo') ? arg('--solo').split(',') : null, ajustes: arg('--ajustes') ? desenvolver(leerJson(arg('--ajustes'), {})) : {} });
   mkdirSync(dirname(arg('--salida')), { recursive: true });
   writeFileSync(arg('--salida'), JSON.stringify(plan, null, 2));
   console.log(JSON.stringify({ proyectos: plan.creados.length, omitidos: plan.omitidos.length, escrituras: plan.writes.length }));

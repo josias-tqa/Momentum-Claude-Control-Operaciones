@@ -17,6 +17,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
 import { leerColeccion } from './consolidar.mjs';
+import { idiomaDe, m } from './lib/idioma.mjs';
 
 // Reescribe las escrituras de un plan: una regla nueva `proposed` nace aprobada. Devuelve los ids aprobados.
 export function aprobarEnPlan(writes, ajustes, ahora) {
@@ -49,7 +50,7 @@ export function aprobarAutomatico({ reglas, ajustes, ahora }) {
     writes.push({
       op: 'set', collection: 'history', doc_id: `h-auto-${projectId}-${marca}`.slice(0, 190),
       data: { projectId, type: 'rule_added', at: ahora, by: 'rutina', ruleId: ids[0],
-        summary: `Aprobación automática: ${ids.length === 1 ? 'se activó 1 regla propuesta' : `se activaron ${ids.length} reglas propuestas`} (${ids.join(', ')}).`.slice(0, 4000) },
+        summary: m(idiomaDe(ajustes), ids.length === 1 ? 'aprob.una' : 'aprob.varias', { n: ids.length, ids: ids.join(', ') }).slice(0, 4000) },
     });
   }
   return { activa: true, aprobadas, writes };

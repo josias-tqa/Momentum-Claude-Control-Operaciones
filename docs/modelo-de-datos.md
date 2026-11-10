@@ -13,7 +13,7 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 
 | Colección | Escribe | Contenido |
 |---|---|---|
-| `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria. `autoApproveRules`: aprobación automática de reglas (apagada por defecto). `discovery`: carpetas de Orchestrator a escanear (`rootFolders`) y carpetas propuestas que un Admin ignoró (`ignoredFolders`) |
+| `config/settings` | Admin | Criterios de triage globales, matriz de severidad, retención, intervalo, minutos máximos en Pending, zona horaria. `language` (`es` | `en`, por defecto `es`): idioma global del tablero y de todo lo que escribe la rutina; lo fija un Admin en Ajustes y la rutina lo lee de acá (cada texto se escribe una sola vez, en ese idioma). `autoApproveRules`: aprobación automática de reglas (apagada por defecto). `discovery`: carpetas de Orchestrator a escanear (`rootFolders`) y carpetas propuestas que un Admin ignoró (`ignoredFolders`) |
 | `config/health`, `config/runlock` | Rutina | Última corrida, fallas consecutivas, uso de la base, marcas de la revisión de reglas (`rulesReview`); lock entre corridas |
 | `projects/{id}` | Admin (alta y configuración) y rutina (salud, watermarks, inventario, emparejamiento) | Carpeta de Orchestrator, **procesos** (cada uno con su repo, su rol, su nombre en Orchestrator y, opcionalmente, su carpeta y su documentación), documentación común, `status`, criterios del proyecto, baseline. Detalle: `scripts/lib/proyecto.mjs` |
 | `memory/{projectId}` | Rutina (Admin puede corregir) | `process`: memoria de proceso (mini-PDD). `productionSummary`: resumen rodante de la memoria de producción |
@@ -22,7 +22,7 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 | `runs/{runId}` | Solo rutina | Una corrida. Por proyecto trae la ventana, los conteos, cada check con su valor observado y los hallazgos con su triage |
 | `incidents/{id}` | Solo rutina | Una tarjeta por tema. Guarda fingerprints, ocurrencias, recurrencias, evidencia redactada, triage (con su porqué) y análisis previo |
 | `incidentWork/{incidentId}` | Operador o Admin | Lado humano: `state` (delegated, snoozed, dismissed, responded), asignado, motivo del descarte, respuesta |
-| `activity/{id}` | Operador o Admin | Comentarios y acciones sobre una tarjeta, incluidos los cambios de regla hechos desde ella (`type: "rule"`) |
+| `activity/{id}` | Operador o Admin | Comentarios y acciones sobre una tarjeta, incluidos los cambios de regla hechos desde ella (`type: "rule"`). Cada acción guarda `type` + `params` (datos neutros al idioma: motivo o decisión, fecha ISO, nombre de la regla, lista de códigos de cambio, `note` escrita por una persona) y el tablero arma la frase al mostrarla en el idioma activo. `text` se guarda además, en el idioma vigente al escribir, para la rutina; las entradas viejas solo tienen `text` |
 | `requests/{id}` | Operador o Admin | `onboard_project`, `reanalyze_project`, `reanalyze_incident`, `recompile_rule`, `discover_projects` (escanear la carpeta de Ajustes) |
 | `libraries/{slug}` | Solo rutina | Catálogo de librerías propias: versiones en uso, actividades de cada una, si trae fuentes |
 | `config/discovery` | Rutina | **Proyectos propuestos**: carpetas con procesos, dentro de las carpetas a escanear, que todavía no son un proyecto. Trae las raíces usadas (`roots`) y, si hubo un problema de acceso, un aviso (`note`). Se actualiza cuando un Admin pide el escaneo y una vez por día |

@@ -1,0 +1,10 @@
+{
+  "idioma.titulo": "Idioma",
+  "idioma.es": "Español",
+  "idioma.en": "English",
+  "idioma.grupo": "Idioma del tablero",
+  "idioma.explica": "Es el idioma de todo el tablero y de lo que escribe la rutina desde la próxima corrida (títulos, análisis, memorias, reglas propuestas). Lo que ya está guardado queda en el idioma en que se escribió. Lo elige un Admin y vale para todas las personas.",
+  "idioma.masIdioma": "Más sobre el idioma",
+  "idioma.toast": "Idioma cambiado a Español",
+  "idioma.errorGuardar": "No se pudo cambiar el idioma"
+}

@@ -32,12 +32,15 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
    - Su recurrencia se acumula en la misma tarjeta.
    - Vale igual para las discrepancias de un proyecto: la rutina nunca escribe `discrepancyWork`.
    - Las reglas las aprueba un Admin. La rutina solo las activa por su cuenta con `scripts/aprobar-reglas.mjs`, y solo si un Admin encendió la aprobación automática en Ajustes (`config/settings.autoApproveRules`).
-6. **Todo cambio en el tablero actualiza su ayuda.** La ayuda vive en `dashboard/ayuda/*.mdx` y se compila dentro de `dashboard/index.html`.
-   - Una pantalla, pestaña, botón o etiqueta nueva o cambiada se explica en su `.mdx`: sección, `Accion` o `Termino`. El `breve` es el tooltip.
-   - Después: `npm run build:ayuda` y `npm test`. `tests/ayuda.test.mjs` falla si falta una sección o un tooltip, o si el bloque generado quedó viejo.
+6. **Todo cambio en el tablero actualiza su ayuda, en los dos idiomas.** La ayuda vive en `dashboard/ayuda/<idioma>/*.mdx` (`es/` y `en/`, mismos `id`) y se compila dentro de `dashboard/index.html`.
+   - Una pantalla, pestaña, botón o etiqueta nueva o cambiada se explica en el `.mdx` de **cada** idioma: sección, `Accion` o `Termino`. El `breve` es el tooltip. El `nombre` de una `Accion` es el texto del botón en ese idioma.
+   - Después: `npm run build:ayuda` y `npm test`. `tests/ayuda.test.mjs` falla si falta una sección o un tooltip en algún idioma, si los idiomas no tienen los mismos `id`, o si el bloque generado quedó viejo.
    - Una ruta nueva también va en `AYUDA_RUTA`; un control interno sin tooltip, en `SIN_TIP`.
-7. **Idioma.** Todo el contenido (memorias, análisis, porqués del triage, títulos) se escribe en español.
-   - Los identificadores técnicos y los nombres de campos quedan en inglés.
+7. **Idioma.** El tablero y la rutina funcionan en español (`es`) o inglés (`en`); lo fija un Admin en Ajustes (`config/settings.language`, por defecto `es`).
+   - **Tablero:** ningún texto visible se escribe a mano en `dashboard/index.html`. Todo sale de `tx('espacio.clave', {param})` (y `txp(n, 'clave')` para plurales, con `clave.one` y `clave.other`), con su clave en `dashboard/i18n/es/<espacio>.json` **y** en `dashboard/i18n/en/<espacio>.json`. Después `npm run build:i18n`. Sirve para texto, `placeholder`, `aria-label`, `title`, toasts y errores; las etiquetas de valores guardados (categorías, estados...) también van por catálogo. Fechas y horas por `fecha()`/`rel()`.
+   - **Rutina:** cada texto se escribe **una sola vez**, en el idioma de `config/settings.language` (nunca en los dos). Los scripts usan `m(lang, 'clave')` con `scripts/lib/mensajes/{es,en}.json`; Claude (triage, análisis, memorias, reglas) escribe directo en ese idioma. Las `firma` de los hallazgos no se traducen: alimentan el fingerprint y deben ser iguales en cualquier idioma.
+   - **Lo que no se traduce:** los identificadores técnicos y los nombres de campos (siempre en inglés), los valores guardados (`decision`, `category`, `type`...) y los textos que escribió una persona (notas, comentarios, texto de una regla, documentos). Lo ya guardado queda en el idioma en que se escribió, salvo el título y el porqué de un incidente que se repite: `scripts/consolidar.mjs` los reescribe en el idioma vigente (campo `language` del incidente).
+   - `tests/i18n.test.mjs` y `tests/mensajes.test.mjs` fallan si falta una clave en un idioma, si los `{parámetros}` no coinciden, si queda una clave sin usar o un texto escrito a mano (un literal que no es texto de interfaz se marca con `// i18n-ok: motivo`). **Un idioma nuevo** se suma a `IDIOMAS` (`scripts/lib/i18n.mjs`, `scripts/lib/ayuda.mjs`, `scripts/lib/idioma.mjs`) con su carpeta de catálogo y de ayuda; los tests dicen qué falta.
 
 ## Mapa
 
@@ -56,7 +59,9 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 | Modelo de datos del tablero | `docs/modelo-de-datos.md` y `schemas/` |
 | Scripts deterministas (colecta, evaluación, consolidación, lotes) | `scripts/` (tests: `npm test`) |
 | Tablero (fuente del artifact) | `dashboard/index.html` |
-| Ayuda del tablero (introducción, configuración inicial, pantallas, glosario; MDX) | `dashboard/ayuda/*.mdx` → `npm run build:ayuda` |
+| Ayuda del tablero (introducción, configuración inicial, pantallas, glosario; MDX, un juego por idioma) | `dashboard/ayuda/<idioma>/*.mdx` → `npm run build:ayuda` |
+| Textos del tablero por idioma (catálogos) | `dashboard/i18n/<idioma>/*.json` → `npm run build:i18n` |
+| Textos de los scripts de la rutina por idioma | `scripts/lib/mensajes/<idioma>.json` · `scripts/lib/idioma.mjs` |
 
 ## Estado de trabajo
 

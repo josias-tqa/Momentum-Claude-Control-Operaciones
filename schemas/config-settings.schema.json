@@ -39,6 +39,11 @@
       "type": "string",
       "maxLength": 60
     },
+    "language": {
+      "type": "string",
+      "enum": ["es", "en"],
+      "description": "Idioma del tablero y de los textos que escribe la rutina (títulos, motivos, análisis, memorias). Lo fija un Admin en Ajustes; por defecto es."
+    },
     "autoApproveRules": {
       "type": "boolean"
     },

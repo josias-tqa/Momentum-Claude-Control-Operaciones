@@ -24,9 +24,10 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
-import { arg, leerJson } from './lib/args.mjs';
+import { arg, leerJson, desenvolver } from './lib/args.mjs';
 import { slugProceso } from './lib/proyecto.mjs';
 import { leerColeccion } from './consolidar.mjs';
+import { idiomaDe, m } from './lib/idioma.mjs';
 
 export const TIPOS = ['orchestrator', 'code', 'queue', 'version', 'trigger', 'docs', 'hygiene', 'other'];
 
@@ -52,7 +53,8 @@ function cuerpo(e) {
   return d;
 }
 
-export function consolidarDiscrepancias({ projectId, encontradas, existentes = [], trabajo = [], ahora }) {
+export function consolidarDiscrepancias({ projectId, encontradas, existentes = [], trabajo = [], ahora, ajustes = {} }) {
+  const lang = idiomaDe(ajustes);
   const propias = existentes.filter((d) => d.projectId === projectId);
   const porId = new Map(propias.map((d) => [d.id, d]));
   const work = new Map(trabajo.map((w) => [w.id, w]));
@@ -86,7 +88,7 @@ export function consolidarDiscrepancias({ projectId, encontradas, existentes = [
   for (const d of propias) {
     if (vistas.has(d.id)) continue;
     if (d.status !== 'open') { resumen.sinCambios += 1; continue; }
-    writes.push({ op: 'update', collection: 'discrepancies', doc_id: d.id, ...version(d), data: { status: 'resolved', resolvedAt: ahora, resolvedReason: 'Ya no se detecta en el análisis del proyecto.' } });
+    writes.push({ op: 'update', collection: 'discrepancies', doc_id: d.id, ...version(d), data: { status: 'resolved', resolvedAt: ahora, resolvedReason: m(lang, 'disc.resuelta') } });
     resumen.resueltas += 1;
   }
   return { resumen, errores, writes };
@@ -100,8 +102,9 @@ if (process.argv[1] && process.argv[1].endsWith('consolidar-discrepancias.mjs'))
     projectId, encontradas: leerJson(arg('--encontradas')),
     existentes: db ? leerColeccion(join(db, 'discrepancies')) : [], trabajo: db ? leerColeccion(join(db, 'discrepancyWork')) : [],
     ahora: arg('--ahora') || new Date().toISOString(),
+    ajustes: db ? desenvolver(leerJson(join(db, 'config', 'settings.json'), {})) : {},
   });
-  if (r.errores.length) { console.error(`Lista de discrepancias inválida:\n - ${r.errores.join('\n - ')}`); process.exit(1); }
+  if (r.errores.length) { console.error(`Lista de discrepancias inválida:\n - ${r.errores.join('\n - ')}`); process.exit(1); } // i18n-ok: mensaje de consola para quien opera el script
   mkdirSync(dirname(arg('--salida')), { recursive: true });
   writeFileSync(arg('--salida'), JSON.stringify(r, null, 2));
   console.log(JSON.stringify(r.resumen));

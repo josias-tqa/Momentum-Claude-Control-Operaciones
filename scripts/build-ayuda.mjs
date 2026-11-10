@@ -1,4 +1,5 @@
-// Compila la ayuda del tablero (dashboard/ayuda/*.mdx) y la inserta en dashboard/index.html.
+// Compila la ayuda del tablero (dashboard/ayuda/<idioma>/*.mdx) y la inserta en dashboard/index.html.
+// Hay un juego de .mdx por idioma (es, en) con los mismos ids; los textos fijos del build están en TXT_BUILD.
 // Uso: npm run build:ayuda            (regenera el bloque)
 //      node scripts/build-ayuda.mjs --check   (falla si el bloque no está al día)
 //
@@ -16,7 +17,13 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { evaluate } from '@mdx-js/mdx';
-import { fuentesAyuda, hashAyuda, leerBloque, idsAyuda, TABLERO, MARCA_INICIO, MARCA_FIN } from './lib/ayuda.mjs';
+import { fuentesAyuda, hashAyuda, leerBloque, idsAyuda, TABLERO, MARCA_INICIO, MARCA_FIN, IDIOMAS_AYUDA } from './lib/ayuda.mjs';
+
+// Textos que el propio build escribe en el HTML (el resto sale de los .mdx), por idioma.
+const TXT_BUILD = {
+  es: { ejemplo: 'Ejemplo con datos ficticios', solo: 'Solo', toc: 'Contenido de la ayuda' },
+  en: { ejemplo: 'Example with sample data', solo: 'Only', toc: 'Help contents' },
+};
 
 // ---------- runtime JSX → HTML ----------
 class Html { constructor(s) { this.s = s; } }
@@ -40,7 +47,7 @@ function jsx(tipo, props = {}) {
 const texto = (html) => html.replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 
 // ---------- componentes ----------
-function componentes(tips) {
+function componentes(tips, T) {
   const tip = (id, titulo, breve) => {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(id || '')) throw new Error(`id inválido: "${id}"`);
     if (breve) tips[id] = { titulo, breve };
@@ -56,7 +63,7 @@ function componentes(tips) {
     Accion({ id, nombre, breve, solo, children }) {
       if (!nombre || !breve) throw new Error(`Accion ${id}: faltan nombre o breve`);
       tip(id, nombre, breve);
-      return new Html(`<div class="ay-accion" id="ayuda-${esc(id)}"><div class="ay-accion-h"><span class="btn" aria-hidden="true">${esc(nombre)}</span>${solo ? `<span class="role-b">Solo ${esc(solo)}</span>` : ''}</div><p><b>${esc(breve)}</b></p>${aHtml(children)}</div>`);
+      return new Html(`<div class="ay-accion" id="ayuda-${esc(id)}"><div class="ay-accion-h"><span class="btn" aria-hidden="true">${esc(nombre)}</span>${solo ? `<span class="role-b">${esc(T.solo)} ${esc(solo)}</span>` : ''}</div><p><b>${esc(breve)}</b></p>${aHtml(children)}</div>`);
     },
     Termino({ id, nombre, children }) {
       const def = aHtml(children);
@@ -70,14 +77,14 @@ function componentes(tips) {
     Vista({ nombre, variante = '', nota }) {
       if (!/^[a-z-]+$/.test(nombre || '') || !/^[a-z-]*$/.test(variante)) throw new Error(`Vista inválida: ${nombre}/${variante}`);
       // Marcador que el tablero reemplaza por la vista real (ver vistaDemo en index.html).
-      return new Html(`<figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:${nombre}:${variante}--></div><figcaption>Ejemplo con datos ficticios${nota ? ` · ${esc(nota)}` : ''}</figcaption></figure>`);
+      return new Html(`<figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:${nombre}:${variante}--></div><figcaption>${esc(T.ejemplo)}${nota ? ` · ${esc(nota)}` : ''}</figcaption></figure>`);
     },
   };
 }
 
 // ---------- índice ----------
 // Árbol de tres niveles: el tablero muestra siempre los dos primeros y abre el tercero en la sección activa.
-function indice(html) {
+function indice(html, T) {
   const secs = [...html.matchAll(/<section class="ay-sec n(\d)" id="ayuda-([\w-]+)" data-nivel="\d"><h\d>(.*?)<\/h\d>(?:<p class="ay-breve">(.*?)<\/p>)?/g)]
     .map((m) => ({ n: Number(m[1]), id: m[2], titulo: m[3], breve: m[4] || '', hijos: [] }));
   const grupos = [];
@@ -88,29 +95,35 @@ function indice(html) {
     else if (s.n === 3 && h) h.hijos.push(s);
   }
   const lista = (xs, n) => (xs.length ? `<ol class="n${n}">${xs.map((x) => `<li><a href="#ayuda-${x.id}">${x.titulo}</a>${lista(x.hijos, n + 1)}</li>`).join('')}</ol>` : '');
-  return `<nav class="ay-toc" aria-label="Contenido de la ayuda">${lista(grupos, 1)}</nav>`
+  return `<nav class="ay-toc" aria-label="${esc(T.toc)}">${lista(grupos, 1)}</nav>`
     + `<div class="ay-inicio">${grupos.map((g) => `<a class="ay-card" href="#ayuda-${g.id}"><b>${g.titulo}</b><span>${g.breve}</span></a>`).join('')}</div>`;
 }
 
 // ---------- build ----------
-export async function construir() {
+async function compilar(lang) {
   const tips = {};
-  const comps = componentes(tips);
+  const comps = componentes(tips, TXT_BUILD[lang]);
   let cuerpo = '';
-  for (const f of fuentesAyuda()) {
+  for (const f of fuentesAyuda(lang)) {
     let Contenido;
     try { ({ default: Contenido } = await evaluate(f.texto, { Fragment, jsx, jsxs: jsx, development: false })); }
-    catch (e) { throw new Error(`${f.archivo}: ${e.message}`); }
+    catch (e) { throw new Error(`${lang}/${f.archivo}: ${e.message}`); }
     cuerpo += aHtml(Contenido({ components: comps }));
   }
   const ids = idsAyuda(cuerpo);
   const rep = ids.filter((x, i) => ids.indexOf(x) !== i);
-  if (rep.length) throw new Error(`ids repetidos en la ayuda: ${[...new Set(rep)].join(', ')}`);
-  const html = indice(cuerpo) + cuerpo;
+  if (rep.length) throw new Error(`ids repetidos en la ayuda (${lang}): ${[...new Set(rep)].join(', ')}`);
+  const html = indice(cuerpo, TXT_BUILD[lang]) + cuerpo;
   const json = JSON.stringify(tips).replace(/<\//g, '<\\/');
-  return `${MARCA_INICIO} sha256=${hashAyuda()} · generado por scripts/build-ayuda.mjs desde dashboard/ayuda/*.mdx: no editar a mano -->\n`
-    + `<template id="ayuda-tpl">${html}</template>\n`
-    + `<script type="application/json" id="ayuda-tips">${json}</script>\n${MARCA_FIN}`;
+  return `<template id="ayuda-tpl-${lang}">${html}</template>\n<script type="application/json" id="ayuda-tips-${lang}">${json}</script>`;
+}
+
+export async function construir() {
+  for (const l of IDIOMAS_AYUDA) if (!TXT_BUILD[l]) throw new Error(`TXT_BUILD no tiene el idioma ${l}`);
+  const partes = [];
+  for (const l of IDIOMAS_AYUDA) partes.push(await compilar(l));
+  return `${MARCA_INICIO} sha256=${hashAyuda()} · generado por scripts/build-ayuda.mjs desde dashboard/ayuda/<idioma>/*.mdx: no editar a mano -->\n`
+    + `${partes.join('\n')}\n${MARCA_FIN}`;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -124,7 +137,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log('Ayuda al día');
   } else {
     writeFileSync(TABLERO, nuevo);
-    const b = leerBloque(nuevo);
-    console.log(`Ayuda generada: ${idsAyuda(b.html).length} anclas, ${Object.keys(b.tips).length} tooltips`);
+    for (const l of IDIOMAS_AYUDA) { const b = leerBloque(nuevo, l); console.log(`Ayuda ${l}: ${idsAyuda(b.html).length} anclas, ${Object.keys(b.tips).length} tooltips`); }
   }
 }

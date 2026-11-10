@@ -15,6 +15,7 @@ import { dirname, join } from 'node:path';
 import { fingerprint, normalizarFirma } from './lib/fingerprint.mjs';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
 import { normalizarProyecto, procesoPorNombre } from './lib/proyecto.mjs';
+import { idiomaDe, m } from './lib/idioma.mjs';
 
 // ---------- clasificación por texto ----------
 const CATEGORIAS = [
@@ -116,8 +117,9 @@ const soloAlcance = (f = {}) => Object.fromEntries(Object.entries(f).filter(([k]
 const excepcionesDe = (c = {}) => (c.exceptions || []).filter((e) => e && e.filter && Object.keys(e.filter).length);
 
 export function evaluarRegla(regla, senales, proyecto = {}, ajustes = {}) {
+  const lang = idiomaDe(ajustes);
   const c = regla.compiled || {};
-  if (!c.signal || c.mode === 'llm') return { resultado: 'omitido', observado: null, motivo: 'regla en lenguaje natural: la evalúa Claude' };
+  if (!c.signal || c.mode === 'llm') return { resultado: 'omitido', observado: null, motivo: m(lang, 'eval.motivo.llm') };
   const tz = ajustes.timezone;
   const excepciones = excepcionesDe(c);
   const todos = registrosDe(senales, c.signal).sort((a, b) => String(a._t).localeCompare(String(b._t)));
@@ -128,7 +130,7 @@ export function evaluarRegla(regla, senales, proyecto = {}, ajustes = {}) {
     const proc = c.filter && c.filter.process;
     const ahora = { _t: senales.ventana.hasta, _texto: '', _proceso: proc || '', _cola: (c.filter && c.filter.queue) || '' };
     const exc = excepciones.find((e) => coincide(ahora, e.filter, tz));
-    if (exc) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: `excepción de la regla${exc.text ? ': ' + exc.text : ''}` };
+    if (exc) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: m(lang, 'eval.motivo.excepcion', { texto: exc.text ? ': ' + exc.text : '' }) };
     // La colecta trae solo la última ventana (~1 h). Se usa además el último job conocido por proceso,
     // que la consolidación guarda en watermarks.lastJobByProcess.
     const ultimoVisto = sinExceptuar.filter((r) => coincide(r, c.filter, tz)).map((r) => r._t).filter(Boolean).sort().slice(-1)[0] || null;
@@ -136,7 +138,7 @@ export function evaluarRegla(regla, senales, proyecto = {}, ajustes = {}) {
       ? Object.entries(proyecto.watermarks.lastJobByProcess).filter(([n]) => n.toLowerCase().includes(String(proc).toLowerCase())).map(([, t]) => t).sort().slice(-1)[0]
       : null;
     const ultimo = [ultimoVisto, guardado].filter(Boolean).sort().slice(-1)[0] || null;
-    if (!ultimo) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: 'sin historial del proceso todavía' };
+    if (!ultimo) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: m(lang, 'eval.motivo.sinHistorial') };
     const minutos = Math.round((Date.parse(senales.ventana.hasta) - Date.parse(ultimo)) / 60000);
     const limite = Number(c.windowMinutes || 60);
     return { resultado: minutos > limite ? 'alerta' : 'ok', observado: minutos, umbral: limite, registros: [], ultimo };
@@ -160,7 +162,7 @@ export function evaluarRegla(regla, senales, proyecto = {}, ajustes = {}) {
       // Denominador: solo los registros del mismo alcance (p. ej. los jobs del Performer), no todos.
       const base = enVentana.filter((r) => coincide(r, soloAlcance(c.filter), tz));
       observado = base.length ? Math.round((match.length / base.length) * 1000) / 1000 : 0;
-      if (base.length < Number(c.minSample || 3)) return { resultado: 'ok', observado, umbral: c.threshold ?? null, registros: [], exceptuados, motivo: 'muestra insuficiente' };
+      if (base.length < Number(c.minSample || 3)) return { resultado: 'ok', observado, umbral: c.threshold ?? null, registros: [], exceptuados, motivo: m(lang, 'eval.motivo.muestra') };
       break;
     }
     case 'count':
@@ -235,6 +237,8 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   const checks = [];
   const hallazgos = [];
   const pendMax = Number(ajustes.pendingMaxMinutes || 30);
+  const lang = idiomaDe(ajustes);
+  const M = (k, p) => m(lang, k, p);
   const hasta = senales.ventana.hasta;
 
   function hallazgo(h) {
@@ -264,13 +268,13 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
 
   // 1) Jobs Faulted, agrupados por proceso + firma del error.
   const faulted = senales.jobs.filter((j) => j.estado === 'Faulted' && (j.fin || j.creado) >= senales.ventana.desde);
-  check('jobs_faulted', 'Jobs con error (Faulted)', faulted.length ? 'alerta' : 'ok', faulted.length, 0);
+  check('jobs_faulted', M('eval.check.jobs_faulted'), faulted.length ? 'alerta' : 'ok', faulted.length, 0);
   for (const [, grupo] of agrupar(faulted, (j) => `${j.proceso}|${normalizarFirma(errorDeJob(j))}`)) {
     const msg = errorDeJob(grupo[0]);
     const cat = categorizar(msg);
     hallazgo({
       checkId: 'jobs_faulted', categoria: cat, proceso: grupo[0].proceso, firma: msg,
-      titulo: `${grupo[0].proceso}: ${grupo.length} job(s) con error${cat === 'login' ? ' de login' : ''}`,
+      titulo: M(cat === 'login' ? 'eval.titulo.jobs_faulted_login' : 'eval.titulo.jobs_faulted', { proceso: grupo[0].proceso, n: grupo.length }),
       severidadSugerida: cat === 'login' || grupo.length >= 3 ? 'P2' : 'P3',
       conteo: grupo.length, primera: minimo(grupo.map((j) => j.fin || j.creado)), ultima: maximo(grupo.map((j) => j.fin || j.creado)),
       evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, estado: j.estado, fin: j.fin, maquina: j.maquina })), logs: (logsPorJob.get(grupo[0].key) || []).slice(-5) },
@@ -279,9 +283,9 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
 
   // 2) Jobs detenidos.
   const detenidos = senales.jobs.filter((j) => ['Stopped', 'Terminating'].includes(j.estado) && (j.fin || j.creado) >= senales.ventana.desde);
-  check('jobs_stopped', 'Jobs detenidos', detenidos.length ? 'alerta' : 'ok', detenidos.length, 0);
+  check('jobs_stopped', M('eval.check.jobs_stopped'), detenidos.length ? 'alerta' : 'ok', detenidos.length, 0);
   for (const [proc, grupo] of agrupar(detenidos, (j) => j.proceso)) {
-    hallazgo({ checkId: 'jobs_stopped', categoria: 'infrastructure', proceso: proc, firma: 'job detenido', titulo: `${proc}: ${grupo.length} job(s) detenido(s)`,
+    hallazgo({ checkId: 'jobs_stopped', categoria: 'infrastructure', proceso: proc, firma: 'job detenido', titulo: M('eval.titulo.jobs_stopped', { proceso: proc, n: grupo.length }),
       severidadSugerida: 'P3', conteo: grupo.length, primera: minimo(grupo.map((j) => j.fin || j.creado)), ultima: maximo(grupo.map((j) => j.fin || j.creado)),
       evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, estado: j.estado, fin: j.fin })) } });
   }
@@ -291,12 +295,12 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   const minutosDesde = (iso) => (Date.parse(hasta) - Date.parse(iso)) / 60000;
   const espera = (j) => (j.estado === 'Pending' ? minutosDesde(j.creado) : (j.inicio && j.creado ? (Date.parse(j.inicio) - Date.parse(j.creado)) / 60000 : 0));
   const colgados = senales.jobs.filter((j) => j.creado && (j.estado === 'Pending' || (j.inicio && j.inicio >= senales.ventana.desde)) && espera(j) > pendMax);
-  check('jobs_pending_long', `Jobs que esperaron robot más de ${pendMax} min`, colgados.length ? 'alerta' : 'ok', colgados.length, 0);
+  check('jobs_pending_long', M('eval.check.jobs_pending_long', { min: pendMax }), colgados.length ? 'alerta' : 'ok', colgados.length, 0);
   for (const [proc, grupo] of agrupar(colgados, (j) => j.proceso)) {
     const peor = Math.max(...grupo.map(espera));
     const siguen = grupo.filter((j) => j.estado === 'Pending').length;
     hallazgo({ checkId: 'jobs_pending_long', categoria: 'scheduling', proceso: proc, firma: 'job pending demasiado tiempo',
-      titulo: siguen ? `${proc}: ${siguen} job(s) esperando robot hace más de ${pendMax} min` : `${proc}: ${grupo.length} job(s) esperaron ${Math.round(peor / 60 * 10) / 10} h antes de arrancar`,
+      titulo: siguen ? M('eval.titulo.pending_siguen', { proceso: proc, n: siguen, min: pendMax }) : M('eval.titulo.pending_esperaron', { proceso: proc, n: grupo.length, h: Math.round(peor / 60 * 10) / 10 }),
       severidadSugerida: peor > pendMax * 3 ? 'P2' : 'P3',
       conteo: grupo.length, primera: minimo(grupo.map((j) => j.creado)), ultima: maximo(grupo.map((j) => j.inicio || j.creado)),
       evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, creado: j.creado, inicio: j.inicio || null, estado: j.estado })), minutosMaximo: Math.round(peor) } });
@@ -305,29 +309,29 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   // 4) Falla silenciosa: job Successful con logs Fatal (quirk del framework TQA: GetTransactionData
   //    agota reintentos, loguea Fatal y el job termina Successful).
   const silenciosos = senales.jobs.filter((j) => j.estado === 'Successful' && (logsPorJob.get(j.key) || []).some((l) => l.nivel === 'Fatal'));
-  check('silent_failure', 'Jobs exitosos con errores Fatal (falla silenciosa)', silenciosos.length ? 'alerta' : 'ok', silenciosos.length, 0);
+  check('silent_failure', M('eval.check.silent_failure'), silenciosos.length ? 'alerta' : 'ok', silenciosos.length, 0);
   for (const [, grupo] of agrupar(silenciosos, (j) => `${j.proceso}|${normalizarFirma(errorDeJob(j))}`)) {
     const msg = errorDeJob(grupo[0]);
     hallazgo({ checkId: 'silent_failure', categoria: 'silent_failure', proceso: grupo[0].proceso, firma: msg,
-      titulo: `${grupo[0].proceso}: terminó "Successful" pero registró errores Fatal`, severidadSugerida: 'P2', conteo: grupo.length,
+      titulo: M('eval.titulo.silent_failure', { proceso: grupo[0].proceso }), severidadSugerida: 'P2', conteo: grupo.length,
       primera: minimo(grupo.map((j) => j.fin)), ultima: maximo(grupo.map((j) => j.fin)),
       evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, fin: j.fin })), logs: (logsPorJob.get(grupo[0].key) || []).filter((l) => l.nivel === 'Fatal').slice(-5) } });
   }
 
   // 5) Queue items: excepciones de aplicación agrupadas por cola + motivo; abandonados por cola.
   const fallidosApp = senales.queueItems.filter((q) => q.estado === 'Failed' && q.tipoExcepcion !== 'Business');
-  check('queue_app_exceptions', 'Items fallidos por excepción de sistema', fallidosApp.length ? 'alerta' : 'ok', fallidosApp.length, 0);
+  check('queue_app_exceptions', M('eval.check.queue_app_exceptions'), fallidosApp.length ? 'alerta' : 'ok', fallidosApp.length, 0);
   for (const [, grupo] of agrupar(fallidosApp, (q) => `${q.cola}|${normalizarFirma(q.motivo)}`)) {
     const cat = categorizar(grupo[0].motivo);
     hallazgo({ checkId: 'queue_app_exceptions', categoria: cat, cola: grupo[0].cola, firma: grupo[0].motivo || 'sin motivo',
-      titulo: `Cola ${grupo[0].cola}: ${grupo.length} item(s) con error de sistema`, severidadSugerida: cat === 'login' || grupo.length >= 10 ? 'P2' : 'P3',
+      titulo: M('eval.titulo.queue_app', { cola: grupo[0].cola, n: grupo.length }), severidadSugerida: cat === 'login' || grupo.length >= 10 ? 'P2' : 'P3',
       conteo: grupo.length, primera: minimo(grupo.map((q) => q.fin || q.creado)), ultima: maximo(grupo.map((q) => q.fin || q.creado)),
       evidencia: { queueItems: grupo.slice(0, 10) } });
   }
   const abandonados = senales.queueItems.filter((q) => q.estado === 'Abandoned');
-  check('queue_abandoned', 'Items abandonados', abandonados.length ? 'alerta' : 'ok', abandonados.length, 0);
+  check('queue_abandoned', M('eval.check.queue_abandoned'), abandonados.length ? 'alerta' : 'ok', abandonados.length, 0);
   for (const [cola, grupo] of agrupar(abandonados, (q) => q.cola)) {
-    hallazgo({ checkId: 'queue_abandoned', categoria: 'infrastructure', cola, firma: 'items abandonados', titulo: `Cola ${cola}: ${grupo.length} item(s) abandonado(s)`,
+    hallazgo({ checkId: 'queue_abandoned', categoria: 'infrastructure', cola, firma: 'items abandonados', titulo: M('eval.titulo.queue_abandoned', { cola, n: grupo.length }),
       severidadSugerida: 'P3', conteo: grupo.length, primera: minimo(grupo.map((q) => q.creado)), ultima: maximo(grupo.map((q) => q.creado)),
       evidencia: { queueItems: grupo.slice(0, 10) } });
   }
@@ -342,18 +346,18 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
     if (esperado === null || grupo.length < 5 || grupo.length <= esperado * 2) continue;
     sobreBase += 1;
     hallazgo({ checkId: 'queue_business_rate', categoria: 'business', cola, firma: 'excepciones de negocio sobre baseline',
-      titulo: `Cola ${cola}: ${grupo.length} excepciones de negocio (esperado ~${Math.round(esperado)})`, severidadSugerida: 'P3', conteo: grupo.length,
+      titulo: M('eval.titulo.queue_business', { cola, n: grupo.length, esperado: Math.round(esperado) }), severidadSugerida: 'P3', conteo: grupo.length,
       primera: minimo(grupo.map((q) => q.fin)), ultima: maximo(grupo.map((q) => q.fin)),
       evidencia: { esperado: Math.round(esperado), motivos: [...agrupar(grupo, (q) => q.motivo)].map(([m, g]) => ({ motivo: m, cantidad: g.length })).slice(0, 10) } });
   }
-  check('queue_business_rate', 'Excepciones de negocio sobre el baseline', sobreBase ? 'alerta' : (Object.keys(base).length ? 'ok' : 'omitido'), negocio.length, null);
+  check('queue_business_rate', M('eval.check.queue_business_rate'), sobreBase ? 'alerta' : (Object.keys(base).length ? 'ok' : 'omitido'), negocio.length, null);
 
   // 7) Triggers que estaban habilitados en el inventario y ahora no.
   const invTriggers = (proyecto.inventory && proyecto.inventory.triggers) || [];
   const deshabilitados = senales.triggers.filter((t) => t.habilitado === false && invTriggers.some((i) => i.name === t.nombre && i.enabled));
-  check('trigger_disabled', 'Triggers deshabilitados', deshabilitados.length ? 'alerta' : 'ok', deshabilitados.length, 0);
+  check('trigger_disabled', M('eval.check.trigger_disabled'), deshabilitados.length ? 'alerta' : 'ok', deshabilitados.length, 0);
   for (const t of deshabilitados) {
-    hallazgo({ checkId: 'trigger_disabled', categoria: 'scheduling', proceso: t.proceso, firma: `trigger ${t.nombre} deshabilitado`, titulo: `Trigger "${t.nombre}" deshabilitado`,
+    hallazgo({ checkId: 'trigger_disabled', categoria: 'scheduling', proceso: t.proceso, firma: `trigger ${t.nombre} deshabilitado`, titulo: M('eval.titulo.trigger_disabled', { nombre: t.nombre }),
       severidadSugerida: 'P3', conteo: 1, primera: hasta, ultima: hasta, evidencia: { trigger: t } });
   }
 
@@ -370,27 +374,27 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
     const horasSin = (Date.parse(hasta) - Date.parse(ultimo)) / 3600000;
     if (horasSin > horas) {
       sinCorrer += 1;
-      hallazgo({ checkId: 'process_no_runs', categoria: 'scheduling', proceso: proc, firma: 'proceso sin ejecuciones', titulo: `${proc}: sin ejecuciones hace ${Number.isFinite(horasSin) ? Math.round(horasSin) + ' h' : 'mucho tiempo'}`,
+      hallazgo({ checkId: 'process_no_runs', categoria: 'scheduling', proceso: proc, firma: 'proceso sin ejecuciones', titulo: M('eval.titulo.no_runs', { proceso: proc, tiempo: Number.isFinite(horasSin) ? M('eval.tiempo.horas', { n: Math.round(horasSin) }) : M('eval.tiempo.mucho') }),
         severidadSugerida: 'P2', conteo: 1, primera: ultimo || null, ultima: hasta, evidencia: { ultimoJob: ultimo || null, esperadoCadaHoras: horas } });
     }
   }
-  check('process_no_runs', 'Procesos que no corrieron cuando se esperaba', sinCorrer ? 'alerta' : (Object.keys(brechas).length ? 'ok' : 'omitido'), sinCorrer, 0);
+  check('process_no_runs', M('eval.check.process_no_runs'), sinCorrer ? 'alerta' : (Object.keys(brechas).length ? 'ok' : 'omitido'), sinCorrer, 0);
 
   // 9) Deploy detectado (cambio de versión respecto del inventario).
   const invProc = (proyecto.inventory && proyecto.inventory.processes) || [];
   const cambios = senales.procesos.filter((p) => { const i = invProc.find((x) => x.name === p.nombre); return i && i.version && p.version && i.version !== p.version; });
-  check('deploy_detected', 'Versiones nuevas desplegadas', cambios.length ? 'alerta' : 'ok', cambios.length, 0);
+  check('deploy_detected', M('eval.check.deploy_detected'), cambios.length ? 'alerta' : 'ok', cambios.length, 0);
   for (const p of cambios) {
     const anterior = invProc.find((x) => x.name === p.nombre).version;
-    hallazgo({ checkId: 'deploy_detected', categoria: 'deploy', proceso: p.nombre, firma: `deploy ${p.version}`, titulo: `${p.nombre}: nueva versión ${p.version} (antes ${anterior})`,
+    hallazgo({ checkId: 'deploy_detected', categoria: 'deploy', proceso: p.nombre, firma: `deploy ${p.version}`, titulo: M('eval.titulo.deploy', { proceso: p.nombre, version: p.version, anterior }),
       severidadSugerida: 'P4', conteo: 1, primera: hasta, ultima: hasta, evidencia: { versionAnterior: anterior, versionNueva: p.version } });
   }
 
   // 10) La propia colecta falló (credenciales vencidas, permisos, red).
-  check('monitoring', 'Colecta de datos completa', senales.errores.length ? 'alerta' : 'ok', senales.errores.length, 0);
+  check('monitoring', M('eval.check.monitoring'), senales.errores.length ? 'alerta' : 'ok', senales.errores.length, 0);
   if (senales.errores.length) {
     const loginFallo = senales.errores.some((e) => /^login/.test(e));
-    hallazgo({ checkId: 'monitoring', categoria: 'monitoring', firma: loginFallo ? 'login fallido' : 'errores de colecta', titulo: loginFallo ? 'La Torre de Control no pudo iniciar sesión en Orchestrator' : `La colecta tuvo ${senales.errores.length} error(es)`,
+    hallazgo({ checkId: 'monitoring', categoria: 'monitoring', firma: loginFallo ? 'login fallido' : 'errores de colecta', titulo: loginFallo ? M('eval.titulo.monitoring_login') : M('eval.titulo.monitoring_colecta', { n: senales.errores.length }),
       severidadSugerida: loginFallo ? 'P2' : 'P3', conteo: senales.errores.length, primera: hasta, ultima: hasta, evidencia: { errores: senales.errores.slice(0, 20) } });
   }
 
@@ -399,7 +403,7 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   for (const r of activas) {
     const c = r.compiled || {};
     const ev = evaluarRegla(r, senales, proyecto, ajustes);
-    check(`rule:${r.id}`, `Regla: ${r.text}`, ev.resultado, ev.observado, ev.umbral);
+    check(`rule:${r.id}`, M('eval.check.regla', { texto: r.text }), ev.resultado, ev.observado, ev.umbral);
     if (ev.resultado !== 'alerta' || ['known', 'ignore'].includes(c.action)) continue;
     const muestra = ev.registros.slice(-5);
     const texto = muestra.map((x) => x._texto).find(Boolean) || r.text;
@@ -416,7 +420,7 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
       continue;
     }
     hallazgo({ checkId: `rule:${r.id}`, ruleId: r.id, categoria: categoriaRegla, proceso: (c.filter && c.filter.process) || (muestra[0] && muestra[0]._proceso) || null,
-      cola: (c.filter && c.filter.queue) || null, firma: `regla ${r.id}`, titulo: c.title || `Se cumplió la regla: ${r.text}`, severidadSugerida: c.severity || 'P3',
+      cola: (c.filter && c.filter.queue) || null, firma: `regla ${r.id}`, titulo: c.title || M('eval.titulo.regla', { texto: r.text }), severidadSugerida: c.severity || 'P3',
       decisionSugerida: c.action === 'escalate' ? 'escalate' : 'notify', conteo: ev.observado, primera: minimo(muestra.map((x) => x._t)), ultima: maximo(muestra.map((x) => x._t)),
       evidencia: { observado: ev.observado, umbral: ev.umbral, muestra: muestra.map(({ _t, _texto, _proceso, _cola, ...resto }) => resto) } });
   }
