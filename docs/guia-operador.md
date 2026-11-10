@@ -115,12 +115,14 @@ Al analizar un proyecto, la rutina compara el código, la documentación y Orche
 
 ## Documentación de un proyecto (Admin)
 
-La rutina lee sola la documentación que viene en los paquetes. Si el PDD, el SDD o el Runbook no están ahí, o están viejos, se suben desde la pestaña **Documentación** del proyecto:
+La rutina lee sola la documentación que viene en los paquetes. Lo que no está ahí, o está viejo, se sube desde la pestaña **Documentación** del proyecto. Se pueden subir tantos documentos como haga falta:
 
-1. **Subir archivo** (`.docx`, `.md` o `.txt`) o **Pegar texto**. Un Word se convierte a Markdown en el momento; un PDF hay que guardarlo antes como `.docx` o pegar su texto.
-2. Revisá el Markdown. Los emails, números de documento y usuarios se enmascaran solos; **los nombres de personas no**: quitalos a mano.
-3. **Guardar**. El documento queda guardado en Markdown, sin imágenes. Se puede **Ver**, **Descargar .md**, **Reemplazar** o **Quitar**.
+1. **Subir archivo** (`.docx`, `.pdf`, `.md` o `.txt`) o **Pegar texto**. Se convierte a Markdown en el momento. De un PDF se recupera solo el texto (las tablas quedan como texto corrido): si existe el Word, da mejor resultado.
+2. Elegí la **categoría** (PDD, SDD, Runbook u Otro) y, si querés, escribí un **título o descripción**. Revisá el Markdown. Los emails, números de documento y usuarios se enmascaran solos; **los nombres de personas no**: quitalos a mano.
+3. **Guardar documento**. Queda guardado en Markdown, sin imágenes. Se puede **Ver**, **Descargar .md** o **Quitar**.
 4. **Pedir re-análisis** para que la memoria de proceso y las discrepancias tomen el documento nuevo.
+
+La misma pestaña lista, en **En los paquetes publicados**, los documentos que la rutina encontró dentro de cada paquete. Con **Desactivar** la rutina deja de usar uno (por ejemplo, un PDD viejo); **Volver a usar** lo recupera.
 
 ## Tarjetas con librería o con deploy
 

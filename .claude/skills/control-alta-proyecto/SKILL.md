@@ -44,9 +44,10 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    - las excepciones de negocio definidas;
    - los sistemas con los que interactúa (aplicaciones, URLs sin parámetros, APIs).
 4. **Documentación:** leé el SDD/PDD de cada proceso y la documentación común (rutas en `processes[].docs.paths` y `projects.docs.paths`, o lo que devolvió `fetch-repo`).
-   - **Documentos subidos al tablero.** Un Admin puede subir a mano el PDD, el SDD y el Runbook del proyecto (pestaña Documentación). Están en `documents`, ya en Markdown: `ArtifactData query` de `documents` con `where: [["projectId","==","<id>"]]` y `out_dir: work/$RUN/alta/<id>/documentos`. Cada uno trae `kind` (`pdd`, `sdd`, `runbook`), `markdown`, `fileName` y `uploadedAt`.
+   - **Documentos subidos al tablero.** Un Admin puede subir a mano documentos del proyecto (pestaña Documentación): PDD, SDD, Runbook u otros, tantos como quiera, también varios de la misma categoría. Están en `documents`, ya en Markdown: `ArtifactData query` de `documents` con `where: [["projectId","==","<id>"]]` y `out_dir: work/$RUN/alta/<id>/documentos`. Cada uno trae `kind` (`pdd`, `sdd`, `runbook` u `other`), `title` (opcional: dice de qué es, por ejemplo de qué proceso), `markdown`, `fileName`, `source` y `uploadedAt`. Los que vienen de un PDF (`source: "pdf"`) son texto corrido: las tablas no conservan sus columnas.
+   - **Documentos desactivados.** Un Admin puede desactivar documentos del paquete (`projects/<id>.disabledDocs`, como `"<proceso>:<ruta>"`). `fetch-codigo` ya no los extrae y los informa en `docsDesactivados`: no los busques por otro lado (tampoco en el repo de respaldo) ni los cites en "Fuentes".
    - Si un documento está subido **y** viene en el paquete, vale el subido: alguien lo cargó a propósito. Si se contradicen, es una discrepancia de tipo `docs`.
-   - En "Fuentes" de la memoria citá el subido como `<PDD|SDD|Runbook> subido al tablero (<fecha>)`.
+   - En "Fuentes" de la memoria citá el subido como `<título o categoría> subido al tablero (<fecha>)`.
    - Esos documentos pasaron por un enmascarado básico al subirse, pero pueden traer nombres de personas: **nunca** los copies a la memoria ni a una discrepancia.
 
    Extraé:

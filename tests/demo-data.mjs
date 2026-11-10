@@ -29,6 +29,8 @@ export function demoSeed({ vacio = false } = {}) {
     seed[p] = w.op === 'update' ? { ...(seed[p] || proyecto), ...w.data } : w.data;
   }
   delete seed['projects/facturacion'].__version; delete seed['projects/facturacion'].id;
+  // Documentos que vienen dentro del paquete publicado (los lista la rutina): se pueden desactivar desde el tablero.
+  { const inv = (seed['projects/facturacion'].inventory ||= {}); inv.processes = (inv.processes && inv.processes.length ? inv.processes : [{ name: 'FIN_Facturacion_Performer', version: '1.4.0' }]); inv.processes[0].docs = ['Documentation/PDD.docx', 'README.md']; }
   // Fechas relativas a "ahora" para que la demo se vea viva.
   for (const [k, v] of Object.entries(seed)) if (k.startsWith('incidents/')) { v.lastSeenAt = iso(12); v.firstSeenAt = iso(70); }
   const login = Object.entries(seed).find(([k, v]) => k.startsWith('incidents/') && v.category === 'login');
@@ -72,7 +74,7 @@ export function demoSeed({ vacio = false } = {}) {
   seed['discrepancies/disc-facturacion-vieja'] = disc('facturacion', 'docs', 'El PDD no menciona la excepción BE002', { status: 'resolved', resolvedAt: iso(700), resolvedReason: 'Ya no se detecta en el análisis del proyecto.' });
   seed['discrepancies/disc-nomina-cola'] = disc('nomina', 'orchestrator', 'La cola RRHH_NOV_Items del SDD no existe en Orchestrator');
   // Documentación subida a mano, ya en Markdown.
-  seed['documents/facturacion_runbook'] = { projectId: 'facturacion', kind: 'runbook', fileName: 'Runbook Facturación.docx', source: 'docx', chars: 118, masked: 1, uploadedBy: 'u_admin000000000000000001', uploadedAt: iso(3000),
+  seed['documents/facturacion_runbook'] = { projectId: 'facturacion', kind: 'runbook', title: null, fileName: 'Runbook Facturación.docx', source: 'docx', chars: 118, masked: 1, uploadedBy: 'u_admin000000000000000001', uploadedAt: iso(3000),
     markdown: '# Runbook de Facturación\n\n## Login fallido\n\n1. Verificar si el usuario del robot está bloqueado.\n2. Avisar a soporte: [EMAIL]' };
   return seed;
 }

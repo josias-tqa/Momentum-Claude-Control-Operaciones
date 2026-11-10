@@ -28,7 +28,7 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 | `config/discovery` | Rutina | **Proyectos propuestos**: carpetas con procesos, dentro de las carpetas a escanear, que todavía no son un proyecto. Trae las raíces usadas (`roots`) y, si hubo un problema de acceso, un aviso (`note`). Se actualiza cuando un Admin pide el escaneo y una vez por día |
 | `discrepancies/{id}` | Solo rutina | Una tarjeta por **discrepancia** de un proyecto: lo que no coincide entre código, documentación y Orchestrator. `status` dice si la rutina la sigue detectando (`open`) o no (`resolved`) |
 | `discrepancyWork/{discrepancyId}` | Operador o Admin | Lado humano de una discrepancia: `state` (snoozed, dismissed, responded, open), motivo del descarte, respuesta |
-| `documents/{projectId}_{kind}` | Admin | PDD, SDD o Runbook de un proyecto subido a mano, **en Markdown** (`markdown`), con el archivo de origen y cuántos datos se enmascararon. Un documento por tipo y por proyecto, de hasta 230 KB |
+| `documents/{id}` | Admin | Un documento de un proyecto subido a mano, **en Markdown** (`markdown`): su categoría (`kind`: `pdd`, `sdd`, `runbook` u `other`), un título opcional, el archivo de origen y cuántos datos se enmascararon. Tantos como haga falta por proyecto, de hasta 230 KB cada uno |
 | `rollups/{projectId}_{AAAA-MM}` | Solo rutina | Resumen mensual que queda cuando la retención depura |
 | `data/users/{id}/…` | Cada persona, lo suyo | Preferencias (no se usa todavía) |
 
@@ -68,11 +68,19 @@ Son otro tipo de tarjeta: viven en la página del proyecto (pestaña **Discrepan
 
 ## Documentos subidos a mano
 
-Un Admin sube el PDD, el SDD o el Runbook desde la pestaña **Documentación** del proyecto. El tablero convierte el `.docx` a Markdown en el navegador (títulos, párrafos, negritas, listas y tablas; sin imágenes), o toma un `.md`, un `.txt` o texto pegado, y lo guarda en `documents/{projectId}_{kind}`.
+Un Admin sube documentos desde la pestaña **Documentación** del proyecto: tantos como quiera, cada uno con una categoría (PDD, SDD, Runbook u Otro) y un título opcional. El tablero los convierte a Markdown en el navegador y los guarda en `documents/{id}` (`<proyecto>_<sufijo>`):
+
+- `.docx`: títulos, párrafos, negritas, listas y tablas; sin imágenes. Sin librerías.
+- `.pdf`: solo el texto, con pdf.js (se baja de cdnjs recién al subir un PDF). Los títulos se deducen del tamaño de letra y las tablas quedan como texto corrido.
+- `.md`, `.txt` o texto pegado: como están.
 
 - **PII:** antes de guardar se enmascaran emails, números de documento, CUIT/NIT y usuarios de Windows, con los mismos patrones de `config/patrones-pii.json` (los verifica `tests/scripts.test.mjs`). Los nombres de personas no se pueden detectar: el Admin revisa el Markdown antes de confirmar.
 - La rutina los lee en `/control-alta-proyecto` y `/control-analisis`, solo del proyecto que está mirando, y **no copia** a la memoria ni a los análisis nada que identifique a una persona.
 - En un `import`, pasan por `build-writes` como cualquier otro documento.
+
+### Documentos del paquete
+
+Los documentos que vienen dentro de cada paquete publicado quedan listados en `projects/{id}.inventory.processes[].docs` (los registra `indexar-codigo.mjs`) y el tablero los muestra en la misma pestaña. Un Admin puede desactivar cualquiera: el tablero guarda `"<proceso de Orchestrator>:<ruta>"` en `projects/{id}.disabledDocs`, y `scripts/fetch-codigo.mjs` borra esos archivos de lo que extrae, así que ni el alta ni el análisis previo los leen.
 
 ## Proyectos propuestos (escaneo de carpetas)
 
@@ -121,7 +129,7 @@ Guardar una regla `proposed`, `disabled` o `rejected` la aprueba o reactiva. Un 
 | `incidents` + `incidentWork` + `activity` | Depende de la estabilidad; el dedupe evita repetidos | Cerrados a los 180 días: unos pocos miles |
 | `history` | Solo eventos relevantes | Permanente: cientos por año |
 | `discrepancies` + `discrepancyWork` | Unas pocas por proyecto | Las resueltas se borran a los 180 días |
-| `documents` | Hasta 3 por proyecto | Permanente: 30 |
+| `documents` | Unos pocos por proyecto | Permanente: decenas |
 | `rollups` | 1 por proyecto y por mes | 120 por año |
 
 Si el total pasa 15.000 documentos, `/control-mantenimiento` avisa en `config/health` y achica la retención.

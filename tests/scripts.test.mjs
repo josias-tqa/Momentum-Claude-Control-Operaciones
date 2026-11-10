@@ -535,7 +535,7 @@ test('índice de código: cada proceso trae los sistemas de su paquete y de sus 
 });
 
 // ---------- carpeta a escanear, aprobación automática, discrepancias y documentos ----------
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { listaDeCarpetas, raizDe, dentroDe } from '../scripts/lib/carpetas.mjs';
 import { aprobarAutomatico } from '../scripts/aprobar-reglas.mjs';
 import { consolidarDiscrepancias, idDiscrepancia, claveDiscrepancia } from '../scripts/consolidar-discrepancias.mjs';
@@ -678,6 +678,7 @@ test('esquemas: documentos en Markdown, lado humano de una discrepancia, ajustes
   const ok = (collection, doc_id, data) => assert.deepEqual(prepararLotes([{ op: 'set', collection, doc_id, data }]).errores, [], `${collection}/${doc_id}`);
   const mal = (collection, doc_id, data, re) => assert.ok(prepararLotes([{ op: 'set', collection, doc_id, data }]).errores.some((e) => re.test(e)), `${collection}/${doc_id} debería fallar`);
   ok('documents', 'p_sdd', { projectId: 'p', kind: 'sdd', markdown: '# SDD\n\n| Cola | Uso |\n| --- | --- |\n| C1 | Entrada |', fileName: 'SDD.docx', source: 'docx', chars: 40, masked: 0, uploadedBy: 'u_1', uploadedAt: AHORA });
+  ok('documents', 'p_abc123', { projectId: 'p', kind: 'other', title: 'Acuerdo de servicio', markdown: 'Texto', fileName: 'SLA.pdf', source: 'pdf' });
   mal('documents', 'p_otro', { projectId: 'p', kind: 'manual', markdown: 'x' }, /fuera de/);
   mal('documents', 'p_pdd', { projectId: 'p', kind: 'pdd', markdown: 'Contacto: persona@cliente.com' }, /PII/);
   ok('discrepancyWork', 'd1', { projectId: 'p', state: 'responded', response: { decision: 'fix_orchestrator', notes: 'Se crea la cola', ticket: 'OPS-9' }, updatedAt: AHORA, updatedBy: 'u_1' });
@@ -724,3 +725,20 @@ test('aprobación automática inmediata: build-writes activa las reglas que un p
   assert.deepEqual(out.reglasAprobadasAutomaticamente, ['p-a', 'p-b']);
   assert.equal(JSON.parse(readFileSync(join(dir, 'lotes/docs/rules__p-a.json'), 'utf8')).status, 'active');
 });
+
+test('documentos del paquete: los que un Admin desactivó no se extraen', () => conFixtures(() => {
+  const dir = mkdtempSync(join(tmpdir(), 'docs-'));
+  const base = JSON.parse(readFileSync(join(FIX, 'db/projects/facturacion.json'), 'utf8'));
+  const correrFetch = (disabledDocs) => {
+    writeFileSync(join(dir, 'p.json'), JSON.stringify({ ...base, data: { ...base.data, disabledDocs } }));
+    return JSON.parse(execFileSync('node', [join(RAIZ, 'scripts/fetch-codigo.mjs'), '--proyecto', join(dir, 'p.json'), '--proceso', 'FIN_Facturacion_Performer', '--destino', join(dir, 'c')], { encoding: 'utf8', env: process.env }));
+  };
+  const todo = correrFetch([]);
+  assert.ok(todo.docs.length >= 1, 'el paquete de ejemplo trae documentación');
+  const doc = todo.docs[0];
+  const r = correrFetch([`FIN_Facturacion_Performer:${doc}`, 'OtroProceso:' + doc]);
+  assert.ok(!r.docs.includes(doc));
+  assert.deepEqual(r.docsDesactivados, [doc]);
+  assert.ok(!existsSync(join(dir, 'c/proceso', doc)), 'el archivo no queda en disco');
+  assert.equal(r.archivos, todo.archivos - 1);
+}));
