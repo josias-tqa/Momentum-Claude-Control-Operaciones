@@ -9,7 +9,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { arg, bandera, leerJson, desenvolver } from './lib/args.mjs';
-import { descargar, listar, leerProjectJson, leerDependencias, actividadesDe, higiene, tieneFuentes, docsDe } from './lib/paquetes.mjs';
+import { descargar, listar, leerProjectJson, leerDependencias, actividadesDe, higiene, tieneFuentes, docsDe, sistemasDe } from './lib/paquetes.mjs';
 
 export function indexar({ procesos, inventario = [], todo = false }) {
   const errores = [];
@@ -22,7 +22,7 @@ export function indexar({ procesos, inventario = [], todo = false }) {
     const lista = listar(f);
     const pj = leerProjectJson(f);
     const deps = leerDependencias(pj);
-    const info = { activities: actividadesDe(lista), hasSources: tieneFuentes(lista), dependencies: deps };
+    const info = { activities: actividadesDe(lista), hasSources: tieneFuentes(lista), dependencies: deps, systems: sistemasDe(f, lista) };
     (libs[name] ||= {})[version] = info;
     if (nivel < 3) for (const d of deps) indexarLib(d.name, d.version, nivel + 1);
     return info;
@@ -47,9 +47,12 @@ export function indexar({ procesos, inventario = [], todo = false }) {
     const lista = listar(f);
     const deps = leerDependencias(leerProjectJson(f));
     for (const d of deps) indexarLib(d.name, d.version, 1);
+    const libsProc = alcanzables(deps.filter((d) => libs[d.name]));
+    // Sistemas del proceso: los de su código más los de las librerías que usa.
+    const systems = [...new Set([...sistemasDe(f, lista), ...libsProc.flatMap((d) => (libs[d.name][d.version] || {}).systems || [])])].sort().slice(0, 40);
     salida.push({
       name: p.nombre, package: p.paquete, version: p.version, indexedVersion: p.version,
-      libraries: alcanzables(deps.filter((d) => libs[d.name])).map(({ name, version }) => ({ name, version })),
+      libraries: libsProc.map(({ name, version }) => ({ name, version })), systems,
       hasSources: tieneFuentes(lista), docs: docsDe(lista).map((e) => e.slice('content/'.length)), hygiene: higiene(lista),
     });
   }

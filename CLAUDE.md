@@ -41,6 +41,7 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 | Descubrir y registrar todos los proyectos de Orchestrator | skill `/control-descubrir` |
 | Análisis previo a escalar (código + docs) | skill `/control-analisis` |
 | Aprendizaje de respuestas humanas (memoria de producción, reglas propuestas) | skill `/control-aprendizaje` |
+| Propuestas de reglas: similitud entre procesos y revisión diaria (nunca activa nada) | skill `/control-reglas` |
 | Retención, rollups, seed y export/import para la entrega | skill `/control-mantenimiento` |
 | Verificación del entorno (credenciales, red, permisos) | skill `/verificar-entorno` |
 | Modelo de datos del tablero | `docs/modelo-de-datos.md` y `schemas/` |

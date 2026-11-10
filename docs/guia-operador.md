@@ -100,3 +100,13 @@ Si un incidente salió de una regla, o una regla lo marcó como conocido, la tar
 Si el incidente no salió de ninguna regla, el botón es **Crear regla**: escribís una para ese caso (por ejemplo, "los abandonados de los lunes antes de las 9 son normales; no avisar") y vale para ese proyecto.
 
 En Ver más → **Reglas**, el botón **Editar** abre el mismo editor para cualquier regla.
+
+### Propuestas de la rutina (Admin)
+
+La rutina también propone por su cuenta. Nunca activa nada: todo aparece en **Para revisar**.
+
+- **Reglas por similitud.** Cuando aprobás o editás una regla, la rutina busca otros procesos que usan el mismo portal, la misma aplicación o la misma librería, y les propone la regla equivalente. La propuesta dice por qué ("usa el mismo portal que…"). Se aprueba, se rechaza o se ajusta con **Editar** antes de aprobar.
+- **Cambios sugeridos.** Una vez por día la rutina revisa los últimos 30 días y marca con **Cambio sugerido** las reglas que conviene tocar: una excepción o un umbral distinto si la regla avisa y casi siempre se descarta, una severidad más baja si sus tarjetas se posponen, o desactivarla si no dispara hace 60 días. **Revisar** abre el editor con la sugerencia; **Aplicar** la carga en el formulario y vos confirmás con Guardar. **No, gracias** la descarta y no vuelve por 90 días.
+- **Reglas nuevas de la revisión diaria.** Si un mismo tema sin regla se descartó varias veces, o un aviso se repite sin que nadie lo mire, llega una regla propuesta.
+
+Como máximo llegan 3 propuestas por proyecto por vez.

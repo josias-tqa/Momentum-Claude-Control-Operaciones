@@ -452,3 +452,84 @@ test('excepciones: una regla "known" deja de tapar el hallazgo que cae en su exc
   assert.equal(abandonados([known([{ filter: { days: [dia] } }])]).conocidoPor, undefined, 'la excepción aplica: se reporta');
   assert.equal(abandonados([known([{ filter: { days: [dia === 'mon' ? 'tue' : 'mon'] } }])]).conocidoPor, 'k1', 'otro día: sigue siendo conocido');
 });
+
+// ---------- propuestas de reglas: similitud entre procesos y revisión diaria ----------
+import { sugerir, mapaDeSistemas } from '../scripts/sugerir-reglas.mjs';
+import { sistemasEnTexto } from '../scripts/lib/paquetes.mjs';
+
+test('sistemas: portales y aplicaciones del código, sin esquemas XML, navegadores ni credenciales', () => {
+  const xaml = `<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:ui="http://schemas.uipath.com/workflow/activities">
+    <ui:OpenBrowser Url="https://www.portal-eps.com.co/login?user=x" /> <ui:Click Selector="&lt;wnd app='saplogon.exe' /&gt;" />
+    <ui:Click Selector="&lt;html app=&apos;chrome.exe&apos; url='https://otro.portal.gov/x' /&gt;" /> https://usuario:clave@privado.com/x</Activity>`;
+  assert.deepEqual(sistemasEnTexto(xaml), ['app:saplogon.exe', 'web:otro.portal.gov', 'web:portal-eps.com.co']);
+});
+
+const AHORA = '2026-11-10T12:00:00Z';
+const hace = (d) => new Date(Date.parse(AHORA) - d * 86400000).toISOString();
+const proy = (id, procesos) => ({ id, name: id, status: 'active', inventory: { processes: procesos.map(([name, systems, libs = []]) => ({ name, systems, libraries: libs.map((l) => ({ name: l, version: '1.0.0' })) })) } });
+const PROYS = [
+  proy('derechos', [['VD_Performer', ['web:portal-eps.com'], ['LIB_Comun']], ['VD_Reporter', [], ['LIB_Comun']]]),
+  proy('autorizaciones', [['AUT_Performer', ['web:portal-eps.com'], ['LIB_Comun']]]),
+  proy('nomina', [['NOM_Performer', ['app:saplogon.exe'], ['LIB_Comun']]]),
+];
+const reglaPortal = { id: 'derechos-portal', projectId: 'derechos', status: 'active', origin: 'manual', text: 'Más de 5 errores de login al portal, escalar', approvedAt: hace(0.1),
+  compiled: { signal: 'logs', filter: { process: 'VD_Performer', messageRegex: 'login' }, aggregate: 'count', threshold: 5, severity: 'P2', action: 'escalate' } };
+
+test('propuestas por similitud: la regla se ofrece al proceso que usa el mismo portal, una sola vez', () => {
+  assert.deepEqual(mapaDeSistemas(PROYS).procesos.find((x) => x.name === 'VD_Reporter').claves, [], 'la librería que usan todos no cuenta');
+  const base = { proyectos: PROYS, incidentes: [], trabajo: [], ahora: AHORA };
+  const r = sugerir({ ...base, reglas: [reglaPortal], salud: { rulesReview: { similarityAt: hace(1), dailyAt: AHORA } } });
+  assert.equal(r.diario, false);
+  assert.deepEqual(r.candidatos.map((c) => [c.tipo, c.projectId, c.process]), [['similar', 'autorizaciones', 'AUT_Performer']]);
+  assert.equal(r.candidatos[0].comparten[0].sistema, 'web:portal-eps.com');
+  assert.equal(r.plan.writes.find((w) => w.doc_id === 'health').data.rulesReview.similarityAt, AHORA);
+  // Ya propuesta (aunque la hayan rechazado), ya revisada, o descartada por la rutina: no se repite.
+  const key = r.candidatos[0].key;
+  assert.equal(sugerir({ ...base, reglas: [reglaPortal, { id: 'x', projectId: 'autorizaciones', status: 'rejected', proposalKey: key }], salud: { rulesReview: { dailyAt: AHORA } } }).candidatos.length, 0);
+  assert.equal(sugerir({ ...base, reglas: [reglaPortal], salud: { rulesReview: { similarityAt: AHORA, dailyAt: AHORA } } }).candidatos.length, 0);
+  assert.equal(sugerir({ ...base, reglas: [reglaPortal], salud: { rulesReview: { dailyAt: AHORA, descartados: { [key]: hace(5) } } } }).candidatos.length, 0);
+});
+
+test('revisión diaria: regla ruidosa, severidad que sobra, regla sin uso y tema repetido sin regla', () => {
+  const inc = (id, extra) => ({ id, projectId: 'derechos', status: 'open', category: 'login', process: 'VD_Performer', lastSeenAt: hace(2), decision: 'escalate', triage: { matchedRules: [] }, ...extra });
+  const r1 = { ...reglaPortal, approvedAt: hace(100) };
+  const r2 = { id: 'derechos-cola', projectId: 'derechos', status: 'active', text: 'Más de 3 abandonados, avisar', createdAt: hace(100), compiled: { severity: 'P2', action: 'alert' } };
+  const r3 = { id: 'derechos-vieja', projectId: 'derechos', status: 'active', text: 'Regla que nunca dispara', createdAt: hace(100), compiled: { severity: 'P3' }, __version: 4 };
+  const incidentes = [
+    inc('a1', { triage: { matchedRules: ['derechos-portal'] } }), inc('a2', { triage: { matchedRules: ['derechos-portal'] } }), inc('a3', { evidence: { ultima: { regla: { id: 'derechos-portal' } } } }),
+    inc('b1', { triage: { matchedRules: ['derechos-cola'] } }), inc('b2', { triage: { matchedRules: ['derechos-cola'] } }),
+    inc('c1', { category: 'selector', reopenCount: 1 }),
+    inc('d1', { category: 'data', decision: 'notify', recurrences: Array.from({ length: 6 }, (_, n) => ({ at: hace(n + 1) })) }),
+  ];
+  const trabajo = [
+    { id: 'a1', state: 'dismissed', dismissReason: 'false_positive' }, { id: 'a2', state: 'responded', response: { decision: 'expected_behavior' } },
+    { id: 'b1', state: 'snoozed' }, { id: 'b2', state: 'snoozed' }, { id: 'c1', state: 'dismissed', dismissReason: 'expected' },
+  ];
+  const salud = { rulesReview: { similarityAt: AHORA, dailyAt: hace(1), trackingSince: hace(90) } };
+  const r = sugerir({ proyectos: PROYS, reglas: [r1, r2, r3], incidentes, trabajo, salud, ahora: AHORA });
+  assert.equal(r.diario, true);
+  // Tope de 3 por proyecto, por prioridad: quedan afuera el tema recurrente y la regla sin uso.
+  assert.deepEqual(r.candidatos.map((c) => c.tipo), ['ruidosa', 'severidad', 'descartado_repetido']);
+  assert.equal(r.recortadosPorTope, 2);
+  assert.equal(r.candidatos[1].value, 'P3');
+  assert.ok(r.plan.writes.some((w) => w.collection === 'rules' && w.doc_id === 'derechos-portal' && w.data.lastTriggeredAt === hace(2)));
+  // Con un cambio sugerido sin resolver o rechazado hace poco, no se insiste; con menos pendientes entra el resto.
+  const r1b = { ...r1, suggestion: { kind: 'exception', why: 'x', key: 'sug:derechos-portal:ruidosa' } };
+  const r2b = { ...r2, dismissedSuggestions: [{ kind: 'severity', at: hace(10) }] };
+  const otra = sugerir({ proyectos: PROYS, reglas: [r1b, r2b, r3], incidentes, trabajo, salud, ahora: AHORA });
+  assert.deepEqual(otra.candidatos.map((c) => c.tipo), ['descartado_repetido', 'recurrente_sin_regla', 'sin_uso']);
+  // Sin 60 días de seguimiento todavía no se propone retirar nada.
+  const nuevo = sugerir({ proyectos: PROYS, reglas: [r3], incidentes: [], trabajo: [], salud: { rulesReview: { similarityAt: AHORA } }, ahora: AHORA });
+  assert.equal(nuevo.candidatos.length, 0);
+  assert.equal(nuevo.plan.writes.find((w) => w.doc_id === 'health').data.rulesReview.trackingSince, AHORA);
+  assert.deepEqual(prepararLotes(r.plan.writes).errores, []);
+});
+
+test('índice de código: cada proceso trae los sistemas de su paquete y de sus librerías', async () => {
+  const { indexar } = await import('../scripts/indexar-codigo.mjs');
+  process.env.OPS_FIXTURES = join(FIX, 'uip');
+  const { senales } = senalesDeFixture();
+  const r = indexar({ procesos: senales.procesos, todo: true });
+  delete process.env.OPS_FIXTURES;
+  assert.ok(r.procesos.length && r.procesos.every((p) => Array.isArray(p.systems)));
+});

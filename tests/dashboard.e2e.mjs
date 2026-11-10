@@ -44,6 +44,7 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.deepEqual([...sev].sort(), sev.slice().sort(), 'ordenadas por severidad');
   assert.equal(titulos.filter((t) => /login/i.test(t)).length, 1, 'una sola tarjeta de login');
   assert.ok(await visible(page, 'text=Para revisar'), 'admin ve Para revisar');
+  assert.ok(await visible(page, 'text=cambio(s) sugerido(s) en reglas'), 'cambios sugeridos por la rutina');
   assert.ok(await visible(page, 'text=×7'), 'badge de recurrencia');
   paso('admin: bandeja ordenada, una tarjeta por tema, recurrencia visible');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'admin-escritorio.png'), fullPage: true });
@@ -251,6 +252,24 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.ok(w.data.status === 'pending_compile' && /antes de las 10/.test(w.data.text) && w.data.approvedBy);
   assert.equal(await page.locator('.rule-ed').count(), 0);
   paso('lista de reglas: el mismo editor; editar una propuesta la aprueba');
+
+  // Propuestas de la rutina: por similitud (con su porqué) y cambio sugerido sobre una regla activa.
+  assert.ok(await visible(page, 'text=por similitud con otro proceso'));
+  assert.ok(await visible(page, 'text=usa la misma librería LIB_Sap'));
+  const sugerida = page.locator('.rowi', { hasText: 'excepciones de negocio' }).first();
+  assert.ok(await sugerida.locator('text=Cambio sugerido').count());
+  await sugerida.locator('[data-act="re-abrir"]', { hasText: 'Revisar' }).click();
+  await page.waitForSelector('.rule-ed [data-act="re-sug-aplicar"]');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'reglas-sugerencias.png'), fullPage: true });
+  await page.locator('.rule-ed [data-act="re-sug-aplicar"]').click();
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('.rule-ed [data-act="re-sev"][aria-pressed="true"]').textContent(), 'P4', 'la sugerencia se carga en el formulario');
+  assert.ok(!(await writes()).some((x) => x.path === 'rules/facturacion-negocio'), 'aplicar no escribe: confirma una persona');
+  await page.locator('.rule-ed [data-act="re-guardar"]').click();
+  await page.waitForTimeout(150);
+  w = (await writes()).filter((x) => x.path === 'rules/facturacion-negocio').pop();
+  assert.ok(w.data.compiled.severity === 'P4' && w.data.suggestion === null);
+  paso('propuestas de la rutina: regla por similitud con su porqué; cambio sugerido que se aplica y se confirma');
   await ctx.close();
 }
 

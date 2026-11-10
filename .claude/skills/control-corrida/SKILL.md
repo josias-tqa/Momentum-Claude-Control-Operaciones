@@ -93,7 +93,7 @@ node scripts/evaluate.mjs --senales work/$RUN/<id>/senales.json --proyecto work/
   --reglas work/$RUN/reglas.json --ajustes work/$RUN/db/config/settings.json --salida work/$RUN/<id>/hallazgos.json
 ```
 
-- `indexar-codigo` solo baja paquetes de procesos con versión nueva (normalmente ninguno): no usa modelo y suele tardar segundos.
+- `indexar-codigo` solo baja paquetes de procesos con versión nueva (normalmente ninguno): no usa modelo y suele tardar segundos. También detecta los **sistemas** de cada proceso (portales `web:<host>` y aplicaciones `app:<exe>` del código y de sus librerías), que quedan en `inventory.processes[].systems` y usa `/control-reglas` para la similitud.
 - `reglas.json` es un array con las reglas activas: `{id, ...cuerpo}` leídas de `work/$RUN/db/rules`.
 - La colecta cubre todas las carpetas del proyecto: la del proyecto más las propias de algún proceso.
   - Si todos los procesos tienen `orchestratorProcess`, se limita a ellos: la carpeta puede compartirse con otros proyectos.
@@ -158,9 +158,11 @@ Si un lote falla por versión (otro escribió el documento):
 
 Ejecutá `/control-aprendizaje`. Procesa las respuestas humanas nuevas y los re-controles vencidos.
 
+Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos cuando una regla se aprobó o editó, y una vez por día revisa las reglas con los últimos 30 días. Su primer paso es un script: si no hay candidatos termina en segundos.
+
 ## 11. Salud y cierre
 
-1. `set` de `config/health` con `{lastRunId, lastRunAt, lastOkAt (si la corrida fue ok), consecutiveFailures, dbDocs}`.
+1. `update` de `config/health` con `{lastRunId, lastRunAt, lastOkAt (si la corrida fue ok), consecutiveFailures, dbDocs}`. Usá `update`, no `set`: el documento también guarda `rulesReview` (de `/control-reglas`) y `warning`.
 2. Si es la primera corrida del día en UTC, ejecutá `/control-mantenimiento retencion`.
 3. `delete` de `config/runlock` con su `if_version`.
 

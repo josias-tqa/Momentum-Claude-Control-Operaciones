@@ -166,6 +166,9 @@ th{font-weight:500;color:var(--muted);font-size:12px}
 .btn.danger{color:var(--p1)} .btn.danger:hover{border-color:var(--p1)}
 .btn.danger.solid{background:var(--p1);border-color:var(--p1);color:var(--surface)}
 .rule-ed{padding:12px 4px 14px;border-bottom:1px solid var(--line)}
+.sug{align-items:flex-start;flex-wrap:wrap}
+.sug>div:first-child{flex:1;min-width:220px}
+.tag.sugt{border-color:var(--accent);color:var(--accent)}
 .ok-ico{color:var(--ok)} .al-ico{color:var(--p2)} .om-ico{color:var(--p4)}
 .ico-s{width:15px;height:15px;vertical-align:-3px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);border-radius:8px;padding:8px 14px;font-size:13px;z-index:20}
@@ -230,6 +233,8 @@ const PSTATUS = { pending_analysis:'Esperando análisis', analyzing:'Analizando'
 const RSTATUS = { pending_compile:'Por compilar', proposed:'Propuesta', active:'Activa', disabled:'Desactivada', rejected:'Rechazada' };
 const SEV_ORD = { P1:1, P2:2, P3:3, P4:4 };
 const SEVS = ['P1', 'P2', 'P3', 'P4'];
+const SUG = { exception:'agregar una excepción', severity:'cambiar la severidad', text:'cambiar el texto', retire:'desactivar la regla' };
+const origenTxt = (r) => ({ learned:' · aprendida de un incidente', onboarding:' · del alta', similar:' · por similitud con otro proceso', review:' · de la revisión diaria' }[r.origin] || '');
 const corto = (t, n = 90) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 
 // ---------- utilidades ----------
@@ -469,7 +474,7 @@ function reglasDe(i) {
   const ids = [...((i.triage || {}).matchedRules || []), ...[ev.ultima, ev.primera].map((x) => x && x.regla && x.regla.id)];
   return [...new Set(ids.filter(Boolean))].map((id) => S.rules[id]).filter(Boolean);
 }
-const reglaMeta = (r) => `${esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}`;
+const reglaMeta = (r) => `${esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${origenTxt(r)}`;
 function ruleEditorHtml(r, ctx, inc) {
   const k = reKey(ctx, r.id); const st = S.re[k] || {};
   const c = r.compiled || {}; const excs = r.exceptions || [];
@@ -488,7 +493,12 @@ function ruleEditorHtml(r, ctx, inc) {
   const quitar = st.quitar || [];
   const guardar = r.status === 'proposed' ? 'Guardar y aprobar' : ['disabled', 'rejected'].includes(r.status) ? 'Guardar y activar' : 'Guardar cambios';
   const enBandeja = inc && !['dismissed', 'responded'].includes((S.work[inc.id] || {}).state);
-  return `<div class="redit">${cab}
+  // Cambio que propuso la rutina (revisión diaria): se aplica al formulario y lo confirma una persona.
+  const sg = r.suggestion;
+  const sugHtml = !sg ? '' : st.aplicada ? '<div class="banner info">Sugerencia cargada en el formulario: revisala y guardá.</div>'
+    : `<div class="banner info sug"><div><b>La rutina sugiere ${esc(SUG[sg.kind] || 'un cambio')}</b>${sg.value && sg.kind !== 'retire' ? `: «${esc(sg.value)}»` : ''}<br><span class="muted">${esc(sg.why)}</span></div>
+      <span class="actions"><button class="btn primary" data-act="re-sug-aplicar" ${at}>${sg.kind === 'retire' ? 'Desactivar' : 'Aplicar'}</button><button class="btn" data-act="re-sug-descartar" ${at}>No, gracias</button></span></div>`;
+  return `<div class="redit">${cab}${r.status === 'proposed' && r.why ? `<span class="muted">Por qué se propone: ${esc(r.why)}</span>` : ''}${sugHtml}
     <label>Qué controla<textarea id="${esc(tid)}">${esc(S.drafts[tid] ?? r.text)}</textarea></label>
     ${nota}
     ${conSev ? `<div class="re-row"><span class="muted">Severidad</span><div class="opts" role="group" aria-label="Severidad">${SEVS.map((v) => `<button class="opt" data-act="re-sev" ${at} data-v="${v}" aria-pressed="${sev === v}">${v}</button>`).join('')}</div></div>` : ''}
@@ -660,6 +670,8 @@ function viewInicio() {
     const err = Object.values(S.projects).filter((p) => p.status === 'error' && (!S.filter || p.id === S.filter));
     const items = [];
     if (prop) items.push(`<a href="#reglas"><b class="n">${prop}</b> regla(s) propuesta(s) para aprobar</a>`);
+    const sug = Object.values(S.rules).filter((r) => r.suggestion && r.status !== 'proposed' && (!S.filter || r.projectId === S.filter)).length;
+    if (sug) items.push(`<a href="#reglas"><b class="n">${sug}</b> cambio(s) sugerido(s) en reglas</a>`);
     for (const p of rev) items.push(`<a href="#proyecto-${esc(p.id)}">Revisar alta de <b>${esc(p.name)}</b></a>`);
     for (const p of err) items.push(`<a href="#proyecto-${esc(p.id)}">${ico('alert', 'ico-s al-ico')} <b>${esc(p.name)}</b>: ${esc(PSTATUS.error)}</a>`);
     if (items.length) html += `<section><div class="sec-h"><h2>Para revisar</h2></div><div class="mini">${items.join('')}</div></section>`;
@@ -799,14 +811,15 @@ function configProyecto(p) {
 }
 
 function rulesTable(reglas, enProyecto) {
-  const ord = { proposed: 0, pending_compile: 1, active: 2, disabled: 3, rejected: 4 };
-  reglas = reglas.slice().sort((a, b) => ord[a.status] - ord[b.status]);
+  const ord = { proposed: 0, pending_compile: 2, active: 3, disabled: 4, rejected: 5 };
+  const pos = (r) => (r.suggestion && r.status !== 'proposed' ? 1 : ord[r.status]); // con cambio sugerido: justo después de las propuestas
+  reglas = reglas.slice().sort((a, b) => pos(a) - pos(b));
   return `<div class="rows">${reglas.map((r) => `<div class="rowi" style="grid-template-columns:1fr auto">
-    <span class="t"><b>${esc(r.text)}</b><br><span class="muted">${esc(RSTATUS[r.status] || r.status)}${enProyecto ? '' : ' · ' + esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}${(r.exceptions || []).length ? ` · ${r.exceptions.length} excepción(es)` : ''}${r.compileNote ? ' — ' + esc(r.compileNote) : ''}</span></span>
+    <span class="t"><b>${esc(r.text)}</b><br><span class="muted">${esc(RSTATUS[r.status] || r.status)}${enProyecto ? '' : ' · ' + esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${origenTxt(r)}${(r.exceptions || []).length ? ` · ${r.exceptions.length} excepción(es)` : ''}${r.compileNote ? ' — ' + esc(r.compileNote) : ''}</span>${r.status === 'proposed' && r.why ? `<br><span class="muted">Por qué se propone: ${esc(r.why)}</span>` : ''}${r.suggestion ? `<br><span class="tag sugt">Cambio sugerido</span> <span class="muted">${esc(SUG[r.suggestion.kind] || '')}: ${esc(r.suggestion.why)}</span>` : ''}</span>
     <span class="actions">${S.isAdmin && r.status === 'proposed' ? `<button class="btn primary" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Aprobar</button><button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="rejected">Rechazar</button>` : ''}
       ${S.isAdmin && r.status === 'active' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="disabled">Desactivar</button>` : ''}
       ${S.isAdmin && r.status === 'disabled' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Activar</button>` : ''}
-      ${S.isAdmin ? `<button class="btn ${S.reOpen[r.id] ? 'on' : ''}" data-act="re-abrir" data-rid="${esc(r.id)}" aria-expanded="${Boolean(S.reOpen[r.id])}">Editar</button>` : ''}</span></div>
+      ${S.isAdmin ? `<button class="btn ${S.reOpen[r.id] ? 'on' : ''}" data-act="re-abrir" data-rid="${esc(r.id)}" aria-expanded="${Boolean(S.reOpen[r.id])}">${r.suggestion ? 'Revisar' : 'Editar'}</button>` : ''}</span></div>
     ${S.isAdmin && S.reOpen[r.id] ? `<div class="rule-ed">${ruleEditorHtml(r, 'lista', null)}</div>` : ''}`).join('') || '<span class="muted">Sin reglas.</span>'}</div>`;
 }
 
@@ -817,7 +830,7 @@ function viewReglas() {
     <label>Proyecto<select id="nr-proj">${['*', ...ps.map((p) => p.id)].map((id) => `<option value="${esc(id)}" ${(S.drafts['nr-proj'] || S.filter || '*') === id ? 'selected' : ''}>${esc(id === '*' ? 'Todos los proyectos' : projName(id))}</option>`).join('')}</select></label>
     <label>Regla en lenguaje natural<input type="text" id="nr-text" placeholder="Ej.: si se ven más de 10 errores de login seguidos, escalar" value="${esc(S.drafts['nr-text'] || '')}"></label>
     <div><button class="btn primary" data-act="nueva-regla">Crear regla</button> <span class="muted">La rutina la traduce a un control en la próxima corrida y muestra cómo la entendió.</span></div></div>` : '';
-  return head('Reglas de control', 'Puntos de control definidos en lenguaje natural. Las propuestas nacen de respuestas a incidentes y las aprueba un Admin.') + form + `<div class="box">${rulesTable(reglas, false)}</div>` + navMore('reglas');
+  return head('Reglas de control', 'Puntos de control definidos en lenguaje natural. La rutina propone reglas y cambios (por respuestas a incidentes, por similitud entre procesos y en su revisión diaria); los aprueba un Admin.') + form + `<div class="box">${rulesTable(reglas, false)}</div>` + navMore('reglas');
 }
 
 function viewAjustes() {
@@ -896,6 +909,12 @@ document.addEventListener('click', async (e) => {
   if (act === 're-sev') return reSet({ sev: b.dataset.v });
   if (act === 're-eliminar') return reSet({ confirm: true });
   if (act === 're-cancelar') return reSet({ confirm: false });
+  if (act === 're-sug-aplicar' && S.rules[rid] && S.rules[rid].suggestion && S.rules[rid].suggestion.kind !== 'retire') {
+    const sg = S.rules[rid].suggestion;
+    if (sg.kind === 'severity') reSet({ sev: sg.value, aplicada: true });
+    else { S.drafts[reId(ctx, rid, sg.kind === 'text' ? 'text' : 'exc')] = sg.value || ''; reSet({ aplicada: true }); }
+    return toast('Sugerencia cargada: revisala y guardá');
+  }
   if (act === 're-quitar-exc') { const n = Number(b.dataset.n); const q = (S.re[rk] || {}).quitar || []; return reSet({ quitar: q.includes(n) ? q.filter((x) => x !== n) : [...q, n] }); }
   if (act === 'reanalizar-inc') {
     try { await S.db.collection('requests').add({ type: 'reanalyze_incident', incidentId: id, projectId: inc.projectId, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' }); toast('Pedido: la próxima corrida vuelve a analizar esta tarjeta'); }
@@ -968,6 +987,7 @@ document.addEventListener('click', async (e) => {
         if (patch.exceptions.length > 20) return toast('Una regla admite hasta 20 excepciones');
       }
       if (!cambios.length) return toast('No hay cambios para guardar');
+      if (st.aplicada) patch.suggestion = null; // la sugerencia de la rutina quedó resuelta
       // Texto o excepciones nuevas: la rutina vuelve a traducir la regla. Solo severidad: vale ya.
       const recompilar = Boolean(patch.text || patch.exceptions);
       const inactiva = ['proposed', 'disabled', 'rejected'].includes(r.status);
@@ -976,6 +996,17 @@ document.addEventListener('click', async (e) => {
       await S.db.doc(`rules/${rid}`).update(patch);
       await cerrarEdicionRegla(inc, ctx, rid, `ajustó la regla «${corto(text)}»: ${cambios.join('; ')}`, `se ajustó la regla (${cambios.join('; ')})`);
       toast(recompilar ? 'Regla guardada: la próxima corrida la vuelve a traducir' : 'Regla guardada');
+    } else if (act === 're-sug-aplicar' || act === 're-sug-descartar') {
+      const r = S.rules[rid]; if (!r || !r.suggestion) return toast('La sugerencia ya no está');
+      if (act === 're-sug-aplicar') { // solo llega acá la de desactivar: las demás se cargan en el formulario
+        await S.db.doc(`rules/${rid}`).update({ status: 'disabled', suggestion: null, updatedBy: S.me || null, updatedAt: nowIso() });
+        await cerrarEdicionRegla(inc, ctx, rid, `desactivó la regla «${corto(r.text)}» (sugerencia de la rutina)`, 'se desactivó la regla');
+        toast('Regla desactivada');
+      } else {
+        // Se recuerda el rechazo para que la rutina no vuelva a sugerir lo mismo enseguida.
+        await S.db.doc(`rules/${rid}`).update({ suggestion: null, dismissedSuggestions: [...(r.dismissedSuggestions || []).slice(-19), { kind: r.suggestion.kind, at: nowIso(), by: S.me || null }] });
+        toast('Sugerencia descartada');
+      }
     } else if (act === 're-estado') {
       const r = S.rules[rid]; if (!r) return toast('La regla ya no existe');
       await S.db.doc(`rules/${rid}`).update({ status: b.dataset.s, updatedBy: S.me || null, updatedAt: nowIso() });

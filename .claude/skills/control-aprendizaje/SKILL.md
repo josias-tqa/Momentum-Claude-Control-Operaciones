@@ -58,7 +58,7 @@ La regla nace como `rules/<id>`:
 - **Nunca** la actives. La aprueba un Admin desde el tablero.
 - No propongas una regla por cada respuesta: solo cuando hay un patrón claro, y si no existe una equivalente.
 - Si la tarjeta tiene una `activity` de tipo `rule`, una persona ya ajustó, creó, desactivó o eliminó la regla desde el tablero: **no propongas otra** para ese mismo patrón. Anotá en `history` qué se cambió, con el texto de esa actividad.
-- Si el patrón es una **salvedad de una regla que ya existe** ("la regla está bien, pero los lunes no"), no crees una regla nueva: decilo en el `summary` de `history` para que un Admin agregue la excepción desde la tarjeta. Las `exceptions` de una regla las escribe solo una persona.
+- Si el patrón es una **salvedad de una regla que ya existe** ("la regla está bien, pero los lunes no"), no crees una regla nueva: dejá en esa regla un cambio sugerido, `suggestion: {kind: "exception", value, why, key: "sug:<ruleId>:respuesta", at}` (formato en `/control-reglas`), salvo que ya tenga uno. Las `exceptions` de una regla las escribe solo una persona, al aplicar la sugerencia.
 - Las reglas `known` tienen que ser **acotadas**, con proceso o cola y `messageRegex` específico, para no tapar problemas reales.
 
 ## 5. Re-controles vencidos
