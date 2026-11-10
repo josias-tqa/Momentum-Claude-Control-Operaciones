@@ -1,6 +1,6 @@
 ---
 name: control-analisis
-description: Análisis previo a la validación humana de un incidente escalado por la Torre de Control. Cruza la evidencia redactada con el código del proyecto (Bitbucket, en la versión desplegada) y su documentación (SDD/PDD) para orientar la respuesta humana. Usar desde /control-corrida para cada incidente en plan.analizar, o cuando alguien pide re-analizar un incidente.
+description: Análisis previo a la validación humana de un incidente escalado por la Torre de Control. Cruza la evidencia redactada con el código del paquete publicado en Orchestrator (versión desplegada, con sus librerías) y su documentación (SDD/PDD) para orientar la respuesta humana. Usar desde /control-corrida para cada incidente en plan.analizar, o cuando alguien pide re-analizar un incidente.
 ---
 
 # Análisis previo de un incidente escalado
@@ -16,19 +16,20 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
 
 ## Pasos
 
-1. **Código del proceso afectado, en la versión desplegada.** Un proyecto tiene un repo por proceso.
-   - El incidente trae `processId` (Dispatcher, Performer…) y `process` (nombre en Orchestrator).
+1. **Código del proceso afectado, en la versión desplegada, desde el paquete de Orchestrator.**
    ```bash
-   node scripts/fetch-repo.mjs --proyecto work/$RUN/db/projects/<id>.json --proceso <processId o process> --destino work/$RUN/repos/<id>/<processId>
+   node scripts/fetch-codigo.mjs --proyecto work/$RUN/db/projects/<id>.json --proceso <processId o process> --destino work/$RUN/codigo/<id>/<processId> [--anterior]
    ```
-   - La versión sale sola del inventario del proyecto. El resultado dice si el ref coincide con la versión (`coincideVersion`) y el `sha`.
+   - El paquete es exactamente lo que corre. Trae los `.xaml`/`.cs`, el `project.json` y la documentación del proyecto (README, Runbook). También baja **cada librería propia en la versión exacta** que usa el proceso, en `librerias/<Nombre>@<versión>/`.
+   - La extracción usa una lista blanca: nunca hay datos, planillas ni capturas. No intentes abrir otros archivos del paquete.
+   - **Si el incidente trae `library`** (por ejemplo `ValidarEPS · LoginFamisanar`), el punto de falla está en esa librería: abrí `librerias/<name>@<version>/…/<activity>.xaml` y analizá ahí. Igual mirá cómo la invoca el proceso.
+   - **Si el incidente trae `deploy`, o sospechás una regresión**, usá `--anterior`: la salida lista los archivos agregados, quitados y modificados, y las librerías que cambiaron de versión. Comparalos y resumilo en `changes`.
+   - `fuente: "repo"` significa que el paquete no traía fuentes y se usó el repo de respaldo. Decilo.
+   - Si el feed tiene una versión más nueva de la librería (`uip or libraries versions <name>`), mencionalo en las acciones sugeridas.
    - **Si el incidente es de una cola**, sin proceso, mirá los dos lados:
      - el proceso que la escribe (Dispatcher), para saber si cargó datos inválidos;
      - el que la consume (Performer), para saber si falla al procesarlos.
-     La memoria de proceso dice qué proceso usa cada cola.
    - Si el incidente no tiene proceso asociado, elegilo por la evidencia (el `proceso` de los jobs o logs) o por la memoria.
-   - Si no hay tag `v<versión>`, se usa la rama configurada. Decilo en el análisis: el código puede no ser exactamente el desplegado.
-   - Reutilizá el clon si ya existe en esta corrida.
 2. **Ubicar el paso que falla:**
    - Con los mensajes de la evidencia (`evidence.ultima.logs`, `queueItems[].motivo`) y los marcadores del framework TQA (`Started/Finished SubProcess|Component`, `"<Handler>: Process started."`), encontrá el workflow (`.xaml`) o la clase (`.cs`) donde se lanza la excepción.
    - Para leer XAML/C# apoyate en el skill `uipath-rpa`. Para el razonamiento causal, en el método de `uipath-troubleshoot`:
@@ -60,14 +61,15 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
 {
   "summary": "2-4 frases: qué pasa, desde cuándo, a qué afecta",
   "hypotheses": [ { "text": "causa probable", "likelihood": "alta|media|baja", "evidence": "dato concreto que la sostiene (log, item, línea de código)" } ],
-  "codeRefs": [ { "file": "Framework/InitAllApplications.xaml", "line": 120, "sha": "<sha>", "note": "qué hace ese punto" } ],
+  "codeRefs": [ { "file": "Famisanar/LoginFamisanar.xaml", "line": 120, "pkg": "ValidarEPS 1.0.147", "note": "qué hace ese punto" } ],
   "docRefs": [ { "file": "docs/SDD.md", "section": "Exception Handling — AE001", "note": "qué dice" } ],
   "scope": "alcance: jobs/items afectados, desde cuándo",
   "regression": true,
   "requiresFix": false,
   "suggestedActions": [ "acción concreta para el humano (verificar credencial X en Orchestrator, coordinar con el dueño de SAP, …)" ],
   "responseOptions": [ "Requiere fix", "Comportamiento esperado", "Volver a controlar en 1 semana" ],
-  "repo": { "ref": "v1.4.0", "sha": "<sha>", "matchesDeployedVersion": true, "process": "<processId>" }
+  "source": { "kind": "package", "package": "ValidacionDeDerechosPerformer", "version": "1.0.129", "library": "ValidarEPS 1.0.147" },
+  "changes": "solo si hubo deploy: qué cambió entre la versión anterior y la actual"
 }
 ```
 

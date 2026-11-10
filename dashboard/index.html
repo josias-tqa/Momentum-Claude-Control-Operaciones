@@ -274,17 +274,19 @@ function formDesde(p) {
   return {
     nombre: p ? p.name || '' : '', carpeta: p ? (p.orchestrator || {}).folderPath || '' : '', crit: p ? p.triageCriteria || '' : '',
     docs: p ? ((p.docs || {}).paths || []).join(', ') : '',
+    soloLista: p ? p.includeAllProcesses === false : false,
     procesos: p && procesosDe(p).length ? procesosDe(p).map((x) => ({ id: x.id, label: x.label || '', op: x.orchestratorProcess || '', role: x.role || rolDe(x.label || ''),
       repo: repoTxt(x.repo), rama: (x.repo || {}).branch || 'main', docs: ((x.docs || {}).paths || []).join(', '), carpeta: x.folderPath || '' }))
-      : [{ id: '', label: 'Dispatcher', op: '', role: 'dispatcher', repo: '', rama: 'main', docs: '', carpeta: '' }, { id: '', label: 'Performer', op: '', role: 'performer', repo: '', rama: 'main', docs: '', carpeta: '' }],
+      : [],
   };
 }
 // Convierte el formulario en el documento del proyecto. Devuelve { error } o { data }.
 function proyectoDesdeForm(f) {
   if (!f.nombre.trim()) return { error: 'Falta el nombre del proyecto' };
   if (!f.carpeta.trim()) return { error: 'Falta la carpeta de Orchestrator' };
+  // Los procesos son opcionales: si no se cargan, la rutina toma todos los de la carpeta.
   const procs = f.procesos.filter((x) => x.label.trim() || x.repo.trim() || x.op.trim());
-  if (!procs.length) return { error: 'Agregá al menos un proceso' };
+  if (f.soloLista && !procs.length) return { error: 'Para controlar solo algunos procesos, cargá al menos uno' };
   const usados = new Set(); const processes = [];
   for (const [i, x] of procs.entries()) {
     // El repo es opcional: un proceso sin repo (p. ej. sin versionar en Bitbucket) se controla igual,
@@ -299,7 +301,7 @@ function proyectoDesdeForm(f) {
       folderPath: x.carpeta.trim() && x.carpeta.trim() !== f.carpeta.trim() ? x.carpeta.trim() : null,
       repo: repo ? { ...repo, branch: x.rama.trim() || 'main' } : null, docs: { paths: listaDocs(x.docs) } });
   }
-  return { data: { name: f.nombre.trim(), orchestrator: { folderPath: f.carpeta.trim() }, processes, docs: { paths: listaDocs(f.docs) }, triageCriteria: f.crit } };
+  return { data: { name: f.nombre.trim(), orchestrator: { folderPath: f.carpeta.trim() }, includeAllProcesses: !f.soloLista, processes, docs: { paths: listaDocs(f.docs) }, triageCriteria: f.crit } };
 }
 function formProyectoHtml(clave, f, { boton, botonExtra } = {}) {
   const fid = (k, i) => `f-${clave}-${i ?? 'p'}-${k}`;
@@ -307,21 +309,26 @@ function formProyectoHtml(clave, f, { boton, botonExtra } = {}) {
   return `<div class="form">
     <div class="grid2"><label>Nombre del proyecto${inp('nombre', undefined, f.nombre, 'Validación de derechos')}</label>
     <label>Carpeta de Orchestrator (producción)${inp('carpeta', undefined, f.carpeta, 'Produccion/Finanzas')}</label></div>
+    <p class="muted" style="margin:0">El código, las librerías y la documentación se toman solos de los paquetes de Orchestrator, en la versión desplegada. Todos los procesos de la carpeta quedan bajo control.</p>
+    <details data-adv="${esc(clave)}" ${S.adv[clave] ? 'open' : ''}><summary class="muted" style="cursor:pointer">Opciones avanzadas</summary><div class="form" style="margin-top:10px">
+    <label style="display:flex;gap:8px;align-items:center;color:var(--fg)"><input type="checkbox" id="${fid('solo')}" data-form="${esc(clave)}" data-k="soloLista" ${f.soloLista ? 'checked' : ''} style="width:auto"> Controlar solo los procesos de esta lista</label>
     <div class="sec-h" style="margin:6px 0 0"><h2>Procesos</h2><span class="cnt">${f.procesos.length}</span></div>
+    ${f.procesos.length ? '' : '<span class="muted">Sin procesos cargados: se detectan solos. Cargalos solo para asignar un repo de Bitbucket de respaldo, documentación propia o una carpeta distinta.</span>'}
     <div class="procs">${f.procesos.map((x, i) => `<div class="proc">
       <div class="proc-h"><b>Proceso ${i + 1}</b>
         <select id="${fid('role', i)}" data-form="${esc(clave)}" data-k="role" data-i="${i}" aria-label="Rol" style="width:auto">${ROLES.map(([k, l]) => `<option value="${k}" ${x.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
         ${f.procesos.length > 1 ? `<button class="btn link" data-act="quitar-proceso" data-form="${esc(clave)}" data-i="${i}">Quitar</button>` : ''}</div>
       <div class="grid2"><label>Nombre${inp('label', i, x.label, 'Performer')}</label>
       <label>Nombre en Orchestrator (opcional: el alta lo detecta)${inp('op', i, x.op, 'p. ej. VD_Performer')}</label></div>
-      <label>Repositorio de Bitbucket (URL o workspace/repo; vacío si no está versionado)${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
+      <label>Repo de Bitbucket de respaldo (opcional)${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
       <div class="grid2"><label>Rama${inp('rama', i, x.rama, 'main')}</label>
-      <label>Documentación en el repo (opcional, separada por coma)${inp('docs', i, x.docs, 'docs/SDD.md')}</label></div>
+      <label>Documentación adicional (opcional, separada por coma)${inp('docs', i, x.docs, 'docs/SDD.md')}</label></div>
       <label>Carpeta propia (solo si no usa la del proyecto)${inp('carpeta', i, x.carpeta, '')}</label>
     </div>`).join('')}</div>
     <div><button class="btn" data-act="agregar-proceso" data-form="${esc(clave)}">+ Agregar proceso</button></div>
-    <label>Documentación común del proyecto (opcional; rutas dentro de cualquiera de los repos)${inp('docs', undefined, f.docs, 'docs/PDD.md')}</label>
+    <label>Documentación común adicional (opcional)${inp('docs', undefined, f.docs, 'docs/PDD.md')}</label>
     <label>Criterios de triage del proyecto (opcional)<textarea id="${fid('crit')}" data-form="${esc(clave)}" data-k="crit">${esc(f.crit)}</textarea></label>
+    </div></details>
     <div class="actions">${boton}${botonExtra || ''}</div></div>`;
 }
 
@@ -331,7 +338,7 @@ const S = {
   projects: {}, incidents: {}, work: {}, rules: {}, runs: [], settings: null, health: null,
   loaded: { projects:false, incidents:false, work:false, runs:false },
   filter: null, open: {}, panel: {}, drafts: {}, names: {}, sel: {}, activity: {}, history: {}, memory: {},
-  projTab: 'memoria', peopleHits: {}, error: null, stale: false, forms: {},
+  projTab: 'memoria', peopleHits: {}, error: null, stale: false, forms: {}, adv: {}, discovery: null, libraries: {},
 };
 try { S.filter = localStorage.getItem('torre.filtro') || null; } catch {}
 
@@ -455,6 +462,8 @@ function cardHtml(i, compacta = false) {
           ${procLabel(i) ? `<span class="tag">${esc(procLabel(i))}</span>` : ''}
           ${rec.length > 1 || i.occurrences > 1 ? `<span class="tag rec" title="Ocurrencias acumuladas en esta tarjeta">×${esc(i.occurrences)} · última ${esc(rel(i.lastSeenAt))}</span>` : `<span>${esc(rel(i.lastSeenAt))}</span>`}
           ${i.reopenCount ? '<span class="tag reo">Reapareció</span>' : ''}
+          ${i.library ? `<span class="tag" title="El error ocurrió en una librería">${esc(i.library.name)}${i.library.activity ? ' · ' + esc(i.library.activity) : ''}</span>` : ''}
+          ${i.deploy && i.deploy.version ? `<span class="tag reo" title="Hubo un deploy después de abrirse la tarjeta">Nueva versión ${esc(i.deploy.version)}</span>` : ''}
           ${i.decision === 'notify' ? '<span class="tag">Aviso</span>' : ''}
           ${w.state === 'delegated' && w.assignee ? `<span>→ ${who(w.assignee)}</span>` : ''}
         </div>
@@ -494,6 +503,15 @@ function cardHtml(i, compacta = false) {
   return html + '</article>';
 }
 
+// Librería del error: quién más la usa y cuántas tarjetas abiertas tiene en otros proyectos.
+function libreriaHtml(i) {
+  const l = i.library;
+  const usan = Object.values(S.projects).filter((p) => p.id !== i.projectId && ((p.inventory || {}).processes || []).some((x) => (x.libraries || []).some((y) => y.name === l.name)));
+  const otras = Object.values(S.incidents).filter((x) => x.id !== i.id && x.projectId !== i.projectId && x.status === 'open' && x.library && x.library.name === l.name).length;
+  return `<section><h4>Librería</h4><p style="margin:0"><b>${esc(l.name)} ${esc(l.version || '')}</b>${l.activity ? ` · actividad <span class="mono">${esc(l.activity)}</span>` : ''}</p>
+    ${usan.length ? `<p class="muted" style="margin:4px 0 0">También la usan: ${usan.map((p) => esc(p.name)).join(', ')}${otras ? ` · ${otras} tarjeta(s) abierta(s) en esos proyectos` : ''}</p>` : ''}</section>`;
+}
+
 function detailHtml(i) {
   const ev = i.evidence || {}; const u = ev.ultima || ev.primera || {};
   const a = i.analysis || {}; const t = i.triage || {};
@@ -506,6 +524,7 @@ function detailHtml(i) {
   const acts = (S.activity[i.id] || []);
   if (!S.activity[i.id]) loadActivity(i.id);
   return `<div class="detail">
+    ${i.library ? libreriaHtml(i) : ''}
     <section><h4>Triage</h4><dl class="kv">
       <dt>Decisión</dt><dd>${esc(DEC[i.decision] || i.decision)} · confianza ${esc(t.confidence || '—')}</dd>
       <dt>Por qué</dt><dd>${esc(t.rationale)}</dd>
@@ -518,11 +537,14 @@ function detailHtml(i) {
       <p style="margin:0 0 8px">${esc(a.summary)}</p>
       ${(a.hypotheses || []).length ? `<ul class="hyp">${a.hypotheses.map((h) => `<li class="${esc(h.likelihood)}"><b>${esc(h.text)}</b><span class="muted">Probabilidad ${esc(h.likelihood)} · ${esc(h.evidence)}</span></li>`).join('')}</ul>` : ''}
       ${(a.suggestedActions || []).length ? `<h4 style="margin-top:10px">Acciones sugeridas</h4><ul style="margin:0;padding-left:18px">${a.suggestedActions.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
-      ${(a.codeRefs || []).length ? `<h4 style="margin-top:10px">Código</h4>${a.codeRefs.map((c) => `<div class="mono">${esc(c.file)}${c.line ? ':' + esc(c.line) : ''} <span class="muted">@${esc(String(c.sha || '').slice(0, 7))}</span> — ${esc(c.note)}</div>`).join('')}` : ''}
+      ${(a.codeRefs || []).length ? `<h4 style="margin-top:10px">Código</h4>${a.codeRefs.map((c) => `<div class="mono">${esc(c.file)}${c.line ? ':' + esc(c.line) : ''} <span class="muted">${c.pkg ? esc(c.pkg) : '@' + esc(String(c.sha || '').slice(0, 7))}</span> — ${esc(c.note)}</div>`).join('')}` : ''}
       ${(a.docRefs || []).length ? `<h4 style="margin-top:10px">Documentación</h4>${a.docRefs.map((c) => `<div><span class="mono">${esc(c.file)}</span> · ${esc(c.section)} — ${esc(c.note)}</div>`).join('')}` : ''}
-      ${a.repo && !a.repo.matchesDeployedVersion ? '<p class="muted">El código analizado es de la rama configurada, no del tag de la versión desplegada.</p>' : ''}
+      ${a.source ? `<p class="muted">Código analizado: ${a.source.kind === 'repo' ? 'repo de respaldo' : 'paquete'} ${esc(a.source.package)} ${esc(a.source.version)}${a.source.kind === 'package' ? ' (versión desplegada)' : ''}${a.source.library ? ' · librería ' + esc(a.source.library) : ''}.</p>`
+        : a.repo && !a.repo.matchesDeployedVersion ? '<p class="muted">El código analizado es de la rama configurada, no del tag de la versión desplegada.</p>' : ''}
+      ${a.changes ? `<h4 style="margin-top:10px">Qué cambió en el deploy</h4><p style="margin:0">${esc(a.changes)}</p>` : ''}
     </section>` : a.status === 'pending' ? '<section><h4>Análisis previo</h4><p class="muted" style="margin:0">Pendiente: lo completa la próxima corrida.</p></section>' : ''}
     ${lines.length ? `<section><h4>Evidencia (redactada)</h4><div class="ev">${lines.join('')}</div></section>` : ''}
+    ${S.canWrite ? `<div><button class="btn link" data-act="reanalizar-inc" style="padding-left:0">Volver a analizar</button></div>` : ''}
     <section><h4>Actividad</h4>${acts.length ? `<ul class="tl">${acts.map((x) => `<li><time>${esc(fecha(x.at))}</time><span>${who(x.by)} ${esc(x.text || '')}</span></li>`).join('')}</ul>` : '<span class="muted">Sin actividad todavía.</span>'}</section>
   </div>`;
 }
@@ -665,9 +687,12 @@ function viewProyecto(id) {
   else if (tab === 'config') body = configProyecto(p);
   const tabs = [['memoria', 'Memoria de proceso'], ['produccion', 'Memoria de producción'], ['reglas', `Reglas (${reglas.length})`], ['inventario', 'Inventario'], ['config', 'Configuración']];
   const procs = procesosDe(p);
+  const invP = (p.inventory && p.inventory.processes) || [];
+  const extra = (x) => { const v = invP.find((y) => y.name === x.orchestratorProcess); if (!v) return '';
+    return `<span class="muted"> · paquete </span><span class="mono">${esc(v.package || v.name)} ${esc(v.version || '')}</span>${(v.libraries || []).length ? `<span class="muted"> · librerías: </span><span class="mono">${v.libraries.map((l) => esc(l.name + ' ' + l.version)).join(', ')}</span>` : ''}`; };
   return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${procs.length} proceso(s) · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos')
     + `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
-      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span><span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo) || 'sin repo (se controla, sin análisis de código)')}</span>${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Sin procesos configurados.</span>'}
+      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span>${extra(x)}${x.repo ? `<span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo))}</span>` : ''}${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Los procesos de la carpeta se detectan solos en la próxima corrida.</span>'}
       ${S.isAdmin ? `<div><button class="btn link" data-act="tab" data-t="config" style="padding-left:0">Editar configuración</button></div>` : ''}</div>`
     + (p.statusNote ? `<div class="banner info">${esc(p.statusNote)}</div>` : '')
     + (S.isAdmin && p.status === 'review' ? `<div><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')
@@ -725,15 +750,20 @@ function viewAjustes() {
 function viewRegistrar() {
   if (!S.isAdmin) return head('Registrar proyecto', 'Solo los Admin pueden registrar proyectos.');
   if (!S.forms.nuevo) S.forms.nuevo = formDesde(null);
-  return head('Registrar proyecto', 'Un proyecto agrupa sus procesos (por ejemplo Dispatcher y Performer), cada uno con su repositorio. La rutina analiza Orchestrator, el código y la documentación y genera la memoria; después lo revisás y activás.')
-    + `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar">Registrar y analizar</button>' })}</div>` + navMore('registrar');
+  const registradas = new Set(Object.values(S.projects).map((p) => (p.orchestrator || {}).folderPath));
+  const det = ((S.discovery && S.discovery.folders) || []).filter((f) => !registradas.has(f.folderPath));
+  const lista = det.length ? `<section class="box"><div class="sec-h" style="margin:0"><h2>Carpetas detectadas sin registrar</h2><span class="cnt">${det.length}</span></div>
+    <div class="rows">${det.map((f) => `<div class="rowi" style="grid-template-columns:1fr auto"><span class="t"><b>${esc(f.name || f.folderPath)}</b><br><span class="muted mono">${esc(f.folderPath)}</span><span class="muted"> · ${esc((f.procesos || []).length)} proceso(s) · ${esc(f.jobs30d ?? 0)} jobs en 30 días</span></span>
+      <span><button class="btn primary" data-act="registrar-detectada" data-folder="${esc(f.folderPath)}" data-name="${esc(f.name || '')}">Registrar</button></span></div>`).join('')}</div></section>` : '';
+  return head('Registrar proyecto', 'Un proyecto es una carpeta de Orchestrator. La rutina detecta sus procesos, librerías y documentación, y genera la memoria; después lo revisás y activás.')
+    + lista + `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar">Registrar y analizar</button>' })}</div>` + navMore('registrar');
 }
 
 // ---------- eventos ----------
 document.addEventListener('input', (e) => {
   const t = e.target; if (!t.id) return;
   S.drafts[t.id] = t.value;
-  if (t.dataset.form && S.forms[t.dataset.form]) {
+  if (t.type !== 'checkbox' && t.dataset.form && S.forms[t.dataset.form]) {
     const f = S.forms[t.dataset.form];
     if (t.dataset.i !== undefined) {
       const x = f.procesos[Number(t.dataset.i)]; x[t.dataset.k] = t.value;
@@ -746,8 +776,10 @@ document.addEventListener('input', (e) => {
     S.user.search(t.value).then((hits) => { S.peopleHits[id] = hits; schedule(); });
   }
 });
+document.addEventListener('toggle', (e) => { const d = e.target; if (d.dataset && d.dataset.adv) S.adv[d.dataset.adv] = d.open; }, true);
 document.addEventListener('change', (e) => {
   const t = e.target;
+  if (t.type === 'checkbox' && t.dataset.form && S.forms[t.dataset.form]) { S.forms[t.dataset.form][t.dataset.k] = t.checked; return; }
   if (t.tagName === 'SELECT' && t.dataset.form && S.forms[t.dataset.form]) { const x = S.forms[t.dataset.form].procesos[Number(t.dataset.i)]; x[t.dataset.k] = t.value; x.autoRole = false; }
 });
 document.addEventListener('focusin', (e) => {
@@ -769,6 +801,11 @@ document.addEventListener('click', async (e) => {
   if (act === 'panel') { S.panel[id] = S.panel[id] === b.dataset.p ? null : b.dataset.p; S.sel[id] = {}; return schedule(); }
   if (act === 'sel') { S.sel[id] = { ...(S.sel[id] || {}), [b.dataset.k]: b.dataset.v }; return schedule(); }
   if (act === 'tab') { S.projTab = b.dataset.t; return schedule(); }
+  if (act === 'reanalizar-inc') {
+    try { await S.db.collection('requests').add({ type: 'reanalyze_incident', incidentId: id, projectId: inc.projectId, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' }); toast('Pedido: la próxima corrida vuelve a analizar esta tarjeta'); }
+    catch { toast('No se pudo pedir el re-análisis'); }
+    return schedule();
+  }
   if (act === 'agregar-proceso') { S.forms[b.dataset.form].procesos.push({ id: '', label: '', op: '', role: 'other', repo: '', rama: 'main', docs: '', carpeta: '' }); return schedule(); }
   if (act === 'quitar-proceso') { S.forms[b.dataset.form].procesos.splice(Number(b.dataset.i), 1); return schedule(); }
   if (act === 'descartar-cambios') { delete S.forms['cfg-' + b.dataset.pid]; return schedule(); }
@@ -838,6 +875,12 @@ document.addEventListener('click', async (e) => {
         toast('Guardado. La próxima corrida re-analiza el proyecto.');
       } else toast('Configuración guardada');
       S.forms['cfg-' + pid] = formDesde({ ...p, ...r.data });
+    } else if (act === 'registrar-detectada') {
+      const folder = b.dataset.folder; const nombre = b.dataset.name || folder.split('/').pop();
+      let id = slug(folder.split('/').slice(-2).join('-')); if (S.projects[id]) id = `${id}-${Date.now().toString(36).slice(-4)}`;
+      await S.db.doc(`projects/${id}`).set({ name: nombre, status: 'pending_analysis', orchestrator: { folderPath: folder }, includeAllProcesses: true, processes: [], docs: { paths: [] }, triageCriteria: '', createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
+      await S.db.collection('requests').add({ type: 'onboard_project', projectId: id, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
+      toast(`${nombre} registrado: la rutina lo analiza en la próxima corrida`);
     } else if (act === 'registrar') {
       const r = proyectoDesdeForm(S.forms.nuevo || formDesde(null));
       if (r.error) return toast(r.error);
@@ -878,6 +921,8 @@ async function start() {
   db.collection('incidents').where('status', '==', 'open').onSnapshot((s) => { clearTimeout(timer); S.incidents = {}; for (const d of s.docs) S.incidents[d.id] = { id: d.id, ...d.data() }; S.loaded.incidents = true; schedule(); }, onErr);
   db.collection('runs').orderBy('startedAt', 'desc').limit(50).onSnapshot((s) => { S.runs = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.loaded.runs = true; schedule(); }, onErr);
   db.doc('config/settings').onSnapshot((d) => { S.settings = d.exists ? d.data() : null; schedule(); }, () => {});
+  db.doc('config/discovery').onSnapshot((d) => { S.discovery = d.exists ? d.data() : null; schedule(); }, () => {});
+  coll('libraries', 'libraries');
   setInterval(schedule, 60000); // refresca los "hace X min"
 }
 start();

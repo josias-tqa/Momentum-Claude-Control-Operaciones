@@ -25,7 +25,7 @@ Todo lo intermedio va en `work/$RUN/`.
 ## 2. Exportar la base a `work/$RUN/db`
 
 Usá `ArtifactData` con `out_dir: work/$RUN/db`:
-- `list` de `projects`, `rules`, `incidentWork`, `config` y `memory`.
+- `list` de `projects`, `rules`, `incidentWork`, `config`, `memory` y `libraries`.
 - `query` de `incidents` con `where: [["status","==","open"]]`.
 - `query` de `incidents` con `where: [["status","==","closed"],["closedAt",">=",<hace 30 días>]]`.
 - `query` de `requests` con `where: [["status","==","pending"]]`.
@@ -38,6 +38,7 @@ Cada resultado lista la `version` de cada documento. **Registralas** en `work/$R
 
 Por cada `requests` pendiente:
 - `onboard_project` o `reanalyze_project`: ejecutá `/control-alta-proyecto` para ese proyecto.
+- `reanalyze_incident`: juntá los `incidentId` y pasalos a `consolidar.mjs --reanalizar <ids>` en el paso 7. Marcá la solicitud `done` al publicar.
 - `recompile_rule`: compilá esa regla (paso 4).
 
 Al terminar, `update` de la solicitud con `{status: "done"|"error", resultNote, processedAt}` y su `if_version`.
@@ -68,10 +69,13 @@ Para cada proyecto con `status: "active"`:
 
 ```bash
 node scripts/collect.mjs --proyecto work/$RUN/db/projects/<id>.json --desde <watermarks.since o hace 2 h> --salida work/$RUN/<id>/senales.json
+node scripts/indexar-codigo.mjs --senales work/$RUN/<id>/senales.json --proyecto work/$RUN/db/projects/<id>.json --salida work/$RUN/<id>/indice.json
 node scripts/evaluate.mjs --senales work/$RUN/<id>/senales.json --proyecto work/$RUN/db/projects/<id>.json \
+  --indice work/$RUN/<id>/indice.json --librerias work/$RUN/db/libraries \
   --reglas work/$RUN/reglas.json --ajustes work/$RUN/db/config/settings.json --salida work/$RUN/<id>/hallazgos.json
 ```
 
+- `indexar-codigo` solo baja paquetes de procesos con versión nueva (normalmente ninguno): no usa modelo y suele tardar segundos.
 - `reglas.json` es un array con las reglas activas: `{id, ...cuerpo}` leídas de `work/$RUN/db/rules`.
 - La colecta cubre todas las carpetas del proyecto: la del proyecto más las propias de algún proceso.
   - Si todos los procesos tienen `orchestratorProcess`, se limita a ellos: la carpeta puede compartirse con otros proyectos.
@@ -109,7 +113,7 @@ Por cada hallazgo de `hallazgos.json` decidí la clasificación y escribila en `
 ## 7. Consolidar y armar escrituras
 
 ```bash
-node scripts/consolidar.mjs --run-id $RUN --run-dir work/$RUN --inicio <inicio ISO> --trigger scheduled --session-url <URL de esta sesión si la conocés>
+node scripts/consolidar.mjs --run-id $RUN --run-dir work/$RUN --inicio <inicio ISO> --trigger scheduled --session-url <URL de esta sesión si la conocés> [--reanalizar <ids>]
 node scripts/build-writes.mjs --plan work/$RUN/plan.json --salida work/$RUN/lotes
 ```
 

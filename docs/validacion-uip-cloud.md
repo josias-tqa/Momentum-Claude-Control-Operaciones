@@ -103,3 +103,7 @@ Notas para el diseño:
    - **NO-GO**: ninguno responde. Se replantea, por ejemplo con una rutina local por Remote Control.
 5. Además: Bitbucket `ls-remote` y clon OK, y escritura con `ArtifactData` **sin pedir aprobación**,
    requisito de una rutina desatendida.
+
+## Código desde paquetes
+
+Verificado el 2026-11-09: `packages download` y `libraries download` traen los `.nupkg` con los `.xaml`, el `project.json` (dependencias exactas) y la documentación. Alcanzan los scopes de solo lectura. La extracción usa la lista blanca de `scripts/lib/paquetes.mjs`.

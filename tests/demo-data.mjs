@@ -32,6 +32,9 @@ export function demoSeed({ vacio = false } = {}) {
   // Fechas relativas a "ahora" para que la demo se vea viva.
   for (const [k, v] of Object.entries(seed)) if (k.startsWith('incidents/')) { v.lastSeenAt = iso(12); v.firstSeenAt = iso(70); }
   const login = Object.entries(seed).find(([k, v]) => k.startsWith('incidents/') && v.category === 'login');
+  login[1].library = { name: 'LIB_Sap', version: '2.2.0', activity: 'LoginSap' };
+  login[1].deploy = { version: '1.4.0', previous: '1.3.2', at: iso(20) };
+  seed['config/discovery'] = { at: iso(60), folders: [{ folderPath: 'Produccion/Tesoreria/Pagos', name: 'Pagos', procesos: ['TES_Pagos_Dispatcher', 'TES_Pagos_Performer'], jobs30d: 412 }] };
   login[1].occurrences = 7; login[1].recurrences = [{ runId: 'run-demo-0', at: iso(72), count: 3 }, { runId, at: iso(12), count: 4 }];
   login[1].analysis = { status: 'done', summary: 'Desde hace 70 minutos el Performer falla al iniciar sesión en SAP en todos los jobs. El lote completo queda sin procesar.',
     hypotheses: [{ text: 'La credencial C_180_FIN_FAC_SapCredentials venció o fue bloqueada en SAP', likelihood: 'alta', evidence: '12 errores "invalid credentials" seguidos, en las 3 ejecuciones, desde la misma máquina.' }, { text: 'Cambio en la pantalla de login de SAP', likelihood: 'baja', evidence: 'No hay errores de selector; el mensaje viene de SAP.' }],
@@ -41,7 +44,7 @@ export function demoSeed({ vacio = false } = {}) {
   if (otros[0]) seed[`incidentWork/${otros[0][0].split('/')[1]}`] = { state: 'delegated', assignee: 'u_oper0000000000000000002', delegatedBy: 'u_admin000000000000000001', updatedAt: iso(30), updatedBy: 'u_admin000000000000000001' };
   seed['runs/' + runId] = { ...seed['runs/' + runId], startedAt: iso(14), finishedAt: iso(12) };
   seed['runs/run-demo-0'] = { startedAt: iso(74), finishedAt: iso(72), status: 'ok', trigger: 'scheduled', projects: [{ projectId: 'conciliacion', status: 'ok', checks: [], findings: [], incidentsNew: [], incidentsUpdated: [] }], summary: {} };
-  seed['projects/conciliacion'] = { name: 'Conciliación bancaria', status: 'active', orchestrator: { folderPath: 'Produccion/Tesoreria' }, repo: { workspace: 'ejemplo', slug: 'conciliacion' }, health: { level: 'ok' } };
+  seed['projects/conciliacion'] = { name: 'Conciliación bancaria', status: 'active', orchestrator: { folderPath: 'Produccion/Tesoreria' }, repo: { workspace: 'ejemplo', slug: 'conciliacion' }, health: { level: 'ok' }, inventory: { processes: [{ name: 'TES_Conciliacion', package: 'TES_Conciliacion', version: '3.0.1', libraries: [{ name: 'LIB_Sap', version: '2.1.0' }] }] } };
   seed['projects/nomina'] = { name: 'Novedades de nómina', status: 'review', statusNote: 'Alta completa: 2 procesos, 1 cola, 14 assets. Discrepancia: la cola RRHH_NOV_Items del SDD no existe en Orchestrator.', orchestrator: { folderPath: 'Produccion/RRHH' }, repo: { workspace: 'ejemplo', slug: 'nomina' } };
   seed['rules/facturacion-login'] = { projectId: 'facturacion', text: 'Si se ven más de 10 errores de login seguidos, alertar', status: 'active', origin: 'manual', compileNote: 'Cuenta errores Error/Fatal que mencionan login o credenciales; alerta si hay más de 10 seguidos.' };
   seed['rules/facturacion-abandonados'] = { projectId: 'facturacion', text: 'Los items abandonados de los lunes antes de las 9 son normales (mantenimiento de SAP)', status: 'proposed', origin: 'learned', sourceIncidentId: 'inc-x', compileNote: 'Marca como conocido los abandonados de FIN_FAC_Facturas los lunes antes de las 9:00.' };

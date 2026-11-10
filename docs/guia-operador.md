@@ -37,22 +37,28 @@ Si el problema vuelve a ocurrir, **no se crea otra tarjeta**. La misma muestra "
 
 ## Registrar un proyecto (Admin)
 
-Un **proyecto** agrupa sus **procesos**, por ejemplo un Dispatcher, un Performer y un Reporter. Normalmente comparten la carpeta de Orchestrator y cada uno tiene su propio repositorio.
+Un **proyecto es una carpeta de Orchestrator**. La rutina detecta sola sus procesos (Dispatcher, Performer, Reporter…), las librerías que usan y la documentación. Todo sale de los paquetes publicados, en la versión que está en producción.
 
-1. Ver más → **Registrar proyecto**. Completá:
-   - el nombre;
-   - la carpeta de producción de Orchestrator;
-   - los procesos: por cada uno, su nombre, el repo de Bitbucket (sirve la URL copiada del navegador) y la rama.
-     - Opcional: el nombre del proceso en Orchestrator. Si lo dejás vacío, el análisis lo detecta.
-     - Opcional: la documentación del proceso.
-     - Opcional: una carpeta propia, si no usa la del proyecto.
-   - Con **+ Agregar proceso** sumás más procesos.
-2. La próxima corrida analiza el proyecto:
-   - inventario y baseline de 30 días;
-   - el código de cada repo y la documentación;
-   - empareja cada repo con su proceso de Orchestrator y avisa si un repo no corresponde.
-   - Genera la **memoria de proceso** y propone reglas.
-3. Revisá la memoria y las reglas, y tocá **Activar el control de este proyecto**.
+1. Ver más → **Registrar proyecto**. Hay dos formas:
+   - En **Carpetas detectadas sin registrar**, tocá **Registrar** en la carpeta que quieras.
+   - O escribí el nombre y la carpeta a mano.
+2. La próxima corrida lo analiza y genera la **memoria de proceso** y reglas propuestas.
+3. Revisá todo y tocá **Activar el control de este proyecto**.
+
+Los procesos que se agreguen después a la carpeta se suman solos.
+
+En **Opciones avanzadas** se puede:
+- controlar solo algunos procesos de la carpeta;
+- cargar un repo de Bitbucket de respaldo;
+- agregar documentación adicional.
+
+Normalmente no hace falta.
+
+## Tarjetas con librería o con deploy
+
+- **`ValidarEPS · LoginFamisanar`**: el error ocurrió dentro de esa actividad de la librería. El análisis lee el código de la librería en la versión que usa el proceso. El detalle dice qué otros proyectos usan la misma librería.
+- **`Nueva versión 1.0.129`**: se desplegó una versión nueva después de abrirse la tarjeta. La rutina la vuelve a analizar y explica qué cambió.
+- **Volver a analizar**, en el detalle: pide un análisis nuevo en la próxima corrida.
 
 ## Corregir la configuración de un proyecto (Admin)
 

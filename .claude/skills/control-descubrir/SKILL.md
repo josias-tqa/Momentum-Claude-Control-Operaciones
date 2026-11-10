@@ -1,6 +1,6 @@
 ---
 name: control-descubrir
-description: Descubre automáticamente los proyectos UiPath de Orchestrator (todas las carpetas que ve la External App), los agrupa por carpeta con sus procesos (Dispatcher, Performer, Reporter...), empareja cada proceso con su repo de Bitbucket por el nombre del paquete y los registra en el tablero con su solicitud de alta. Usar cuando piden "descubrir/importar/crear todos los proyectos" o al sumar carpetas nuevas a la External App.
+description: Descubre automáticamente los proyectos UiPath de Orchestrator (todas las carpetas que ve la External App), los agrupa por carpeta con sus procesos (Dispatcher, Performer, Reporter...), empareja (opcional) cada proceso con un repo de Bitbucket de respaldo y los registra en el tablero con su solicitud de alta. Usar cuando piden "descubrir/importar/crear todos los proyectos" o al sumar carpetas nuevas a la External App.
 ---
 
 # Descubrimiento de proyectos
@@ -26,7 +26,7 @@ Si `orchestrator.fuenteCarpetas.listadas` es 0, decilo: falta ese permiso de ten
    node scripts/descubrir.mjs --salida work/$RUN/candidatos.json --registrados work/$RUN/db/projects [--workspaces <ws1,ws2>]
    ```
    - Los workspaces de Bitbucket salen de los proyectos ya registrados, de `BITBUCKET_WORKSPACES` o de `--workspaces`.
-   - Si `bitbucket.errores` dice que no se pueden listar los repos, el token probablemente es de un solo repositorio. Los proyectos se crean igual, con `repo: null`, y se completan desde el tablero.
+   - Bitbucket es opcional (solo respaldo): el código sale de los paquetes de Orchestrator. Sin `BITBUCKET_TOKEN` se omite.
 4. Revisá los candidatos antes de crear nada:
    - Descartá carpetas que claramente **no son producción**: nombres como `Test`, `QA`, `Dev`, `UAT`, `Pruebas`, `Sandbox`, `Personal` o `Shared` sin procesos productivos. Listalas en el resumen como omitidas y explicá por qué.
    - Una carpeta con procesos de **varios proyectos** (por ejemplo, prefijos distintos como `FIN_…` y `RRHH_…`) se parte en un proyecto por prefijo. Editá `candidatos.json` antes del paso 5.

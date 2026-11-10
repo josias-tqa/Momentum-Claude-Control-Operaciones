@@ -24,6 +24,8 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 | `incidentWork/{incidentId}` | Operador o Admin | Lado humano: `state` (delegated, snoozed, dismissed, responded), asignado, motivo del descarte, respuesta |
 | `activity/{id}` | Operador o Admin | Comentarios y acciones sobre una tarjeta |
 | `requests/{id}` | Operador o Admin | `onboard_project`, `reanalyze_project`, `recompile_rule` |
+| `libraries/{slug}` | Solo rutina | Catálogo de librerías propias: versiones en uso, actividades de cada una, si trae fuentes |
+| `config/discovery` | Rutina | Carpetas con procesos que todavía no son un proyecto (se actualiza una vez por día) |
 | `rollups/{projectId}_{AAAA-MM}` | Solo rutina | Resumen mensual que queda cuando la retención depura |
 | `data/users/{id}/…` | Cada persona, lo suyo | Preferencias (no se usa todavía) |
 

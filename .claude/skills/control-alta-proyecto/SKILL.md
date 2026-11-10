@@ -1,6 +1,6 @@
 ---
 name: control-alta-proyecto
-description: Alta y análisis automático de un proyecto UiPath en la Torre de Control. Descubre procesos, colas, assets, triggers y máquinas de la carpeta de Orchestrator, calcula un baseline de 30 días, lo cruza con el código (Bitbucket) y la documentación (SDD/PDD), y genera la memoria de proceso (mini-PDD), reglas y criterios iniciales propuestos. Usar cuando hay una solicitud onboard_project o reanalyze_project, o cuando piden registrar/analizar un proyecto.
+description: Alta y análisis automático de un proyecto UiPath en la Torre de Control. Descubre procesos, colas, assets, triggers y máquinas de la carpeta de Orchestrator, calcula un baseline de 30 días, lo cruza con el código y la documentación del paquete publicado en Orchestrator (Bitbucket solo de respaldo), y genera la memoria de proceso (mini-PDD), reglas y criterios iniciales propuestos. Usar cuando hay una solicitud onboard_project o reanalyze_project, o cuando piden registrar/analizar un proyecto.
 ---
 
 # Alta de un proyecto
@@ -27,24 +27,16 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    ```
    - Inventaría **todas** las carpetas del proyecto, con todos sus procesos, aunque haya otros que no son del proyecto. El paso 3 los empareja.
    - Si `errores` trae un fallo de login o de permisos, `status: "error"` con un `statusNote` que diga qué acceso falta: la External App no está asignada a la carpeta, falta un scope, etc. Terminá ahí.
-3. **Código, un repo por proceso.** Para cada `processes[]`:
-   ```bash
-   node scripts/fetch-repo.mjs --proyecto work/$RUN/db/projects/<id>.json --proceso <processId> --destino work/$RUN/repos/<id>/<processId>
-   ```
-   - Guardá cada salida JSON en el array `work/$RUN/alta/<id>/repos.json`.
-   - Si un repo no se puede clonar (no existe, o el token no tiene acceso), anotalo y seguí con los demás. El proyecto termina en `error` solo si **ningún** repo se pudo leer.
-   - Un proceso puede no tener repo (`repo: null`) porque no está versionado. Se empareja por nombre o rol, se controla igual, y en la memoria queda dicho que no hay código para el análisis. No lo trates como error.
-   - **Emparejá** cada proceso con su proceso de Orchestrator:
+3. **Procesos y código, desde Orchestrator.**
+   - Los procesos son todos los de la carpeta, salvo `includeAllProcesses: false`. Completá `processes[]` con los que falten: `id`, `label` legible, `orchestratorProcess`, `role` y `repo: null`.
+   - Índice de librerías del proyecto:
      ```bash
-     node scripts/emparejar-procesos.mjs --proyecto work/$RUN/db/projects/<id>.json --inventario work/$RUN/alta/<id>/inventario.json --repos work/$RUN/alta/<id>/repos.json
+     node scripts/collect.mjs --proyecto work/$RUN/db/projects/<id>.json --desde <hace 2 h> --salida work/$RUN/alta/<id>/senales.json
+     node scripts/indexar-codigo.mjs --senales work/$RUN/alta/<id>/senales.json --proyecto work/$RUN/db/projects/<id>.json --salida work/$RUN/<id>/indice.json --todo
      ```
-     - Lo que devuelve `processes` reemplaza `projects.processes` en el paso 7, con `orchestratorProcess` completado.
-     - `sinEmparejar`: procesos cuyo repo no corresponde a ningún proceso de la carpeta. **Suele ser un repo equivocado**: decilo en `statusNote`.
-     - `sinDeclarar`: procesos de la carpeta que el proyecto no declaró. Pueden ser de otro proyecto, o un proceso que falta registrar: mencionalo.
-     - Si el código de un repo describe claramente otro proceso (por ejemplo, otro cliente o un SDD de otro proyecto), no lo empareje aunque el nombre se parezca. Explicalo.
-   - Con la versión desplegada de cada proceso (del inventario), si el tag `v<versión>` no existe, el clon queda en la rama. Volvé a correr `fetch-repo` con `--version` ya conocida, o anotá que no hay tags.
-
-   Después, por cada repo, identificá:
+   - Por cada proceso: `node scripts/fetch-codigo.mjs --proyecto … --proceso <id> --destino work/$RUN/codigo/<id>/<processId>`. El código, las librerías y la documentación salen del paquete de la versión desplegada. El repo (si hay) es solo respaldo.
+   - `hygiene` del índice: si el paquete publica capturas, datos o carpetas internas, anotalo en "Discrepancias" como recomendación para desarrollo (ver `docs/recomendaciones-publicacion.md`).
+   Después, por cada proceso, identificá:
    - el estilo (XAML/REFramework, coded-first, mixto) y si está `.claude/tqa-project.json`;
    - los entry points y dispatcher/performer;
    - las colas y assets referenciados en el Config (`Data/Config.xlsx` o `Config.json`; para el xlsx alcanza con los nombres de hojas y claves; podés usar `unzip -p` sobre el xml);

@@ -4,8 +4,7 @@ Este repo es el "motor" de la Torre de Control. Una rutina de Claude programada 
 controla los proyectos UiPath en producción. Lee tres fuentes:
 
 - Orchestrator, con el CLI `uip`.
-- El código, desde Bitbucket.
-- La documentación de cada proyecto.
+- El código, las librerías y la documentación, desde los **paquetes publicados en Orchestrator**, en la versión desplegada. Bitbucket es solo respaldo opcional.
 
 Con eso clasifica lo que encuentra y lo escribe en el tablero compartido (artifact con base de
 datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de Momentum opera desde ese tablero.
@@ -16,7 +15,8 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
    reintentan jobs, no se tocan colas, assets ni procesos.
    - Se permiten solo los verbos de lectura de `scripts/lib/uip.mjs`.
    - El hook `.claude/hooks/guard-solo-lectura.mjs` bloquea el resto.
-2. **Cero cambios de código.** Los repos de los proyectos se clonan en `work/` solo para leerlos.
+2. **Cero cambios de código.** Los paquetes y repos se descargan en `work/` solo para leerlos.
+   - De un paquete se extrae solo la lista blanca de `scripts/lib/paquetes.mjs`: nunca datos, planillas ni capturas.
    - Nunca se hace commit, push ni PR sobre ellos.
    - Si un incidente requiere un fix, se **reporta** con la evidencia y la sugerencia para que lo tome un humano.
 3. **PII.** Nada que venga de Orchestrator se escribe en el tablero sin pasar por `scripts/lib/redact.mjs`.

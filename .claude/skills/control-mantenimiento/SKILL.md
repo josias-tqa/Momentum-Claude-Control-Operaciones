@@ -22,6 +22,15 @@ La base admite **25.000 documentos**. Se mantiene lejos de ese límite así:
 4. Guardá en `config/health.dbDocs` el conteo por colección (`list` con `limit: 1`) y el total.
    - Si el total pasa 15.000, poné un aviso en `config/health.warning` y bajá la retención a la mitad.
 
+## descubrimiento diario (desde `retencion`)
+
+Una vez por día, actualizá la lista de carpetas sin registrar que ve el tablero:
+```bash
+node scripts/descubrir.mjs --salida work/$RUN/descubrimiento.json --registrados work/$RUN/db/projects --plan-tablero work/$RUN/discovery-plan.json
+node scripts/build-writes.mjs --plan work/$RUN/discovery-plan.json --salida work/$RUN/lotes-discovery
+```
+Publicalo con `ArtifactData`. Si `config/discovery` ya existe, pasá su versión como `if_version`. También borrá de `libraries/*` las versiones que ya no usa ningún proyecto.
+
 ## seed (tablero nuevo)
 
 1. `set` de `config/settings` con el contenido de `seed/settings.json`, solo si el documento no existe.

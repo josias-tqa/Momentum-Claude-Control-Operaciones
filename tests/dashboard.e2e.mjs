@@ -54,7 +54,13 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   // Esperar al render (requestAnimationFrame) en vez de leer en el mismo tick.
   await page.waitForSelector('text=Análisis previo', { timeout: 3000 });
   await page.waitForSelector('text=Framework/InitAllApplications.xaml:42', { timeout: 3000 });
-  paso('detalle: triage, análisis, código y evidencia');
+  assert.ok(await visible(page, 'text=LIB_Sap · LoginSap'), 'etiqueta de librería');
+  assert.ok(await visible(page, 'text=Nueva versión 1.4.0'), 'etiqueta de deploy');
+  assert.ok(await visible(page, 'text=También la usan: Conciliación bancaria'));
+  await login.locator('[data-act="reanalizar-inc"]').click();
+  await page.waitForTimeout(100);
+  assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path.startsWith('requests/') && w.data.type === 'reanalyze_incident'));
+  paso('detalle: triage, análisis, librería, deploy y volver a analizar');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'detalle.png'), fullPage: true });
 
   // Descartar: la tarjeta sale de la bandeja y se escribe incidentWork + activity.
@@ -109,34 +115,34 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForTimeout(150);
   assert.ok(await visible(page, 'text=Registra en SAP las facturas'));
   paso('proyecto: memoria de proceso');
-  // Registrar proyecto con dos procesos (Dispatcher y Performer), cada uno con su repo.
+  // Registrar proyecto: solo nombre y carpeta; los procesos se detectan solos.
   await page.evaluate(() => { location.hash = '#registrar'; });
   await page.waitForTimeout(100);
   await page.fill('#f-nuevo-p-nombre', 'Cobranzas');
   await page.fill('#f-nuevo-p-carpeta', 'Produccion/Cobranzas');
-  await page.fill('#f-nuevo-0-repo', 'https://bitbucket.org/elementblue/cobranzas-dispatcher/src/main/');
-  await page.fill('#f-nuevo-1-repo', 'elementblue/cobranzas-performer');
-  await page.fill('#f-nuevo-1-op', 'COB_Performer');
-  await page.click('[data-act="agregar-proceso"]');
-  await page.fill('#f-nuevo-2-label', 'Reporter');
-  await page.selectOption('#f-nuevo-2-role', 'reporter');
-  // El Reporter queda sin repo (no versionado): se permite.
+  assert.equal(await page.isVisible('#f-nuevo-p-crit'), false, 'opciones avanzadas cerradas por defecto');
   await page.click('[data-act="registrar"]');
   await page.waitForTimeout(150);
   const w2 = await page.evaluate(() => window.__WRITES__);
   const nuevo = w2.find((w) => w.path === 'projects/cobranzas');
-  assert.ok(nuevo && nuevo.data.status === 'pending_analysis');
-  assert.deepEqual(nuevo.data.processes.map((x) => [x.id, x.role, x.repo && x.repo.slug]), [['dispatcher', 'dispatcher', 'cobranzas-dispatcher'], ['performer', 'performer', 'cobranzas-performer'], ['reporter', 'reporter', null]]);
-  assert.equal(nuevo.data.processes[1].orchestratorProcess, 'COB_Performer');
-  assert.equal(nuevo.data.orchestrator.folderPath, 'Produccion/Cobranzas');
-  assert.ok(w2.some((w) => w.path.startsWith('requests/') && w.data.type === 'onboard_project'));
+  assert.ok(nuevo && nuevo.data.status === 'pending_analysis' && nuevo.data.includeAllProcesses === true);
+  assert.deepEqual(nuevo.data.processes, []);
+  assert.ok(w2.some((w) => w.path.startsWith('requests/') && w.data.type === 'onboard_project' && w.data.projectId === 'cobranzas'));
+  // Registrar desde la lista de carpetas detectadas.
+  await page.evaluate(() => { location.hash = '#registrar'; });
+  await page.waitForTimeout(150);
+  await page.click('[data-act="registrar-detectada"][data-folder="Produccion/Tesoreria/Pagos"]');
+  await page.waitForTimeout(150);
+  assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path.startsWith('projects/') && w.data.orchestrator && w.data.orchestrator.folderPath === 'Produccion/Tesoreria/Pagos'));
   if (CAPT) await page.screenshot({ path: join(CAPT, 'registrar.png'), fullPage: true });
-  paso('registrar proyecto con varios procesos, cada uno con su repo');
+  paso('registrar proyecto: nombre y carpeta, o desde una carpeta detectada');
 
   // Editar la configuración de un proyecto con el formato anterior (un solo repo) y re-analizar.
   await page.evaluate(() => { location.hash = '#proyecto-nomina'; });
   await page.waitForTimeout(150);
   await page.click('text=Editar configuración');
+  await page.waitForTimeout(100);
+  await page.click('details[data-adv="cfg-nomina"] summary');
   await page.waitForTimeout(100);
   assert.equal(await page.inputValue('#f-cfg-nomina-0-repo'), 'ejemplo/nomina');
   await page.fill('#f-cfg-nomina-0-repo', 'https://bitbucket.org/ejemplo/nomina-performer');
@@ -146,11 +152,13 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.fill('#f-cfg-nomina-1-label', 'Dispatcher');
   await page.selectOption('#f-cfg-nomina-1-role', 'dispatcher');
   await page.fill('#f-cfg-nomina-1-repo', 'ejemplo/nomina-dispatcher');
+  await page.check('#f-cfg-nomina-p-solo');
   await page.click('[data-act="guardar-proyecto"][data-reanalizar="1"]');
   await page.waitForTimeout(150);
   const w3 = await page.evaluate(() => window.__WRITES__);
   const upd = w3.filter((w) => w.path === 'projects/nomina').pop();
   assert.equal(upd.data.repo, null, 'se reemplaza el formato anterior');
+  assert.equal(upd.data.includeAllProcesses, false, 'controlar solo la lista');
   assert.deepEqual(upd.data.processes.map((x) => x.repo.slug), ['nomina-performer', 'nomina-dispatcher']);
   assert.ok(w3.some((w) => w.path.startsWith('requests/') && w.data.type === 'reanalyze_project' && w.data.projectId === 'nomina'));
   assert.ok(await visible(page, 'text=nomina-dispatcher'), 'el resumen de procesos se actualiza');
