@@ -112,7 +112,7 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    - `baseline`;
    - `watermarks.lastJobByProcess` = `ultimoJobPorProceso` de `inventario.json`, solo si no existe ya;
    - `status`: `"review"`, o `"active"` si era un re-análisis de un proyecto activo;
-   - `statusNote`, con un resumen de 2 o 3 líneas de lo encontrado y cuántas discrepancias quedaron abiertas (el detalle está en la pestaña Discrepancias).
+   - `statusNote`: frases cortas, una idea por frase (el tablero muestra cada frase como un punto, plegado en la pestaña Memoria de proceso). No repitas la lista de procesos ni el detalle de las discrepancias: ya se ven en la página.
 8. **Reglas iniciales propuestas.** 3 a 6 documentos `rules/<id>-<slug>` con:
    - `{projectId, text, status: "proposed", origin: "onboarding", compiled, compileNote, createdBy: "rutina", createdAt}`;
    - basadas en el SDD (SLAs, excepciones críticas) y el baseline. Por ejemplo, "Si el Dispatcher no corre en más de X h, escalar" o "Más de N items con error de sistema en una hora, escalar";
