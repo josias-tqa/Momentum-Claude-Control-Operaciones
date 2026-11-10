@@ -6,20 +6,37 @@
 //  - controla el tamaño (256 KiB por documento);
 //  - busca PII residual (emails, CUIT, cuentas, usuarios de Windows...). Si encuentra, aborta.
 //
-// Uso: node scripts/build-writes.mjs --plan work/<run>/plan.json --salida work/<run>/lotes
+//  - si un Admin encendió la aprobación automática de reglas (config/settings.autoApproveRules), toda regla
+//    que el plan crea como `proposed` sale `active`. Los ajustes se buscan en db/config/settings.json, subiendo
+//    desde la carpeta del plan (work/<run>/db), o se indican con --ajustes.
+//
+// Uso: node scripts/build-writes.mjs --plan work/<run>/plan.json --salida work/<run>/lotes [--ajustes <settings.json>]
 // Salida: <salida>/docs/<coleccion>__<id>.json y <salida>/lote-N.json con
 //   { "writes": [ { "op", "collection", "doc_id", "file_path", "if_version" } ] }
 // El agente pasa ese array `writes` tal cual a ArtifactData (action "batch").
 
-import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { arg, leerJson } from './lib/args.mjs';
+import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
+import { arg, leerJson, desenvolver } from './lib/args.mjs';
+import { aprobarEnPlan } from './aprobar-reglas.mjs';
 import { validar, esquemaPara } from './lib/schema.mjs';
 import { detectarPii } from './lib/redact.mjs';
 
 const MAX_DOC = 250 * 1024;
 const MAX_LOTE_BYTES = 900 * 1024;
 const MAX_LOTE = 50;
+
+// Ajustes del tablero exportados en esta corrida: <carpeta del plan o alguna superior>/db/config/settings.json.
+export function buscarAjustes(planPath) {
+  let dir = dirname(resolve(planPath));
+  for (let k = 0; k < 6; k++) {
+    const f = join(dir, 'db', 'config', 'settings.json');
+    if (existsSync(f)) return f;
+    if (dirname(dir) === dir) break;
+    dir = dirname(dir);
+  }
+  return null;
+}
 
 export function prepararLotes(writes) {
   const errores = [];
@@ -57,6 +74,8 @@ export function prepararLotes(writes) {
 if (process.argv[1] && process.argv[1].endsWith('build-writes.mjs')) {
   const plan = leerJson(arg('--plan'));
   const salida = resolve(arg('--salida'));
+  const fAjustes = arg('--ajustes') || buscarAjustes(arg('--plan'));
+  const aprobadas = aprobarEnPlan(plan.writes || [], fAjustes ? desenvolver(leerJson(fAjustes, {})) : null, new Date().toISOString());
   const { errores, lotes } = prepararLotes(plan.writes || []);
   if (errores.length) {
     console.error(`Plan inválido (${errores.length} error(es)); no se generaron lotes:`);
@@ -81,5 +100,5 @@ if (process.argv[1] && process.argv[1].endsWith('build-writes.mjs')) {
     writeFileSync(archivo, JSON.stringify({ writes: entradas }, null, 2));
     indice.push({ archivo, escrituras: entradas.length });
   });
-  console.log(JSON.stringify({ lotes: indice }));
+  console.log(JSON.stringify({ lotes: indice, ...(aprobadas.length ? { reglasAprobadasAutomaticamente: aprobadas } : {}) }));
 }

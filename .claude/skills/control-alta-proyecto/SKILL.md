@@ -44,9 +44,10 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    - las excepciones de negocio definidas;
    - los sistemas con los que interactúa (aplicaciones, URLs sin parámetros, APIs).
 4. **Documentación:** leé el SDD/PDD de cada proceso y la documentación común (rutas en `processes[].docs.paths` y `projects.docs.paths`, o lo que devolvió `fetch-repo`).
-   - **Documentos subidos al tablero.** Un Admin puede subir a mano el PDD, el SDD y el Runbook del proyecto (pestaña Documentación). Están en `documents`, ya en Markdown: `ArtifactData query` de `documents` con `where: [["projectId","==","<id>"]]` y `out_dir: work/$RUN/alta/<id>/documentos`. Cada uno trae `kind` (`pdd`, `sdd`, `runbook`), `markdown`, `fileName` y `uploadedAt`.
+   - **Documentos subidos al tablero.** Un Admin puede subir a mano documentos del proyecto (pestaña Documentación): PDD, SDD, Runbook u otros, tantos como quiera, también varios de la misma categoría. Están en `documents`, ya en Markdown: `ArtifactData query` de `documents` con `where: [["projectId","==","<id>"]]` y `out_dir: work/$RUN/alta/<id>/documentos`. Cada uno trae `kind` (`pdd`, `sdd`, `runbook` u `other`), `title` (opcional: dice de qué es, por ejemplo de qué proceso), `markdown`, `fileName`, `source` y `uploadedAt`. Los que vienen de un PDF (`source: "pdf"`) son texto corrido: las tablas no conservan sus columnas.
+   - **Documentos desactivados.** Un Admin puede desactivar documentos del paquete (`projects/<id>.disabledDocs`, como `"<proceso>:<ruta>"`). `fetch-codigo` ya no los extrae y los informa en `docsDesactivados`: no los busques por otro lado (tampoco en el repo de respaldo) ni los cites en "Fuentes".
    - Si un documento está subido **y** viene en el paquete, vale el subido: alguien lo cargó a propósito. Si se contradicen, es una discrepancia de tipo `docs`.
-   - En "Fuentes" de la memoria citá el subido como `<PDD|SDD|Runbook> subido al tablero (<fecha>)`.
+   - En "Fuentes" de la memoria citá el subido como `<título o categoría> subido al tablero (<fecha>)`.
    - Esos documentos pasaron por un enmascarado básico al subirse, pero pueden traer nombres de personas: **nunca** los copies a la memoria ni a una discrepancia.
 
    Extraé:
@@ -122,4 +123,4 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
 
 Todo lo escrito pasa por `build-writes`: armá un plan `{writes:[…]}` en `work/$RUN/alta/<id>/plan.json` (con las escrituras de `discrepancias-plan.json`) y ejecutá `node scripts/build-writes.mjs`. Después publicá los lotes con `ArtifactData batch`.
 
-Al terminar, el proyecto queda en **review**. Un Admin lo pasa a `active` desde el tablero, después de revisar la memoria, las discrepancias y las reglas propuestas. Las reglas nacen siempre `proposed`: si la aprobación automática está activa, las aprueba la corrida siguiente (`/control-corrida`, paso 4).
+Al terminar, el proyecto queda en **review**. Un Admin lo pasa a `active` desde el tablero, después de revisar la memoria, las discrepancias y las reglas propuestas. Escribí las reglas siempre como `proposed`: si la aprobación automática está activa, `build-writes` las convierte en `active` al armar los lotes.

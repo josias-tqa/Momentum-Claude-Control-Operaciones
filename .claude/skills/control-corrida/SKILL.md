@@ -57,10 +57,10 @@ node scripts/aprobar-reglas.mjs --db work/$RUN/db --ahora <ISO> --salida work/$R
 ```
 
 - Solo hace algo si un Admin activó en Ajustes "Aprobar automáticamente las reglas que propone la rutina" (`config/settings.autoApproveRules: true`). Si `activa` es `false` o `aprobadas` está vacío, seguí de largo.
-- Pasa a `active` las reglas `proposed` que había **al empezar la corrida**, con `approvedBy: "rutina"` y `autoApproved: true`, y deja el rastro en `history`. Una regla que proponés en esta corrida se aprueba en la siguiente: mientras tanto un Admin puede rechazarla.
+- Pasa a `active` las reglas `proposed` que hubieran quedado en la base, con `approvedBy: "rutina"` y `autoApproved: true`, y deja el rastro en `history`. Normalmente no hay ninguna: el tablero aprueba las pendientes al encender el interruptor, y las reglas que proponés en esta corrida **nacen activas**, porque `build-writes.mjs` las convierte al armar los lotes (lee `work/$RUN/db/config/settings.json` y lo informa en `reglasAprobadasAutomaticamente`).
 - Validá y publicá: `node scripts/build-writes.mjs --plan work/$RUN/aprobacion-plan.json --salida work/$RUN/lotes-aprobacion` y `ArtifactData batch`. Anotá las versiones nuevas en `_versiones.json`.
 - Para el resto de la corrida, tratá esas reglas como activas: entran en `reglas.json` (paso 5). Si alguna quedó `pending_compile` (no traía `compiled`), compilala ahora y fusioná el resultado en esa misma escritura: un lote no puede tocar dos veces el mismo documento.
-- Nunca apruebes una regla a mano ni escribas `autoApproved` por tu cuenta: lo decide ese script. Los **cambios sugeridos** (`suggestion`) no se aplican solos en ningún caso.
+- Nunca apruebes una regla a mano ni escribas `autoApproved` por tu cuenta: seguí escribiendo `proposed` y lo deciden estos scripts. Los **cambios sugeridos** (`suggestion`) no se aplican solos en ningún caso.
 
 **Compilación.** Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natural) a `compiled`:
 
@@ -173,7 +173,7 @@ Si un lote falla por versión (otro escribió el documento):
 
 Ejecutá `/control-aprendizaje`. Procesa las respuestas humanas nuevas (a incidentes y a discrepancias de proyecto) y los re-controles vencidos.
 
-Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos cuando una regla se aprobó o editó, y una vez por día revisa las reglas con los últimos 30 días. Su primer paso es un script: si no hay candidatos termina en segundos. Siempre propone: la aprobación automática, si está activa, es el paso 4 de la corrida siguiente.
+Después ejecutá `/control-reglas`. Propone reglas por similitud entre procesos cuando una regla se aprobó o editó, y una vez por día revisa las reglas con los últimos 30 días. Su primer paso es un script: si no hay candidatos termina en segundos. Siempre escribe `proposed`: si la aprobación automática está activa, `build-writes` las activa al armar los lotes.
 
 ## 11. Salud y cierre
 

@@ -8,7 +8,7 @@
 //        --destino work/<run>/codigo/<proyecto>/<proceso> [--indice <indice.json>] [--anterior] [--version X]
 // Salida (stdout JSON): { fuente, proceso, paquete, version, ruta, archivos, docs, librerias[], anterior? }
 import { spawnSync } from 'node:child_process';
-import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, statSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { arg, bandera, leerJson, desenvolver } from './lib/args.mjs';
@@ -40,11 +40,18 @@ if (!paquete || !version) {
 }
 if (!paquete || !version) salir(`No se encontró el paquete desplegado de ${nombre}`);
 
+// Documentos del paquete que un Admin desactivó desde el tablero (projects.disabledDocs, "<proceso>:<ruta>"):
+// se borran de lo extraído, así ni el alta ni el análisis los pueden usar.
+const desactivados = new Set(proyecto.disabledDocs || []);
+const docDesactivado = (rel) => desactivados.has(`${nombre}:${rel}`);
 function extraerProceso(ver, dir) {
   const f = descargar({ tipo: 'process', paquete, version: ver, carpeta });
   if (!f) return null;
-  const archivos = extraerSeguro(f, dir);
-  return { nupkg: f, archivos, docs: docsDe(listar(f)).map((e) => e.slice('content/'.length)), deps: leerDependencias(leerProjectJson(f)) };
+  const todos = extraerSeguro(f, dir);
+  const omitidos = todos.filter(docDesactivado);
+  for (const rel of omitidos) rmSync(join(dir, rel), { force: true });
+  return { nupkg: f, archivos: todos.filter((a) => !docDesactivado(a)), omitidos,
+    docs: docsDe(listar(f)).map((e) => e.slice('content/'.length)).filter((a) => !docDesactivado(a)), deps: leerDependencias(leerProjectJson(f)) };
 }
 
 const actual = extraerProceso(version, join(destino, 'proceso'));
@@ -108,7 +115,7 @@ if (bandera('--anterior') && actual) {
 console.log(JSON.stringify({
   fuente, proceso: proc ? proc.id : null, orchestratorProcess: nombre, paquete, version,
   ruta: actual ? join(destino, 'proceso') : respaldo.ruta,
-  archivos: actual ? actual.archivos.length : null, docs: actual ? actual.docs : [],
+  archivos: actual ? actual.archivos.length : null, docs: actual ? actual.docs : [], docsDesactivados: actual ? actual.omitidos : [],
   repo: respaldo ? { ruta: respaldo.ruta, ref: respaldo.ref, sha: respaldo.sha, docs: respaldo.docs } : null,
   librerias, anterior,
 }, null, 2));
