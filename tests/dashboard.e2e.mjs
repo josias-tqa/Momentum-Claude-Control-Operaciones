@@ -20,7 +20,7 @@ const mock = readFileSync(join(RAIZ, 'tests/dashboard-mock.js'), 'utf8');
 const browser = await chromium.launch();
 const errores = [];
 async function abrir({ role = 'admin', vacio = false, sinDb = false, viewport = { width: 1100, height: 900 }, oscuro = false } = {}) {
-  const ctx = await browser.newContext({ viewport, colorScheme: oscuro ? 'dark' : 'light', deviceScaleFactor: 1 });
+  const ctx = await browser.newContext({ viewport, colorScheme: oscuro ? 'dark' : 'light', deviceScaleFactor: CAPT ? 2 : 1 });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errores.push(`${role}: ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error' && !/fonts\.g/.test(m.text())) errores.push(`${role} console: ${m.text()}`); });
@@ -169,13 +169,104 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await ctx.close();
 }
 
+// 1b) Admin: ajustar, crear y eliminar reglas sin salir de la tarjeta.
+{
+  const { page, ctx } = await abrir();
+  const writes = () => page.evaluate(() => window.__WRITES__);
+  const login = page.locator('.card', { hasText: 'login' }).first();
+  await login.locator('[data-act="panel"][data-p="regla"]', { hasText: 'Ajustar regla' }).click();
+  await page.waitForSelector('.card .redit textarea');
+  assert.equal(await login.locator('.redit textarea').inputValue(), 'Si se ven más de 10 errores de login seguidos, alertar');
+  assert.equal(await login.locator('[data-act="re-sev"][aria-pressed="true"]').textContent(), 'P2', 'severidad actual marcada');
+  if (CAPT) await login.screenshot({ path: join(CAPT, 'regla-editor.png') });
+  // Sin cambios no escribe nada.
+  await login.locator('[data-act="re-guardar"]').click();
+  await page.waitForTimeout(100);
+  assert.ok(!(await writes()).some((w) => w.path === 'rules/regla-login'), 'sin cambios no se guarda');
+  // Solo severidad: vale al guardar, no hace falta volver a traducir.
+  await login.locator('[data-act="re-sev"][data-v="P3"]').click();
+  await login.locator('[data-act="re-guardar"]').click();
+  await page.waitForTimeout(150);
+  let w = (await writes()).filter((x) => x.path === 'rules/regla-login').pop();
+  assert.equal(w.data.compiled.severity, 'P3');
+  assert.equal(w.data.compiled.threshold, 10, 'el resto de la regla compilada se conserva');
+  assert.equal(w.data.status, undefined, 'sigue activa');
+  assert.ok((await writes()).some((x) => x.path.startsWith('activity/') && x.data.type === 'rule' && /severidad P2 → P3/.test(x.data.text)));
+  assert.equal(await login.locator('.redit').count(), 0, 'el editor se cierra al guardar');
+  paso('regla desde la tarjeta: cambiar la severidad (inmediato) y rastro en la actividad');
+
+  // Excepción: se guarda en lenguaje natural y la regla queda por traducir.
+  await login.locator('[data-act="panel"][data-p="regla"]').click();
+  await login.locator('.redit input[type=text]').fill('cuando es lunes antes de las 9 (mantenimiento de SAP)');
+  await login.locator('[data-act="re-guardar"]').click();
+  await page.waitForTimeout(150);
+  w = (await writes()).filter((x) => x.path === 'rules/regla-login').pop();
+  assert.equal(w.data.status, 'pending_compile');
+  assert.equal(w.data.exceptions.length, 1);
+  assert.equal(w.data.exceptions[0].text, 'es lunes antes de las 9 (mantenimiento de SAP)');
+  assert.ok(w.data.exceptions[0].incidentId.startsWith('inc-'), 'la excepción recuerda de qué tarjeta salió');
+  await login.locator('[data-act="panel"][data-p="regla"]').click();
+  assert.ok(await visible(page, 'text=No aplica cuando es lunes antes de las 9'));
+  assert.ok(await visible(page, 'text=Tiene cambios sin traducir'));
+  if (CAPT) await login.screenshot({ path: join(CAPT, 'regla-excepcion.png') });
+  paso('regla desde la tarjeta: agregar una excepción');
+
+  // Eliminar: pide confirmación en el mismo lugar y puede descartar la tarjeta en el mismo paso.
+  const antes = await page.locator('main .card').count();
+  await login.locator('[data-act="re-eliminar"]').click();
+  assert.ok(await visible(page, 'text=¿Eliminar esta regla?'));
+  await login.locator('[data-act="re-cancelar"]').click();
+  await login.locator('.redit input[type=checkbox]').check();
+  await login.locator('[data-act="re-eliminar"]').click();
+  await login.locator('[data-act="re-eliminar-ok"]').click();
+  await page.waitForTimeout(200);
+  assert.ok((await writes()).some((x) => x.op === 'delete' && x.path === 'rules/regla-login'));
+  assert.ok((await writes()).some((x) => x.path.startsWith('incidentWork/') && x.data.state === 'dismissed' && x.data.dismissReason === 'false_positive'));
+  assert.equal(await page.locator('main .card').count(), antes - 1, 'la tarjeta sale de la bandeja');
+  paso('regla desde la tarjeta: eliminar con confirmación y descartar la tarjeta');
+
+  // Incidente que no salió de una regla: crear una para ese caso.
+  const otra = page.locator('.card', { hasText: 'abandonado' }).first();
+  await otra.locator('[data-act="panel"][data-p="regla"]', { hasText: 'Crear regla' }).click();
+  await otra.locator('textarea[id$="-rnueva"]').fill('Los abandonados de los lunes antes de las 9 son normales; no avisar');
+  if (CAPT) await otra.screenshot({ path: join(CAPT, 'regla-nueva.png') });
+  await otra.locator('[data-act="re-crear"]').click();
+  await page.waitForTimeout(150);
+  const nueva = (await writes()).find((x) => x.op === 'set' && x.path.startsWith('rules/facturacion-'));
+  assert.ok(nueva && nueva.data.status === 'pending_compile' && nueva.data.origin === 'manual' && nueva.data.sourceIncidentId.startsWith('inc-'));
+  paso('regla desde la tarjeta: crear una regla para un incidente sin regla');
+
+  // El mismo editor en la lista de reglas: editar una propuesta la aprueba.
+  await page.evaluate(() => { location.hash = '#reglas'; });
+  await page.waitForTimeout(100);
+  const fila = page.locator('.rowi', { hasText: 'mantenimiento de SAP' }).first();
+  await fila.locator('[data-act="re-abrir"]').click();
+  await page.waitForSelector('.rule-ed textarea');
+  await page.locator('.rule-ed textarea').fill('Los items abandonados de los lunes antes de las 10 son normales (mantenimiento de SAP)');
+  assert.equal((await page.locator('.rule-ed [data-act="re-guardar"]').textContent()).trim(), 'Guardar y aprobar');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'reglas-lista.png'), fullPage: true });
+  await page.locator('.rule-ed [data-act="re-guardar"]').click();
+  await page.waitForTimeout(150);
+  w = (await writes()).filter((x) => x.path === 'rules/facturacion-abandonados').pop();
+  assert.ok(w.data.status === 'pending_compile' && /antes de las 10/.test(w.data.text) && w.data.approvedBy);
+  assert.equal(await page.locator('.rule-ed').count(), 0);
+  paso('lista de reglas: el mismo editor; editar una propuesta la aprueba');
+  await ctx.close();
+}
+
 // 2) Operador: acciones sobre incidentes, sin acciones de Admin; "Para vos".
 {
   const { page, ctx } = await abrir({ role: 'operador' });
   assert.ok(await visible(page, 'text=Para vos'));
   assert.ok(!(await page.isVisible('text=Para revisar')));
   assert.ok(await page.locator('[data-act="panel"]').count() > 0);
-  paso('operador: ve "Para vos" y acciones rápidas, no ve tareas de Admin');
+  // La regla se ve, pero no se puede cambiar ni crear.
+  const login = page.locator('.card', { hasText: 'login' }).first();
+  await login.locator('[data-act="panel"][data-p="regla"]', { hasText: 'Ver regla' }).click();
+  assert.ok(await visible(page, 'text=Solo un Admin puede cambiar o eliminar reglas'));
+  assert.equal(await page.locator('[data-act="re-guardar"], [data-act="re-eliminar"], [data-act="re-crear"]').count(), 0);
+  assert.equal(await page.locator('[data-act="panel"][data-p="regla"]', { hasText: 'Crear regla' }).count(), 0);
+  paso('operador: ve "Para vos" y acciones rápidas, no ve tareas de Admin; la regla es de solo lectura');
   await ctx.close();
 }
 

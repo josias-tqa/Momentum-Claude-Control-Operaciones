@@ -8,7 +8,7 @@ Los roles se asignan desde el menú **Compartir** del tablero.
 |---|---|---|
 | Lector | Viewer | Ver todo |
 | Operador | Contributor | Responder, delegar, posponer, descartar y comentar incidentes |
-| Admin | Editor | Además: registrar proyectos, aprobar reglas, editar criterios y ajustes |
+| Admin | Editor | Además: registrar proyectos, aprobar, ajustar y eliminar reglas, editar criterios y ajustes |
 
 ## La pantalla principal
 
@@ -31,6 +31,7 @@ Si el problema vuelve a ocurrir, **no se crea otra tarjeta**. La misma muestra "
 | **Descartar** | Con un motivo: esperado, falso positivo, dato de negocio o sistema externo. La rutina lo anota en la memoria del proyecto y puede proponer una regla para no volver a avisar. |
 | **Responder** | Con una decisión, por ejemplo "requiere fix" (con ticket) o "volver a controlar en…" (con fecha), más notas. Queda en la memoria de producción. |
 | **Comentar** | Nota para el equipo, en la actividad de la tarjeta. |
+| **Ajustar regla** / **Crear regla** | Abre el editor de la regla en la misma tarjeta (ver "Reglas"). Los Operadores ven la regla, sin poder cambiarla. |
 | **Ver detalle** | Muestra el porqué del triage, el análisis previo (hipótesis, código y documentación relacionados, acciones sugeridas), la evidencia y la actividad. |
 
 **La Torre de Control nunca cambia nada en Orchestrator ni en el código.** Sugiere qué hacer, y lo hace una persona.
@@ -78,3 +79,24 @@ Normalmente no hace falta.
 Se escriben en lenguaje natural, por ejemplo: "si se ven más de 10 errores de login seguidos, escalar". La rutina las traduce a un control y muestra cómo las entendió.
 
 Las reglas que nacen de respuestas a incidentes llegan como **propuestas**. Un Admin las aprueba o rechaza.
+
+### Ajustar una regla desde la tarjeta (Admin)
+
+Si un incidente salió de una regla, o una regla lo marcó como conocido, la tarjeta tiene el botón **Ajustar regla**. El editor se abre ahí mismo, sin salir de la bandeja:
+
+| Qué querés | Qué hacés | Desde cuándo vale |
+|---|---|---|
+| La regla está bien, pero en cierta condición no aplica | Escribí la **excepción** ("es lunes antes de las 9", "es el proceso Reporter") | Próxima corrida |
+| Avisa con una gravedad que no corresponde | Elegí otra **severidad** (P1 a P4) | Al guardar |
+| El umbral o la condición están mal | Corregí el **texto** de la regla | Próxima corrida |
+| No querés que controle por un tiempo | **Desactivar** | Al guardar |
+| La regla no sirve | **Eliminar regla**. Pide confirmación y no se puede deshacer | Al guardar |
+
+- Cuando cambia el texto o una excepción, la regla queda "Por compilar": la próxima corrida la vuelve a traducir y muestra cómo la entendió.
+- Las excepciones quedan listadas en la regla y se pueden quitar.
+- **Descartar también esta tarjeta** cierra el incidente en el mismo paso, como falso positivo.
+- El cambio queda anotado en la actividad de la tarjeta.
+
+Si el incidente no salió de ninguna regla, el botón es **Crear regla**: escribís una para ese caso (por ejemplo, "los abandonados de los lunes antes de las 9 son normales; no avisar") y vale para ese proyecto.
+
+En Ver más → **Reglas**, el botón **Editar** abre el mismo editor para cualquier regla.

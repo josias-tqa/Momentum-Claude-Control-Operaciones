@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { redactarTexto, sanitizarQueueItem, sanitizarAsset, detectarPii } from '../scripts/lib/redact.mjs';
 import { normalizarFirma, fingerprint } from '../scripts/lib/fingerprint.mjs';
 import { validarComandoLectura } from '../scripts/lib/uip.mjs';
-import { evaluar, evaluarRegla, categorizar } from '../scripts/evaluate.mjs';
+import { evaluar, evaluarRegla, categorizar, enHorario } from '../scripts/evaluate.mjs';
 import { consolidar } from '../scripts/consolidar.mjs';
 import { prepararLotes } from '../scripts/build-writes.mjs';
 
@@ -397,4 +397,58 @@ test('consolidación: procesos nuevos de la carpeta se suman solos; re-análisis
   assert.ok(wp.data.processes.some((x) => x.orchestratorProcess === 'FIN_Facturacion_Performer'));
   assert.ok(plan.analizar.includes('inc-r'));
   assert.deepEqual(prepararLotes(plan.writes.filter((w) => w.collection !== 'incidents')).errores, []);
+});
+
+// ---------- excepciones de una regla ("está bien, pero no aplica cuando…") ----------
+const TZ = { timezone: 'America/Argentina/Buenos_Aires' }; // UTC-3
+
+test('excepciones: los registros exceptuados no cuentan para la regla', () => {
+  const s = { ventana: { desde: '2026-01-01T00:00:00Z', hasta: '2026-01-01T01:00:00Z' }, jobs: [], queueItems: [], logs: [
+    ...Array.from({ length: 8 }, (_, i) => ({ nivel: 'Error', mensaje: 'login failed', proceso: 'VD_Performer', fecha: `2026-01-01T00:${String(i).padStart(2, '0')}:00Z` })),
+    ...Array.from({ length: 6 }, (_, i) => ({ nivel: 'Error', mensaje: 'login failed', proceso: 'VD_Reporter', fecha: `2026-01-01T00:${20 + i}:00Z` })),
+  ] };
+  const compiled = { signal: 'logs', filter: { messageRegex: 'login' }, aggregate: 'count', threshold: 10, comparator: '>' };
+  assert.equal(evaluarRegla({ compiled }, s).resultado, 'alerta', 'sin excepción: 14 > 10');
+  const r = evaluarRegla({ compiled: { ...compiled, exceptions: [{ text: 'no aplica al Reporter', filter: { process: 'VD_Reporter' } }] } }, s);
+  assert.equal(r.observado, 8);
+  assert.equal(r.exceptuados, 6);
+  assert.equal(r.resultado, 'ok');
+  // Una excepción sin filtro quedó en lenguaje natural: la aplica el triage, no descarta registros.
+  assert.equal(evaluarRegla({ compiled: { ...compiled, exceptions: [{ text: 'salvo cierre de mes', mode: 'llm' }, { text: 'vacía', filter: {} }] } }, s).resultado, 'alerta');
+});
+
+test('excepciones: condición de día y hora en la zona horaria de los ajustes', () => {
+  // 2026-11-09 es lunes. 11:30Z = 08:30 en Buenos Aires; 13:30Z = 10:30.
+  const log = (t) => ({ nivel: 'Error', mensaje: 'SAP no responde', fecha: t });
+  const s = { ventana: { desde: '2026-11-09T11:00:00Z', hasta: '2026-11-09T14:00:00Z' }, jobs: [], queueItems: [],
+    logs: [log('2026-11-09T11:10:00Z'), log('2026-11-09T11:30:00Z'), log('2026-11-09T13:30:00Z')] };
+  const compiled = { signal: 'logs', filter: { messageRegex: 'SAP' }, aggregate: 'count', threshold: 2, comparator: '>=',
+    exceptions: [{ text: 'los lunes antes de las 9 hay mantenimiento de SAP', filter: { days: ['mon'], hourTo: 9 } }] };
+  const r = evaluarRegla({ compiled }, s, {}, TZ);
+  assert.equal(r.observado, 1, 'solo cuenta el de las 10:30');
+  assert.equal(r.resultado, 'ok');
+  assert.equal(evaluarRegla({ compiled: { ...compiled, exceptions: [{ filter: { days: ['tue'], hourTo: 9 } }] } }, s, {}, TZ).resultado, 'alerta', 'la excepción es de otro día');
+  assert.equal(enHorario('2026-11-10T02:30:00Z', { hourFrom: 22, hourTo: 6 }, TZ.timezone), true, '23:30 local: rango que cruza la medianoche');
+  assert.equal(enHorario('2026-11-09T15:00:00Z', { hourFrom: 22, hourTo: 6 }, TZ.timezone), false);
+});
+
+test('excepciones: "no corrió en N horas" no alerta mientras rige la excepción', () => {
+  // 2026-11-08 es domingo.
+  const s = { ventana: { desde: '2026-11-08T19:00:00Z', hasta: '2026-11-08T20:00:00Z' }, jobs: [], queueItems: [], logs: [] };
+  const compiled = { signal: 'jobs', aggregate: 'absence', filter: { process: 'VD_Dispatcher' }, windowMinutes: 540 };
+  const p = { watermarks: { lastJobByProcess: { VD_Dispatcher: '2026-11-07T08:00:00Z' } } };
+  assert.equal(evaluarRegla({ compiled }, s, p, TZ).resultado, 'alerta');
+  const r = evaluarRegla({ compiled: { ...compiled, exceptions: [{ text: 'los fines de semana no corre', filter: { days: ['sat', 'sun'] } }] } }, s, p, TZ);
+  assert.equal(r.resultado, 'omitido');
+  assert.match(r.motivo, /fines de semana/);
+});
+
+test('excepciones: una regla "known" deja de tapar el hallazgo que cae en su excepción', () => {
+  const { senales } = senalesDeFixture();
+  const known = (exceptions) => ({ id: 'k1', projectId: 'facturacion', status: 'active', text: 'Abandonados de FIN_FAC_Facturas son normales',
+    compiled: { action: 'known', filter: { queue: 'FIN_FAC_Facturas', messageRegex: 'abandonados' }, exceptions } });
+  const abandonados = (reglas) => evaluar({ senales, proyecto: proyecto(), reglas, ajustes: TZ }).hallazgos.find((h) => h.checkId === 'queue_abandoned');
+  const dia = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date(Date.parse(abandonados([]).ultima) - 3 * 3600000).getUTCDay()];
+  assert.equal(abandonados([known([{ filter: { days: [dia] } }])]).conocidoPor, undefined, 'la excepción aplica: se reporta');
+  assert.equal(abandonados([known([{ filter: { days: [dia === 'mon' ? 'tue' : 'mon'] } }])]).conocidoPor, 'k1', 'otro día: sigue siendo conocido');
 });

@@ -41,7 +41,29 @@ function registrosDe(senales, signal) {
   return [];
 }
 
-function coincide(reg, f = {}) {
+// Condición de día y hora (en la zona horaria de config/settings): `days` (mon..sun) y `hourFrom`/`hourTo`
+// (hora local, de 0 a 24; si hourFrom > hourTo el rango cruza la medianoche).
+function momentoLocal(iso, tz) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  try {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz || 'UTC', weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' })
+      .formatToParts(d).map((x) => [x.type, x.value]));
+    return { dia: p.weekday.toLowerCase().slice(0, 3), hora: Number(p.hour) + Number(p.minute) / 60 };
+  } catch { return null; }
+}
+const tieneHorario = (f = {}) => Boolean(f.days) || f.hourFrom != null || f.hourTo != null;
+export function enHorario(iso, f = {}, tz) {
+  if (!tieneHorario(f)) return true;
+  const m = iso ? momentoLocal(iso, tz) : null;
+  if (!m) return false;
+  if (f.days && ![].concat(f.days).map((d) => String(d).toLowerCase().slice(0, 3)).includes(m.dia)) return false;
+  const desde = Number(f.hourFrom ?? 0); const hasta = Number(f.hourTo ?? 24);
+  return desde <= hasta ? (m.hora >= desde && m.hora < hasta) : (m.hora >= desde || m.hora < hasta);
+}
+
+function coincide(reg, f = {}, tz) {
+  if (!enHorario(reg._t, f, tz)) return false;
   if (f.process && !String(reg._proceso || '').toLowerCase().includes(String(f.process).toLowerCase())) return false;
   if (f.queue && String(reg._cola || reg.cola || '') !== f.queue) return false;
   if (f.level && ![].concat(f.level).includes(reg.nivel)) return false;
@@ -89,51 +111,73 @@ export function normalizarCategoria(cat, textoAlternativo) {
 const ALCANCE = ['process', 'queue'];
 const soloAlcance = (f = {}) => Object.fromEntries(Object.entries(f).filter(([k]) => ALCANCE.includes(k)));
 
-export function evaluarRegla(regla, senales, proyecto = {}) {
+// Excepciones compiladas de una regla (`compiled.exceptions[].filter`): "la regla está bien, pero no aplica
+// cuando…". Las que no traen `filter` quedaron en lenguaje natural y las aplica Claude en el triage.
+const excepcionesDe = (c = {}) => (c.exceptions || []).filter((e) => e && e.filter && Object.keys(e.filter).length);
+
+export function evaluarRegla(regla, senales, proyecto = {}, ajustes = {}) {
   const c = regla.compiled || {};
   if (!c.signal || c.mode === 'llm') return { resultado: 'omitido', observado: null, motivo: 'regla en lenguaje natural: la evalúa Claude' };
+  const tz = ajustes.timezone;
+  const excepciones = excepcionesDe(c);
   const todos = registrosDe(senales, c.signal).sort((a, b) => String(a._t).localeCompare(String(b._t)));
   const desdeVentana = c.windowMinutes ? new Date(Date.parse(senales.ventana.hasta) - c.windowMinutes * 60000).toISOString() : senales.ventana.desde;
-  const enVentana = todos.filter((r) => !r._t || r._t >= desdeVentana);
-  const match = enVentana.filter((r) => coincide(r, c.filter));
+  const sinExceptuar = todos.filter((r) => !r._t || r._t >= desdeVentana);
+  if (c.aggregate === 'absence') {
+    // "No corrió en N horas": la excepción se evalúa contra el momento del control (p. ej. "salvo los fines de semana").
+    const proc = c.filter && c.filter.process;
+    const ahora = { _t: senales.ventana.hasta, _texto: '', _proceso: proc || '', _cola: (c.filter && c.filter.queue) || '' };
+    const exc = excepciones.find((e) => coincide(ahora, e.filter, tz));
+    if (exc) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: `excepción de la regla${exc.text ? ': ' + exc.text : ''}` };
+    // La colecta trae solo la última ventana (~1 h). Se usa además el último job conocido por proceso,
+    // que la consolidación guarda en watermarks.lastJobByProcess.
+    const ultimoVisto = sinExceptuar.filter((r) => coincide(r, c.filter, tz)).map((r) => r._t).filter(Boolean).sort().slice(-1)[0] || null;
+    const guardado = proc && proyecto.watermarks && proyecto.watermarks.lastJobByProcess
+      ? Object.entries(proyecto.watermarks.lastJobByProcess).filter(([n]) => n.toLowerCase().includes(String(proc).toLowerCase())).map(([, t]) => t).sort().slice(-1)[0]
+      : null;
+    const ultimo = [ultimoVisto, guardado].filter(Boolean).sort().slice(-1)[0] || null;
+    if (!ultimo) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: 'sin historial del proceso todavía' };
+    const minutos = Math.round((Date.parse(senales.ventana.hasta) - Date.parse(ultimo)) / 60000);
+    const limite = Number(c.windowMinutes || 60);
+    return { resultado: minutos > limite ? 'alerta' : 'ok', observado: minutos, umbral: limite, registros: [], ultimo };
+  }
+  // Los registros que caen en una excepción no cuentan: ni en el numerador, ni en el denominador, ni en la racha.
+  const enVentana = excepciones.length ? sinExceptuar.filter((r) => !excepciones.some((e) => coincide(r, e.filter, tz))) : sinExceptuar;
+  const exceptuados = sinExceptuar.length - enVentana.length;
+  const match = enVentana.filter((r) => coincide(r, c.filter, tz));
   let observado;
   switch (c.aggregate) {
     case 'consecutive': {
       let racha = 0;
       observado = 0;
       for (const r of enVentana) {
-        racha = coincide(r, c.filter) ? racha + 1 : 0;
+        racha = coincide(r, c.filter, tz) ? racha + 1 : 0;
         observado = Math.max(observado, racha);
       }
       break;
     }
     case 'rate': {
       // Denominador: solo los registros del mismo alcance (p. ej. los jobs del Performer), no todos.
-      const base = enVentana.filter((r) => coincide(r, soloAlcance(c.filter)));
+      const base = enVentana.filter((r) => coincide(r, soloAlcance(c.filter), tz));
       observado = base.length ? Math.round((match.length / base.length) * 1000) / 1000 : 0;
-      if (base.length < Number(c.minSample || 3)) return { resultado: 'ok', observado, umbral: c.threshold ?? null, registros: [], motivo: 'muestra insuficiente' };
+      if (base.length < Number(c.minSample || 3)) return { resultado: 'ok', observado, umbral: c.threshold ?? null, registros: [], exceptuados, motivo: 'muestra insuficiente' };
       break;
-    }
-    case 'absence': {
-      // La colecta trae solo la última ventana (~1 h). Para "no corrió en N horas" se usa además el
-      // último job conocido por proceso, que la consolidación guarda en watermarks.lastJobByProcess.
-      const ultimoVisto = match.map((r) => r._t).filter(Boolean).sort().slice(-1)[0] || null;
-      const proc = c.filter && c.filter.process;
-      const guardado = proc && proyecto.watermarks && proyecto.watermarks.lastJobByProcess
-        ? Object.entries(proyecto.watermarks.lastJobByProcess).filter(([n]) => n.toLowerCase().includes(String(proc).toLowerCase())).map(([, t]) => t).sort().slice(-1)[0]
-        : null;
-      const ultimo = [ultimoVisto, guardado].filter(Boolean).sort().slice(-1)[0] || null;
-      if (!ultimo) return { resultado: 'omitido', observado: null, umbral: c.windowMinutes || null, registros: [], motivo: 'sin historial del proceso todavía' };
-      const minutos = Math.round((Date.parse(senales.ventana.hasta) - Date.parse(ultimo)) / 60000);
-      const limite = Number(c.windowMinutes || 60);
-      return { resultado: minutos > limite ? 'alerta' : 'ok', observado: minutos, umbral: limite, registros: [], ultimo };
     }
     case 'count':
     default:
       observado = match.length;
   }
   const dispara = comparar(observado, c.comparator, Number(c.threshold ?? 1));
-  return { resultado: dispara ? 'alerta' : 'ok', observado, umbral: c.threshold ?? 1, registros: dispara ? match : [] };
+  return { resultado: dispara ? 'alerta' : 'ok', observado, umbral: c.threshold ?? 1, registros: dispara ? match : [], exceptuados };
+}
+
+// Filtro de una regla "known" (o de una excepción) aplicado a un hallazgo ya armado.
+const CAMPOS_HALLAZGO = ['process', 'queue', 'messageRegex', 'days', 'hourFrom', 'hourTo'];
+function coincideHallazgo(h, f = {}, tz) {
+  if (f.process && !String(h.proceso || '').toLowerCase().includes(String(f.process).toLowerCase())) return false;
+  if (f.queue && h.cola !== f.queue) return false;
+  if (f.messageRegex) { try { if (!new RegExp(f.messageRegex, 'i').test(h.firma || '')) return false; } catch { return false; } }
+  return enHorario(h.ultima, f, tz);
 }
 
 // ---------- utilidades de agrupación ----------
@@ -354,7 +398,7 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
   const activas = reglas.filter((r) => r.status === 'active' && (r.projectId === projectId || r.projectId === '*'));
   for (const r of activas) {
     const c = r.compiled || {};
-    const ev = evaluarRegla(r, senales, proyecto);
+    const ev = evaluarRegla(r, senales, proyecto, ajustes);
     check(`rule:${r.id}`, `Regla: ${r.text}`, ev.resultado, ev.observado, ev.umbral);
     if (ev.resultado !== 'alerta' || ['known', 'ignore'].includes(c.action)) continue;
     const muestra = ev.registros.slice(-5);
@@ -377,17 +421,18 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
       evidencia: { observado: ev.observado, umbral: ev.umbral, muestra: muestra.map(({ _t, _texto, _proceso, _cola, ...resto }) => resto) } });
   }
 
-  // 12) Reglas "known"/"ignore": marcan hallazgos que coinciden como comportamiento conocido.
+  // 12) Reglas "known"/"ignore": marcan hallazgos que coinciden como comportamiento conocido,
+  //     salvo que el hallazgo caiga en una excepción de la regla.
   for (const r of activas.filter((x) => ['known', 'ignore'].includes((x.compiled || {}).action))) {
     const f = (r.compiled || {}).filter || {};
+    if (!f.process && !f.queue && !f.messageRegex) continue; // demasiado amplia: no se aplica
+    const excepciones = excepcionesDe(r.compiled).filter((e) => CAMPOS_HALLAZGO.some((k) => e.filter[k] != null && e.filter[k] !== ''));
     for (const h of hallazgos) {
       if (h.conocidoPor) continue;
-      if (f.process && !String(h.proceso || '').toLowerCase().includes(String(f.process).toLowerCase())) continue;
-      if (f.queue && h.cola !== f.queue) continue;
-      if (f.messageRegex) { try { if (!new RegExp(f.messageRegex, 'i').test(h.firma || '')) continue; } catch { continue; } }
-      if (!f.process && !f.queue && !f.messageRegex) continue;
+      if (!coincideHallazgo(h, f, ajustes.timezone)) continue;
+      if (excepciones.some((e) => coincideHallazgo(h, e.filter, ajustes.timezone))) continue;
       h.conocidoPor = r.id;
-      h.decisionSugerida = r.compiled.action === 'ignore' ? 'known' : 'known';
+      h.decisionSugerida = 'known';
     }
   }
 

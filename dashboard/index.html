@@ -153,6 +153,19 @@ th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertic
 th{font-weight:500;color:var(--muted);font-size:12px}
 .form{display:grid;gap:10px}
 .form label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+/* Editor de regla en línea (dentro de la tarjeta o de la lista de reglas) */
+.redit{display:grid;gap:8px;min-width:0}
+.redit label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.redit label.chk{display:flex;gap:8px;align-items:center;color:var(--fg)}
+.re-h{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.re-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.excs{display:grid;gap:4px}
+.exc{display:flex;gap:8px;align-items:baseline;font-size:13px;background:var(--surface-2);border-radius:6px;padding:4px 4px 4px 9px}
+.exc>span{flex:1;min-width:0;overflow-wrap:anywhere}
+.exc.off>span{text-decoration:line-through;color:var(--muted)}
+.btn.danger{color:var(--p1)} .btn.danger:hover{border-color:var(--p1)}
+.btn.danger.solid{background:var(--p1);border-color:var(--p1);color:var(--surface)}
+.rule-ed{padding:12px 4px 14px;border-bottom:1px solid var(--line)}
 .ok-ico{color:var(--ok)} .al-ico{color:var(--p2)} .om-ico{color:var(--p4)}
 .ico-s{width:15px;height:15px;vertical-align:-3px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);border-radius:8px;padding:8px 14px;font-size:13px;z-index:20}
@@ -216,6 +229,8 @@ const HIST = { incident_resolved:'Resuelto', fix_required:'Requiere fix', expect
 const PSTATUS = { pending_analysis:'Esperando análisis', analyzing:'Analizando', review:'En revisión', active:'Activo', paused:'Pausado', error:'Con error' };
 const RSTATUS = { pending_compile:'Por compilar', proposed:'Propuesta', active:'Activa', disabled:'Desactivada', rejected:'Rechazada' };
 const SEV_ORD = { P1:1, P2:2, P3:3, P4:4 };
+const SEVS = ['P1', 'P2', 'P3', 'P4'];
+const corto = (t, n = 90) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 
 // ---------- utilidades ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -339,6 +354,7 @@ const S = {
   loaded: { projects:false, incidents:false, work:false, runs:false },
   filter: null, open: {}, panel: {}, drafts: {}, names: {}, sel: {}, activity: {}, history: {}, memory: {},
   projTab: 'memoria', peopleHits: {}, error: null, stale: false, forms: {}, adv: {}, discovery: null, libraries: {},
+  re: {}, reOpen: {}, // editor de reglas: cambios sin guardar por "contexto|regla" y filas abiertas en la lista
 };
 try { S.filter = localStorage.getItem('torre.filtro') || null; } catch {}
 
@@ -442,6 +458,61 @@ function renderTop() {
   }).join('');
 }
 
+// ---------- reglas: editor en línea ----------
+// El mismo editor se usa dentro de la tarjeta de un incidente (ctx = id del incidente) y en la lista
+// de reglas (ctx = 'lista'). Así una regla se ajusta, se desactiva o se elimina sin salir de la bandeja.
+const reKey = (ctx, rid) => `${ctx}|${rid}`;
+const reId = (ctx, rid, k) => `re-${ctx}-${rid}-${k}`;
+// Reglas que intervinieron en un incidente (las que el triage citó o la que disparó el hallazgo).
+function reglasDe(i) {
+  const ev = i.evidence || {};
+  const ids = [...((i.triage || {}).matchedRules || []), ...[ev.ultima, ev.primera].map((x) => x && x.regla && x.regla.id)];
+  return [...new Set(ids.filter(Boolean))].map((id) => S.rules[id]).filter(Boolean);
+}
+const reglaMeta = (r) => `${esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}`;
+function ruleEditorHtml(r, ctx, inc) {
+  const k = reKey(ctx, r.id); const st = S.re[k] || {};
+  const c = r.compiled || {}; const excs = r.exceptions || [];
+  const at = `data-rid="${esc(r.id)}" data-ctx="${esc(ctx)}"`;
+  const cab = `<div class="re-h"><b>Regla</b><span class="tag">${esc(RSTATUS[r.status] || r.status)}</span><span class="muted">${reglaMeta(r)}</span></div>`;
+  const nota = r.status === 'pending_compile' ? '<span class="muted">Tiene cambios sin traducir: la próxima corrida la vuelve a interpretar.</span>'
+    : r.compileNote ? `<span class="muted">Cómo la entendió la rutina: ${esc(r.compileNote)}</span>` : '';
+  if (!S.isAdmin) {
+    return `<div class="redit">${cab}<div>${esc(r.text)}</div>${nota}
+      ${excs.length ? `<div class="excs">${excs.map((x) => `<div class="exc"><span>No aplica cuando ${esc(x.text)}</span></div>`).join('')}</div>` : ''}
+      <span class="muted">Solo un Admin puede cambiar o eliminar reglas. Para pedir un ajuste, usá Responder → Falso positivo / ajustar regla.</span></div>`;
+  }
+  const tid = reId(ctx, r.id, 'text'); const eid = reId(ctx, r.id, 'exc');
+  const sev = st.sev || c.severity || '';
+  const conSev = !['known', 'ignore'].includes(c.action);
+  const quitar = st.quitar || [];
+  const guardar = r.status === 'proposed' ? 'Guardar y aprobar' : ['disabled', 'rejected'].includes(r.status) ? 'Guardar y activar' : 'Guardar cambios';
+  const enBandeja = inc && !['dismissed', 'responded'].includes((S.work[inc.id] || {}).state);
+  return `<div class="redit">${cab}
+    <label>Qué controla<textarea id="${esc(tid)}">${esc(S.drafts[tid] ?? r.text)}</textarea></label>
+    ${nota}
+    ${conSev ? `<div class="re-row"><span class="muted">Severidad</span><div class="opts" role="group" aria-label="Severidad">${SEVS.map((v) => `<button class="opt" data-act="re-sev" ${at} data-v="${v}" aria-pressed="${sev === v}">${v}</button>`).join('')}</div></div>` : ''}
+    <label>Excepción: la regla está bien, pero no aplica cuando…<input type="text" id="${esc(eid)}" value="${esc(S.drafts[eid] || '')}" placeholder="Ej.: es lunes antes de las 9 (mantenimiento de SAP)" autocomplete="off"></label>
+    ${excs.length ? `<div class="excs">${excs.map((x, n) => `<div class="exc ${quitar.includes(n) ? 'off' : ''}"><span>No aplica cuando ${esc(x.text)}</span><button class="btn link" data-act="re-quitar-exc" ${at} data-n="${n}">${quitar.includes(n) ? 'Deshacer' : 'Quitar'}</button></div>`).join('')}</div>` : ''}
+    ${enBandeja ? `<label class="chk"><input type="checkbox" id="${esc(reId(ctx, r.id, 'desc'))}" data-re="${esc(k)}" ${st.descartar ? 'checked' : ''}> Descartar también esta tarjeta (falso positivo)</label>` : ''}
+    ${st.confirm ? `<div class="actions"><span>¿Eliminar esta regla? No se puede deshacer.</span><button class="btn danger solid" data-act="re-eliminar-ok" ${at}>Sí, eliminar</button><button class="btn" data-act="re-cancelar" ${at}>Cancelar</button></div>`
+      : `<div class="actions"><button class="btn primary" data-act="re-guardar" ${at}>${guardar}</button>
+        ${inc && r.status === 'active' ? `<button class="btn" data-act="re-estado" ${at} data-s="disabled">Desactivar</button>` : ''}
+        <span class="sp"></span><button class="btn danger" data-act="re-eliminar" ${at}>${ico('x')}Eliminar regla</button></div>`}
+    <span class="muted">El texto y las excepciones valen desde la próxima corrida: la rutina vuelve a traducir la regla y muestra cómo la entendió.${conSev ? ' La severidad cambia al guardar.' : ''}</span></div>`;
+}
+// Cierra el editor después de un cambio: deja el rastro en la tarjeta y, si se pidió, la descarta.
+async function cerrarEdicionRegla(inc, ctx, rid, actividad, nota) {
+  const k = reKey(ctx, rid); const st = S.re[k] || {};
+  if (inc) {
+    try { await S.db.collection('activity').add({ incidentId: inc.id, projectId: inc.projectId, type: 'rule', text: actividad, by: S.me || null, at: nowIso() }); } catch {}
+    if (st.descartar) await writeWork(inc, { state: 'dismissed', dismissReason: 'false_positive', response: { notes: nota } }, { type: 'dismiss', text: `descartó: Falso positivo — ${nota}` });
+    S.panel[inc.id] = null;
+  } else delete S.reOpen[rid];
+  delete S.re[k];
+  for (const d of Object.keys(S.drafts)) if (d.startsWith(`re-${ctx}-${rid}-`)) delete S.drafts[d];
+}
+
 function cardHtml(i, compacta = false) {
   const w = S.work[i.id] || {};
   const rec = i.recurrences || [];
@@ -471,9 +542,12 @@ function cardHtml(i, compacta = false) {
     </div>
     ${compacta && !open && !panel ? '' : `<div class="why">${esc(i.triage && i.triage.rationale)}</div>`}`;
   const bt = (p, icono, txt) => `<button class="btn ${panel === p ? 'on' : ''}" data-act="panel" data-p="${p}">${ico(icono)}${txt}</button>`;
+  // Regla: si el incidente salió de una regla (o una regla lo marcó), se ajusta acá mismo; si no, un Admin puede crear una.
+  const rs = reglasDe(i);
+  const btRegla = rs.length ? bt('regla', 'configuration', S.isAdmin ? 'Ajustar regla' : 'Ver regla') : S.isAdmin ? bt('regla', 'configuration', 'Crear regla') : '';
   html += `<div class="actions">
-    ${can && !compacta ? bt('delegar', 'user', 'Delegar') + bt('posponer', 'clock', 'Posponer') + bt('descartar', 'x', 'Descartar') + bt('responder', 'reply', 'Responder') + bt('comentar', 'send', 'Comentar') : ''}
-    ${can && compacta ? bt('descartar', 'x', 'Descartar') + bt('posponer', 'clock', 'Posponer') + bt('responder', 'reply', 'Responder') : ''}
+    ${can && !compacta ? bt('delegar', 'user', 'Delegar') + bt('posponer', 'clock', 'Posponer') + bt('descartar', 'x', 'Descartar') + bt('responder', 'reply', 'Responder') + bt('comentar', 'send', 'Comentar') + btRegla : ''}
+    ${can && compacta ? bt('descartar', 'x', 'Descartar') + bt('posponer', 'clock', 'Posponer') + bt('responder', 'reply', 'Responder') + btRegla : ''}
     <span class="sp"></span><button class="btn link" data-act="detalle" aria-expanded="${Boolean(open)}">${open ? 'Ocultar detalle' : 'Ver detalle'}</button>
   </div>`;
   if (panel === 'comentar') {
@@ -498,6 +572,17 @@ function cardHtml(i, compacta = false) {
       ${sel.decision === 'fix_required' ? `<input type="text" id="${esc(i.id)}-ticket" placeholder="Ticket o referencia del fix (opcional)" value="${d('ticket')}">` : ''}
       ${sel.decision === 'recheck' ? `<label class="muted">Volver a controlar el <input type="date" id="${esc(i.id)}-recheck" value="${d('recheck')}" style="width:auto"></label>` : ''}
       <div><button class="btn primary" data-act="responder" ${sel.decision ? '' : 'disabled'}>Enviar respuesta</button></div></div>`;
+  } else if (panel === 'regla') {
+    if (rs.length) {
+      const r = rs.find((x) => x.id === sel.rid) || rs[0];
+      html += `<div class="panel">${rs.length > 1 ? `<div class="opts" role="group" aria-label="Regla">${rs.map((x) => `<button class="opt" data-act="sel" data-k="rid" data-v="${esc(x.id)}" aria-pressed="${x.id === r.id}">${esc(corto(x.text, 48))}</button>`).join('')}</div>` : ''}${ruleEditorHtml(r, i.id, i)}</div>`;
+    } else if (S.isAdmin) {
+      html += `<div class="panel"><div class="redit"><div class="re-h"><b>Nueva regla para este caso</b><span class="muted">${esc(projName(i.projectId))}</span></div>
+        <textarea id="${esc(i.id)}-rnueva" placeholder="Ej.: los abandonados de esta cola los lunes antes de las 9 son normales; no avisar">${d('rnueva')}</textarea>
+        <label class="chk"><input type="checkbox" id="${esc(i.id)}-rdesc" data-re="${esc(reKey(i.id, 'nueva'))}" ${(S.re[reKey(i.id, 'nueva')] || {}).descartar ? 'checked' : ''}> Descartar también esta tarjeta</label>
+        <div><button class="btn primary" data-act="re-crear">Crear regla</button></div>
+        <span class="muted">Este incidente no salió de una regla. La que escribas vale para este proyecto desde la próxima corrida; la rutina la traduce a un control y muestra cómo la entendió.</span></div></div>`;
+    }
   }
   if (open) html += detailHtml(i);
   return html + '</article>';
@@ -528,7 +613,7 @@ function detailHtml(i) {
     <section><h4>Triage</h4><dl class="kv">
       <dt>Decisión</dt><dd>${esc(DEC[i.decision] || i.decision)} · confianza ${esc(t.confidence || '—')}</dd>
       <dt>Por qué</dt><dd>${esc(t.rationale)}</dd>
-      ${(t.matchedRules || []).length ? `<dt>Reglas</dt><dd class="mono">${(t.matchedRules).map(esc).join(', ')}</dd>` : ''}
+      ${(t.matchedRules || []).length ? `<dt>Reglas</dt><dd>${t.matchedRules.map((x) => S.rules[x] ? esc(S.rules[x].text) : `<span class="mono">${esc(x)}</span>`).join('<br>')}</dd>` : ''}
       ${(t.memoryRefs || []).length ? `<dt>Memoria</dt><dd class="mono">${(t.memoryRefs).map(esc).join(', ')}</dd>` : ''}
       <dt>Visto</dt><dd>desde ${esc(fecha(i.firstSeenAt))} · ${esc(i.occurrences)} ocurrencia(s) en ${esc((i.recurrences || []).length)} corrida(s)</dd>
       ${i.process ? `<dt>Proceso</dt><dd class="mono">${esc(i.process)}</dd>` : ''}${i.queue ? `<dt>Cola</dt><dd class="mono">${esc(i.queue)}</dd>` : ''}
@@ -717,10 +802,12 @@ function rulesTable(reglas, enProyecto) {
   const ord = { proposed: 0, pending_compile: 1, active: 2, disabled: 3, rejected: 4 };
   reglas = reglas.slice().sort((a, b) => ord[a.status] - ord[b.status]);
   return `<div class="rows">${reglas.map((r) => `<div class="rowi" style="grid-template-columns:1fr auto">
-    <span class="t"><b>${esc(r.text)}</b><br><span class="muted">${esc(RSTATUS[r.status] || r.status)}${enProyecto ? '' : ' · ' + esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}${r.compileNote ? ' — ' + esc(r.compileNote) : ''}</span></span>
+    <span class="t"><b>${esc(r.text)}</b><br><span class="muted">${esc(RSTATUS[r.status] || r.status)}${enProyecto ? '' : ' · ' + esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}${(r.exceptions || []).length ? ` · ${r.exceptions.length} excepción(es)` : ''}${r.compileNote ? ' — ' + esc(r.compileNote) : ''}</span></span>
     <span class="actions">${S.isAdmin && r.status === 'proposed' ? `<button class="btn primary" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Aprobar</button><button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="rejected">Rechazar</button>` : ''}
       ${S.isAdmin && r.status === 'active' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="disabled">Desactivar</button>` : ''}
-      ${S.isAdmin && r.status === 'disabled' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Activar</button>` : ''}</span></div>`).join('') || '<span class="muted">Sin reglas.</span>'}</div>`;
+      ${S.isAdmin && r.status === 'disabled' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Activar</button>` : ''}
+      ${S.isAdmin ? `<button class="btn ${S.reOpen[r.id] ? 'on' : ''}" data-act="re-abrir" data-rid="${esc(r.id)}" aria-expanded="${Boolean(S.reOpen[r.id])}">Editar</button>` : ''}</span></div>
+    ${S.isAdmin && S.reOpen[r.id] ? `<div class="rule-ed">${ruleEditorHtml(r, 'lista', null)}</div>` : ''}`).join('') || '<span class="muted">Sin reglas.</span>'}</div>`;
 }
 
 function viewReglas() {
@@ -780,6 +867,7 @@ document.addEventListener('toggle', (e) => { const d = e.target; if (d.dataset &
 document.addEventListener('change', (e) => {
   const t = e.target;
   if (t.type === 'checkbox' && t.dataset.form && S.forms[t.dataset.form]) { S.forms[t.dataset.form][t.dataset.k] = t.checked; return; }
+  if (t.type === 'checkbox' && t.dataset.re) { S.re[t.dataset.re] = { ...(S.re[t.dataset.re] || {}), descartar: t.checked }; return; }
   if (t.tagName === 'SELECT' && t.dataset.form && S.forms[t.dataset.form]) { const x = S.forms[t.dataset.form].procesos[Number(t.dataset.i)]; x[t.dataset.k] = t.value; x.autoRole = false; }
 });
 document.addEventListener('focusin', (e) => {
@@ -801,6 +889,14 @@ document.addEventListener('click', async (e) => {
   if (act === 'panel') { S.panel[id] = S.panel[id] === b.dataset.p ? null : b.dataset.p; S.sel[id] = {}; return schedule(); }
   if (act === 'sel') { S.sel[id] = { ...(S.sel[id] || {}), [b.dataset.k]: b.dataset.v }; return schedule(); }
   if (act === 'tab') { S.projTab = b.dataset.t; return schedule(); }
+  // Editor de reglas: lo que no escribe en la base.
+  const rid = b.dataset.rid; const ctx = b.dataset.ctx; const rk = reKey(ctx, rid);
+  const reSet = (patch) => { S.re[rk] = { ...(S.re[rk] || {}), ...patch }; return schedule(); };
+  if (act === 're-abrir') { S.reOpen[rid] = !S.reOpen[rid]; return schedule(); }
+  if (act === 're-sev') return reSet({ sev: b.dataset.v });
+  if (act === 're-eliminar') return reSet({ confirm: true });
+  if (act === 're-cancelar') return reSet({ confirm: false });
+  if (act === 're-quitar-exc') { const n = Number(b.dataset.n); const q = (S.re[rk] || {}).quitar || []; return reSet({ quitar: q.includes(n) ? q.filter((x) => x !== n) : [...q, n] }); }
   if (act === 'reanalizar-inc') {
     try { await S.db.collection('requests').add({ type: 'reanalyze_incident', incidentId: id, projectId: inc.projectId, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' }); toast('Pedido: la próxima corrida vuelve a analizar esta tarjeta'); }
     catch { toast('No se pudo pedir el re-análisis'); }
@@ -854,6 +950,49 @@ document.addEventListener('click', async (e) => {
       const patch = { status: b.dataset.s }; if (b.dataset.s === 'active') { patch.approvedBy = S.me || null; patch.approvedAt = nowIso(); }
       await S.db.doc(`rules/${b.dataset.rid}`).update(patch);
       toast({ active: 'Regla activa', rejected: 'Regla rechazada', disabled: 'Regla desactivada' }[b.dataset.s]);
+    } else if (act === 're-guardar') {
+      const r = S.rules[rid]; if (!r) return toast('La regla ya no existe');
+      const st = S.re[rk] || {};
+      const text = (S.drafts[reId(ctx, rid, 'text')] ?? r.text).trim(); if (!text) return toast('La regla no puede quedar vacía');
+      const excNueva = (S.drafts[reId(ctx, rid, 'exc')] || '').trim().replace(/^(no aplica )?cuando\s+/i, '');
+      const quitar = st.quitar || [];
+      const sevAntes = (r.compiled || {}).severity || null; const sev = st.sev || sevAntes;
+      const cambios = [];
+      const patch = { updatedBy: S.me || null, updatedAt: nowIso() };
+      if (text !== r.text) { patch.text = text; cambios.push('cambió el texto'); }
+      if (sev !== sevAntes) { patch.compiled = { ...(r.compiled || {}), severity: sev }; cambios.push(`severidad ${sevAntes || '—'} → ${sev}`); }
+      if (excNueva || quitar.length) {
+        patch.exceptions = (r.exceptions || []).filter((_, n) => !quitar.includes(n));
+        if (excNueva) { patch.exceptions.push({ text: excNueva, by: S.me || null, at: nowIso(), incidentId: inc ? inc.id : null }); cambios.push(`nueva excepción: no aplica cuando ${excNueva}`); }
+        if (quitar.length) cambios.push(`quitó ${quitar.length} excepción(es)`);
+        if (patch.exceptions.length > 20) return toast('Una regla admite hasta 20 excepciones');
+      }
+      if (!cambios.length) return toast('No hay cambios para guardar');
+      // Texto o excepciones nuevas: la rutina vuelve a traducir la regla. Solo severidad: vale ya.
+      const recompilar = Boolean(patch.text || patch.exceptions);
+      const inactiva = ['proposed', 'disabled', 'rejected'].includes(r.status);
+      if (recompilar) patch.status = 'pending_compile'; else if (inactiva) patch.status = 'active';
+      if (inactiva) { patch.approvedBy = S.me || null; patch.approvedAt = nowIso(); }
+      await S.db.doc(`rules/${rid}`).update(patch);
+      await cerrarEdicionRegla(inc, ctx, rid, `ajustó la regla «${corto(text)}»: ${cambios.join('; ')}`, `se ajustó la regla (${cambios.join('; ')})`);
+      toast(recompilar ? 'Regla guardada: la próxima corrida la vuelve a traducir' : 'Regla guardada');
+    } else if (act === 're-estado') {
+      const r = S.rules[rid]; if (!r) return toast('La regla ya no existe');
+      await S.db.doc(`rules/${rid}`).update({ status: b.dataset.s, updatedBy: S.me || null, updatedAt: nowIso() });
+      await cerrarEdicionRegla(inc, ctx, rid, `desactivó la regla «${corto(r.text)}»`, 'se desactivó la regla');
+      toast('Regla desactivada');
+    } else if (act === 're-eliminar-ok') {
+      const r = S.rules[rid]; if (!r) return toast('La regla ya no existe');
+      await S.db.doc(`rules/${rid}`).delete();
+      await cerrarEdicionRegla(inc, ctx, rid, `eliminó la regla «${corto(r.text)}»`, 'se eliminó la regla');
+      toast('Regla eliminada');
+    } else if (act === 're-crear') {
+      const text = draft('rnueva'); if (!text) return toast('Escribí la regla');
+      const nk = reKey(id, 'nueva');
+      await S.db.doc(`rules/${slug(inc.projectId)}-${Date.now().toString(36)}`).set({ projectId: inc.projectId, text, status: 'pending_compile', origin: 'manual', sourceIncidentId: id, createdBy: S.me || null, createdAt: nowIso() });
+      await cerrarEdicionRegla(inc, id, 'nueva', `creó una regla a partir de esta tarjeta: «${corto(text)}»`, 'se creó una regla para este caso');
+      clear('rnueva'); delete S.re[nk];
+      toast('Regla creada: se traduce en la próxima corrida');
     } else if (act === 'nueva-regla') {
       const text = (S.drafts['nr-text'] || '').trim(); if (!text) return toast('Escribí la regla');
       const pid = S.drafts['nr-proj'] || (document.getElementById('nr-proj') || {}).value || S.filter || '*';

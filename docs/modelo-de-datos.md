@@ -18,11 +18,11 @@ Las reglas de acceso están en `dashboard/capabilities.json` y las aplica la pla
 | `projects/{id}` | Admin (alta y configuración) y rutina (salud, watermarks, inventario, emparejamiento) | Carpeta de Orchestrator, **procesos** (cada uno con su repo, su rol, su nombre en Orchestrator y, opcionalmente, su carpeta y su documentación), documentación común, `status`, criterios del proyecto, baseline. Detalle: `scripts/lib/proyecto.mjs` |
 | `memory/{projectId}` | Rutina (Admin puede corregir) | `process`: memoria de proceso (mini-PDD). `productionSummary`: resumen rodante de la memoria de producción |
 | `history/{id}` | Rutina | **Memoria de producción**, append-only y permanente |
-| `rules/{id}` | Admin (crear, aprobar) y rutina (compilar, proponer) | Regla en lenguaje natural, su `compiled`, `status` y `origin` |
+| `rules/{id}` | Admin (crear, aprobar, editar, eliminar) y rutina (compilar, proponer) | Regla en lenguaje natural, sus `exceptions` ("no aplica cuando…", escritas por personas), su `compiled`, `status` y `origin` |
 | `runs/{runId}` | Solo rutina | Una corrida. Por proyecto trae la ventana, los conteos, cada check con su valor observado y los hallazgos con su triage |
 | `incidents/{id}` | Solo rutina | Una tarjeta por tema. Guarda fingerprints, ocurrencias, recurrencias, evidencia redactada, triage (con su porqué) y análisis previo |
 | `incidentWork/{incidentId}` | Operador o Admin | Lado humano: `state` (delegated, snoozed, dismissed, responded), asignado, motivo del descarte, respuesta |
-| `activity/{id}` | Operador o Admin | Comentarios y acciones sobre una tarjeta |
+| `activity/{id}` | Operador o Admin | Comentarios y acciones sobre una tarjeta, incluidos los cambios de regla hechos desde ella (`type: "rule"`) |
 | `requests/{id}` | Operador o Admin | `onboard_project`, `reanalyze_project`, `recompile_rule` |
 | `libraries/{slug}` | Solo rutina | Catálogo de librerías propias: versiones en uso, actividades de cada una, si trae fuentes |
 | `config/discovery` | Rutina | Carpetas con procesos que todavía no son un proyecto (se actualiza una vez por día) |
@@ -44,6 +44,20 @@ Las personas se guardan **solo** como IDs opacos (`u_…`). Los nombres los resu
    - el `incidentWork` no está `dismissed` ni `responded`;
    - no está pospuesta, salvo que la severidad haya subido después de posponerla.
 4. `/control-aprendizaje` convierte la respuesta humana en una entrada de `history`. Según la respuesta, cierra el incidente o lo deja abierto (fix pendiente, re-control) y puede proponer una regla.
+
+## Editar una regla
+
+Un Admin edita una regla desde la tarjeta del incidente que la disparó o desde la lista de reglas. El tablero escribe en `rules/{id}`:
+
+| Cambio | Qué escribe | Cuándo vale |
+|---|---|---|
+| Severidad | `compiled.severity` | Al guardar: la usa la próxima evaluación |
+| Texto | `text` y `status: "pending_compile"` | La próxima corrida vuelve a traducir la regla (conserva la severidad) |
+| Excepción | `exceptions[]` (`{text, by, at, incidentId}`) y `status: "pending_compile"` | La próxima corrida la traduce a `compiled.exceptions[].filter`; si no se puede, la aplica el triage |
+| Desactivar | `status: "disabled"` | Al guardar |
+| Eliminar | Borra el documento | Al guardar. No se puede deshacer |
+
+Guardar una regla `proposed`, `disabled` o `rejected` la aprueba o reactiva. Un incidente que no salió de una regla ofrece **Crear regla**: nace `pending_compile`, con `sourceIncidentId`.
 
 ## Presupuesto de documentos (estimado para 10 proyectos)
 

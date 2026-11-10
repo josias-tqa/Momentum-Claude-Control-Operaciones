@@ -63,6 +63,24 @@ Por cada regla con `status: "pending_compile"`, traducí `text` (lenguaje natura
 - Escribí `compileNote` con una frase en español que diga cómo se entendió la regla. El tablero la muestra.
 - Pasá la regla a `status: "active"`. Las reglas `proposed` no se tocan: las aprueba un Admin.
 
+**Reglas editadas desde el tablero.** Un Admin puede cambiar el texto, la severidad o las excepciones de una regla desde la tarjeta de un incidente o desde la lista de reglas. Si cambió el texto o las excepciones, la regla vuelve a `pending_compile` y trae su `compiled` anterior:
+- Volvé a traducir `text`, pero **conservá `compiled.severity`** (la eligió una persona) salvo que el texto nuevo diga otra severidad. Conservá también `action`, `category` y `title` si el texto no los cambia.
+- Si la regla ya no existe (la eliminaron), no hay nada que hacer: no la vuelvas a crear.
+
+**Excepciones.** `rules/<id>.exceptions` es una lista `[{text, by, at, incidentId}]` escrita por personas: "la regla está bien, pero no aplica cuando…". Traducí **cada una** a `compiled.exceptions`, en el mismo orden:
+
+```json
+"exceptions": [ { "text": "es lunes antes de las 9 (mantenimiento de SAP)", "filter": { "days": ["mon"], "hourTo": 9 } },
+                { "text": "es el cierre de mes", "mode": "llm" } ]
+```
+
+- `filter` usa los mismos campos que el filtro de la regla (`process`, `queue`, `level`, `state`, `status`, `exceptionType`, `messageRegex`) más la condición de horario: `days` (`mon`…`sun`), `hourFrom` y `hourTo` (hora local de `config/settings.timezone`, de 0 a 24; si `hourFrom` es mayor que `hourTo`, el rango cruza la medianoche).
+- `evaluate.mjs` deja afuera los registros que coinciden con una excepción antes de contar. En una regla `absence` la excepción se evalúa contra el momento del control. En una regla `known`, el hallazgo que cae en la excepción se vuelve a reportar.
+- Si una excepción no se puede expresar con esos campos, dejala como `{"text", "mode": "llm"}`: la aplicás vos en el triage (paso 6).
+- `compiled.exceptions` se **reemplaza entera** con lo que haya en `exceptions`: si quitaron una, desaparece.
+- Mencioná las excepciones en `compileNote` ("…; no cuenta los lunes antes de las 9").
+- No escribas ni borres `exceptions`: es del lado humano.
+
 ## 5. Colecta y evaluación por proyecto
 
 Para cada proyecto con `status: "active"`:
@@ -92,6 +110,7 @@ Por cada hallazgo de `hallazgos.json` decidí la clasificación y escribila en `
 - la memoria de proceso y la de producción (`memory/<id>`);
 - los incidentes abiertos y su trabajo humano (`incidentWork`);
 - las reglas `mode: "llm"`;
+- las excepciones `mode: "llm"` de la regla que disparó el hallazgo (`hallazgo.ruleId` / `hallazgo.reglas`): si la excepción aplica, la decisión es `known` y el porqué cita la excepción;
 - `referencias/taxonomia-triage.md`.
 
 ```json

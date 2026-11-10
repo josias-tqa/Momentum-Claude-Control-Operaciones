@@ -15,6 +15,34 @@
       "type": "string",
       "maxLength": 2000
     },
+    "exceptions": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "by": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "at": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "incidentId": {
+            "type": "string",
+            "maxLength": 200
+          }
+        }
+      }
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -57,6 +85,14 @@
       "maxLength": 200
     },
     "approvedAt": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "updatedBy": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "updatedAt": {
       "type": "string",
       "maxLength": 40
     },
