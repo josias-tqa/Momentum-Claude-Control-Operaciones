@@ -11,7 +11,7 @@
 //
 // Uso:
 //   node scripts/descubrir.mjs --salida work/descubrimiento/candidatos.json
-//        [--registrados work/<run>/db/projects] [--carpetas "A/B,C/D"] [--workspaces itmz,otro] [--dias 30] [--sin-bitbucket]
+//        [--registrados work/<run>/db/projects] [--carpetas "A/B,C/D" [--solo]] [--workspaces itmz,otro] [--dias 30] [--sin-bitbucket]
 // La salida no contiene PII: nombres de carpetas, procesos, paquetes, repos y conteos.
 
 import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
@@ -42,13 +42,15 @@ const registradosPrevios = dirRegistrados && existsSync(dirRegistrados)
 // ver carpetas a nivel tenant), `folders list`, las carpetas indicadas con --carpetas, y las de
 // los proyectos ya registrados.
 const rutaDe = (f) => f.FullyQualifiedName || f.FullyQualifiedNameOrderable || f.Path || f.FolderPath || f.DisplayName || null;
-const carpetasListadas = [
+// --solo: descubre únicamente las carpetas de --carpetas (solicitudes discover_projects de la corrida).
+const solo = process.argv.includes('--solo');
+const carpetasListadas = solo ? [] : [
   ...intentar('folders list --all', () => uipTodo(['or', 'folders', 'list', '--all'], { maximo: 5000 })),
   ...intentar('folders list', () => uipTodo(['or', 'folders', 'list'], { maximo: 5000 })),
 ].map(rutaDe).filter(Boolean);
 const carpetasManual = (arg('--carpetas') || process.env.OPS_CARPETAS || '').split(',').map((x) => x.trim()).filter(Boolean);
 const carpetasRegistradas = registradosPrevios.flatMap((r) => [r.orchestrator && r.orchestrator.folderPath, ...r.processes.map((x) => x.folderPath)]).filter(Boolean);
-const carpetas = [...new Set([...carpetasListadas, ...carpetasManual, ...carpetasRegistradas])];
+const carpetas = solo ? [...new Set(carpetasManual)] : [...new Set([...carpetasListadas, ...carpetasManual, ...carpetasRegistradas])];
 const fuenteCarpetas = { listadas: carpetasListadas.length, manuales: carpetasManual.length, registradas: carpetasRegistradas.length };
 
 const procesos = [];

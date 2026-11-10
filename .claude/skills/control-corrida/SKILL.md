@@ -40,10 +40,19 @@ Por cada `requests` pendiente:
 - `onboard_project` o `reanalyze_project`: ejecutá `/control-alta-proyecto` para ese proyecto.
 - `reanalyze_incident`: juntá los `incidentId` y pasalos a `consolidar.mjs --reanalizar <ids>` en el paso 7. Marcá la solicitud `done` al publicar.
 - `recompile_rule`: compilá esa regla (paso 4).
+- `discover_projects`: descubrí proyectos **antes** de las altas, así sus `onboard_project` entran en esta misma corrida (dentro del máximo de 3):
+  ```bash
+  node scripts/descubrir.mjs --salida work/$RUN/desc/candidatos.json --registrados work/$RUN/db/projects --carpetas "<folderPath>" --solo
+  node scripts/plan-descubrimiento.mjs --candidatos work/$RUN/desc/candidatos.json --salida work/$RUN/desc/plan.json
+  node scripts/build-writes.mjs --plan work/$RUN/desc/plan.json --salida work/$RUN/desc/lotes
+  ```
+  - Sin `folderPath`, omití `--carpetas` y `--solo` (descubre todas las carpetas).
+  - Aplicá la revisión del paso 4 de `/control-descubrir` (carpetas no productivas, varios prefijos). Publicá los lotes con `ArtifactData batch`.
+  - Sumá las `onboard_project` creadas a la lista de altas de este paso. En `resultNote`: proyectos creados y omitidos con motivo. Si no hubo procesos, `done` con esa nota.
 
 Al terminar, `update` de la solicitud con `{status: "done"|"error", resultNote, processedAt}` y su `if_version`.
 
-**Máximo 3 altas (`onboard_project` / `reanalyze_project`) por corrida**, las más antiguas primero. Cada alta tarda varios minutos y el lock dura 50. Las demás quedan `pending` para la corrida siguiente; decilo en el resumen.
+**Máximo 3 altas (`onboard_project` / `reanalyze_project`) por corrida**, las más antiguas primero. Cada alta tarda varios minutos y el lock dura 50. Las demás quedan `pending` para la corrida siguiente; decilo en el resumen. Las `discover_projects` no cuentan para ese máximo, pero se procesan como mucho 2 por corrida.
 
 ## 4. Compilar reglas
 
