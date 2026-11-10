@@ -1,4 +1,4 @@
-<title>Torre de Control Momentum</title>
+<title>Torre de Control Momentum</title><!-- el idioma activo lo fija setIdioma() -->
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
 <style>
@@ -428,32 +428,37 @@ details[open]>summary{margin-bottom:12px}
 .ay-term-n{font-size:14px}
 </style>
 
-<button class="skip" data-act="saltar">Saltar al contenido</button>
+<button class="skip" data-act="saltar" data-i18n="comun.saltar"></button>
 <div class="app" id="app">
   <aside class="rail">
     <a class="brand" href="#inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M5 22l2.5-10h9L19 22M8.5 8h7l1 4h-9z"/><path d="M4 6a11 11 0 0 1 4-3M20 6a11 11 0 0 0-4-3"/></svg>
-      <span>Torre de Control<small>Operaciones UiPath</small></span>
+      <span><span data-i18n="comun.appNombre"></span><small data-i18n="comun.appSub"></small></span>
     </a>
-    <nav class="nav" id="nav" aria-label="Principal"></nav>
+    <nav class="nav" id="nav" data-i18n-aria="comun.principal"></nav>
     <div class="rail-foot"><div class="pulse" id="pulse" data-tip="pulso"></div><div class="quien" id="quien" data-tip="roles"></div></div>
   </aside>
   <div class="content">
     <header class="mtop">
-      <a class="brand" href="#inicio" aria-label="Torre de Control, ir a la bandeja">
+      <a class="brand" href="#inicio" data-i18n-aria="comun.irBandeja">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M5 22l2.5-10h9L19 22M8.5 8h7l1 4h-9z"/><path d="M4 6a11 11 0 0 1 4-3M20 6a11 11 0 0 0-4-3"/></svg>
-        <span>Torre de Control</span>
+        <span data-i18n="comun.appNombre"></span>
       </a>
       <div class="pulse" id="mpulse" data-tip="pulso"></div>
-      <a class="help" id="ayuda-mtop" href="#ayuda" aria-label="Ayuda de esta pantalla">?</a>
+      <a class="help" id="ayuda-mtop" href="#ayuda" data-i18n-aria="comun.ayudaPantalla">?</a>
     </header>
     <main class="vw" id="view" tabindex="-1"></main>
   </div>
-  <nav class="tabbar" id="tabbar" aria-label="Principal"></nav>
+  <nav class="tabbar" id="tabbar" data-i18n-aria="comun.principal"></nav>
 </div>
 <div id="drawer"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="tip" id="tip" role="tooltip" hidden></div>
+
+<!-- I18N:INICIO sha256=d28106221bc7ebcb15c01d238f2b7da2a191d26d41bd3a4702e4b4de90aeca36 · generado por scripts/build-i18n.mjs desde dashboard/i18n/*.json: no editar a mano -->
+<script type="application/json" id="i18n-es">{"cat.app_down":"Aplicación caída","cat.application":"Sistema","cat.business":"Negocio","cat.configuration":"Configuración","cat.data":"Datos","cat.deploy":"Deploy","cat.infrastructure":"Infraestructura","cat.login":"Login / credenciales","cat.monitoring":"Monitoreo","cat.other":"Otro","cat.regression":"Regresión","cat.scheduling":"Programación","cat.selector":"Selector / UI","cat.silent_failure":"Falla silenciosa","cat.sla":"SLA","comun.appNombre":"Torre de Control","comun.appSub":"Operaciones UiPath","comun.ayudaPantalla":"Ayuda de esta pantalla","comun.deshacer":"Deshacer","comun.haceD":"hace {n} d","comun.haceH":"hace {n} h","comun.haceMin":"hace {n} min","comun.irBandeja":"Torre de Control, ir a la bandeja","comun.principal":"Principal","comun.recien":"recién","comun.saltar":"Saltar al contenido","comun.titulo":"Torre de Control Momentum","ddismiss.already_fixed":"Ya se corrigió","ddismiss.expected":"Es correcto así","ddismiss.false_positive":"La rutina se equivocó","ddismiss.not_relevant":"No es relevante","dec.escalate":"Escalado","dec.known":"Conocido","dec.monitor":"En observación","dec.notify":"Aviso","dismiss.business_data":"Dato de negocio","dismiss.expected":"Es esperado","dismiss.external_system":"Sistema externo","dismiss.false_positive":"Falso positivo","dkind.code":"Código","dkind.docs":"Documentación","dkind.hygiene":"Publicación del paquete","dkind.orchestrator":"Orchestrator","dkind.other":"Otro","dkind.queue":"Colas","dkind.trigger":"Triggers","dkind.version":"Versión","doc.pdd":"Process Definition Document: el proceso de negocio, sus pasos y sus excepciones.","doc.runbook":"Guía de operación: qué hacer ante cada falla y a quién escalar.","doc.sdd":"Solution Design Document: cómo está construida la solución, con sus colas, assets y triggers.","dresp.escalate_dev":"Derivar a desarrollo","dresp.expected":"Es correcto así","dresp.fix_code":"Corregir el código","dresp.fix_docs":"Corregir la documentación","dresp.fix_orchestrator":"Corregir en Orchestrator","hist.data_issue":"Problema de datos","hist.deploy_detected":"Deploy","hist.expected_behavior":"Comportamiento esperado","hist.external_system":"Sistema externo","hist.false_positive":"Falso positivo","hist.fix_required":"Requiere fix","hist.incident_resolved":"Resuelto","hist.note":"Nota","hist.onboarding":"Alta","hist.recheck_done":"Re-control OK","hist.recheck_scheduled":"Re-control agendado","hist.rule_added":"Regla nueva","nivel.critical":"Con problemas","nivel.off":"Sin control activo","nivel.ok":"Sin novedades","nivel.unknown":"Sin datos todavía","nivel.warn":"Con avisos","origen.auto":" · aprobada automáticamente","origen.learned":" · aprendida de un incidente","origen.onboarding":" · del alta","origen.review":" · de la revisión diaria","origen.similar":" · por similitud con otro proceso","prole.dispatcher":"Dispatcher","prole.other":"Otro","prole.performer":"Performer","prole.reporter":"Reporter","pstatus.active":"Activo","pstatus.analyzing":"Analizando","pstatus.error":"Con error","pstatus.paused":"Pausado","pstatus.pending_analysis":"Esperando análisis","pstatus.review":"En revisión","resp.data_issue":"Problema de datos","resp.escalate_dev":"Derivar a desarrollo","resp.expected_behavior":"Comportamiento esperado","resp.external_system":"Sistema externo","resp.false_positive":"Falso positivo / ajustar regla","resp.fix_required":"Requiere fix","resp.recheck":"Volver a controlar","rol.admin":"Admin","rol.lector":"Lector","rol.operador":"Operador","rstatus.active":"Activa","rstatus.disabled":"Desactivada","rstatus.pending_compile":"Por compilar","rstatus.proposed":"Propuesta","rstatus.rejected":"Rechazada","sug.default":"un cambio","sug.exception":"agregar una excepción","sug.retire":"desactivar la regla","sug.severity":"cambiar la severidad","sug.text":"cambiar el texto"}</script>
+<script type="application/json" id="i18n-en">{"cat.app_down":"Application down","cat.application":"System","cat.business":"Business","cat.configuration":"Configuration","cat.data":"Data","cat.deploy":"Deploy","cat.infrastructure":"Infrastructure","cat.login":"Login / credentials","cat.monitoring":"Monitoring","cat.other":"Other","cat.regression":"Regression","cat.scheduling":"Scheduling","cat.selector":"Selector / UI","cat.silent_failure":"Silent failure","cat.sla":"SLA","comun.appNombre":"Control Tower","comun.appSub":"UiPath Operations","comun.ayudaPantalla":"Help for this screen","comun.deshacer":"Undo","comun.haceD":"{n} d ago","comun.haceH":"{n} h ago","comun.haceMin":"{n} min ago","comun.irBandeja":"Control Tower, go to the inbox","comun.principal":"Main","comun.recien":"just now","comun.saltar":"Skip to content","comun.titulo":"Momentum Control Tower","ddismiss.already_fixed":"Already fixed","ddismiss.expected":"It is correct as is","ddismiss.false_positive":"The routine got it wrong","ddismiss.not_relevant":"Not relevant","dec.escalate":"Escalated","dec.known":"Known","dec.monitor":"Under watch","dec.notify":"Notice","dismiss.business_data":"Business data","dismiss.expected":"It is expected","dismiss.external_system":"External system","dismiss.false_positive":"False positive","dkind.code":"Code","dkind.docs":"Documentation","dkind.hygiene":"Package publishing","dkind.orchestrator":"Orchestrator","dkind.other":"Other","dkind.queue":"Queues","dkind.trigger":"Triggers","dkind.version":"Version","doc.pdd":"Process Definition Document: the business process, its steps and its exceptions.","doc.runbook":"Operations guide: what to do on each failure and who to escalate to.","doc.sdd":"Solution Design Document: how the solution is built, with its queues, assets and triggers.","dresp.escalate_dev":"Hand over to development","dresp.expected":"It is correct as is","dresp.fix_code":"Fix the code","dresp.fix_docs":"Fix the documentation","dresp.fix_orchestrator":"Fix in Orchestrator","hist.data_issue":"Data issue","hist.deploy_detected":"Deploy","hist.expected_behavior":"Expected behavior","hist.external_system":"External system","hist.false_positive":"False positive","hist.fix_required":"Fix required","hist.incident_resolved":"Resolved","hist.note":"Note","hist.onboarding":"Onboarding","hist.recheck_done":"Re-check OK","hist.recheck_scheduled":"Re-check scheduled","hist.rule_added":"New rule","nivel.critical":"With problems","nivel.off":"No active control","nivel.ok":"All clear","nivel.unknown":"No data yet","nivel.warn":"With warnings","origen.auto":" · automatically approved","origen.learned":" · learned from an incident","origen.onboarding":" · from onboarding","origen.review":" · from the daily review","origen.similar":" · by similarity with another process","prole.dispatcher":"Dispatcher","prole.other":"Other","prole.performer":"Performer","prole.reporter":"Reporter","pstatus.active":"Active","pstatus.analyzing":"Analyzing","pstatus.error":"With error","pstatus.paused":"Paused","pstatus.pending_analysis":"Waiting for analysis","pstatus.review":"In review","resp.data_issue":"Data issue","resp.escalate_dev":"Hand over to development","resp.expected_behavior":"Expected behavior","resp.external_system":"External system","resp.false_positive":"False positive / adjust rule","resp.fix_required":"Fix required","resp.recheck":"Check again","rol.admin":"Admin","rol.lector":"Reader","rol.operador":"Operator","rstatus.active":"Active","rstatus.disabled":"Disabled","rstatus.pending_compile":"To compile","rstatus.proposed":"Proposed","rstatus.rejected":"Rejected","sug.default":"a change","sug.exception":"add an exception","sug.retire":"disable the rule","sug.severity":"change the severity","sug.text":"change the text"}</script>
+<!-- I18N:FIN -->
 
 <!-- AYUDA:INICIO sha256=4508a82f9e6924de9176017887af00fe9bbd7ff63a688e4c51320adc39f1b4dc · generado por scripts/build-ayuda.mjs desde dashboard/ayuda/*.mdx: no editar a mano -->
 <template id="ayuda-tpl"><nav class="ay-toc box" aria-label="Contenido de la ayuda"><div class="ay-toc-g"><a href="#ayuda-introduccion"><b>Qué es la Torre de Control</b></a><ul><li><a href="#ayuda-como-funciona">Cómo funciona</a></li><li><a href="#ayuda-primeros-pasos">Primeros pasos en un tablero nuevo</a></li><li><a href="#ayuda-solo-lectura">Lo que la Torre de Control nunca hace</a></li><li><a href="#ayuda-roles">Roles</a></li></ul></div><div class="ay-toc-g"><a href="#ayuda-glosario"><b>Glosario</b></a></div><div class="ay-toc-g"><a href="#ayuda-pantallas"><b>Pantallas y acciones</b></a><ul><li><a href="#ayuda-navegacion">Menú y selector de proyecto</a></li><li><a href="#ayuda-bandeja">Bandeja</a></li><li><a href="#ayuda-tarjeta">El tema y su detalle</a></li><li><a href="#ayuda-acciones">Acciones sobre un tema</a></li><li><a href="#ayuda-no-reportados">Fuera de bandeja</a></li><li><a href="#ayuda-corridas">Corridas</a></li><li><a href="#ayuda-proyectos">Proyectos</a></li><li><a href="#ayuda-pagina-proyecto">Página de un proyecto</a></li><li><a href="#ayuda-reglas">Reglas</a></li><li><a href="#ayuda-registrar">Registrar proyecto</a></li><li><a href="#ayuda-ajustes">Ajustes</a></li><li><a href="#ayuda-mas">Más (teléfono)</a></li></ul></div></nav>
@@ -639,16 +644,31 @@ const P = {
 P.data = P.business; P.other = P.application; P.sla = P.scheduling;
 const ico = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || P.application}</svg>`;
 
-// ---------- textos ----------
-const CAT = { business:'Negocio', application:'Sistema', login:'Login / credenciales', selector:'Selector / UI', app_down:'Aplicación caída', data:'Datos', infrastructure:'Infraestructura', configuration:'Configuración', scheduling:'Programación', sla:'SLA', regression:'Regresión', silent_failure:'Falla silenciosa', monitoring:'Monitoreo', deploy:'Deploy', other:'Otro' };
-const DEC = { escalate:'Escalado', notify:'Aviso', monitor:'En observación', known:'Conocido' };
-const DISMISS = [['expected','Es esperado'],['false_positive','Falso positivo'],['business_data','Dato de negocio'],['external_system','Sistema externo']];
-const RESP = [['fix_required','Requiere fix'],['expected_behavior','Comportamiento esperado'],['data_issue','Problema de datos'],['external_system','Sistema externo'],['false_positive','Falso positivo / ajustar regla'],['recheck','Volver a controlar'],['escalate_dev','Derivar a desarrollo']];
-const HIST = { incident_resolved:'Resuelto', fix_required:'Requiere fix', expected_behavior:'Comportamiento esperado', data_issue:'Problema de datos', external_system:'Sistema externo', false_positive:'Falso positivo', recheck_scheduled:'Re-control agendado', recheck_done:'Re-control OK', deploy_detected:'Deploy', rule_added:'Regla nueva', onboarding:'Alta', note:'Nota' };
-const PSTATUS = { pending_analysis:'Esperando análisis', analyzing:'Analizando', review:'En revisión', active:'Activo', paused:'Pausado', error:'Con error' };
-const RSTATUS = { pending_compile:'Por compilar', proposed:'Propuesta', active:'Activa', disabled:'Desactivada', rejected:'Rechazada' };
-const NIVEL = { ok:'Sin novedades', warn:'Con avisos', critical:'Con problemas', unknown:'Sin datos todavía', off:'Sin control activo' };
-const ROLTXT = { admin:'Admin', operador:'Operador', lector:'Lector' };
+// ---------- idioma (catálogos: dashboard/i18n/<idioma>/*.json → npm run build:i18n) ----------
+// tx('espacio.clave', {n}) devuelve el texto en el idioma activo (si falta, el español, y si no, la clave).
+// txp(n, 'espacio.clave') elige la forma .one / .other. Todo texto visible nuevo va por acá, con su clave en es y en en:
+// tests/i18n.test.mjs falla si falta en un idioma o si queda un texto escrito a mano.
+const LANGS = ['es', 'en'];
+const LOCALE = { es: 'es-AR', en: 'en-US' };
+const I18N = (() => { const o = {}; for (const l of LANGS) { try { o[l] = JSON.parse(document.getElementById('i18n-' + l).textContent); } catch { o[l] = {}; } } return o; })();
+let LANG = (() => { try { const l = localStorage.getItem('torre.idioma'); return LANGS.includes(l) ? l : 'es'; } catch { return 'es'; } })();
+const hay = (k) => (I18N[LANG][k] ?? I18N.es[k]) !== undefined;
+const tx = (k, p) => { const s = I18N[LANG][k] ?? I18N.es[k] ?? k; return p ? s.replace(/\{(\w+)\}/g, (_, n) => (p[n] ?? '')) : s; };
+const txp = (n, k, p) => tx(k + (n === 1 ? '.one' : '.other'), { n, ...p });
+// Idioma global del tablero: lo fija un Admin en Ajustes (config/settings.language); localStorage solo acelera el primer pintado.
+function setIdioma(l) {
+  l = LANGS.includes(l) ? l : 'es';
+  document.documentElement.lang = l; document.title = tx('comun.titulo');
+  if (l === LANG) return false;
+  LANG = l; try { localStorage.setItem('torre.idioma', l); } catch {}
+  return true;
+}
+// Mapas de etiquetas: se leen al mostrar (no al cargar), así siguen al idioma activo.
+const tmap = (pre) => new Proxy({}, { get: (_, k) => (typeof k === 'string' && hay(pre + k) ? tx(pre + k) : undefined) });
+const tlist = (pre, claves) => claves.map((k) => [k, tx(pre + k)]);
+const CAT = tmap('cat.'); const DEC = tmap('dec.'); const HIST = tmap('hist.'); const PSTATUS = tmap('pstatus.'); const RSTATUS = tmap('rstatus.'); const NIVEL = tmap('nivel.'); const ROLTXT = tmap('rol.');
+const DISMISS = () => tlist('dismiss.', ['expected', 'false_positive', 'business_data', 'external_system']);
+const RESP = () => tlist('resp.', ['fix_required', 'expected_behavior', 'data_issue', 'external_system', 'false_positive', 'recheck', 'escalate_dev']);
 const SEV_ORD = { P1:1, P2:2, P3:3, P4:4 };
 
 // ---------- ayuda (contenido: dashboard/ayuda/*.mdx → npm run build:ayuda) ----------
@@ -668,21 +688,27 @@ function ayudaDe(h) {
   return k ? AYUDA_RUTA[k] : 'bandeja';
 }
 const SEVS = ['P1', 'P2', 'P3', 'P4'];
-const SUG = { exception:'agregar una excepción', severity:'cambiar la severidad', text:'cambiar el texto', retire:'desactivar la regla' };
-const origenTxt = (r) => ({ learned:' · aprendida de un incidente', onboarding:' · del alta', similar:' · por similitud con otro proceso', review:' · de la revisión diaria' }[r.origin] || '') + (r.autoApproved ? ' · aprobada automáticamente' : '');
+const SUG = tmap('sug.');
+const origenTxt = (r) => (r.origin && hay('origen.' + r.origin) ? tx('origen.' + r.origin) : '') + (r.autoApproved ? tx('origen.auto') : '');
 // Discrepancias de un proyecto (lo que no coincide entre código, documentación y Orchestrator) y su lado humano.
-const DKIND = { orchestrator:'Orchestrator', code:'Código', queue:'Colas', version:'Versión', trigger:'Triggers', docs:'Documentación', hygiene:'Publicación del paquete', other:'Otro' };
-const DDISMISS = [['expected','Es correcto así'],['false_positive','La rutina se equivocó'],['already_fixed','Ya se corrigió'],['not_relevant','No es relevante']];
-const DRESP = [['fix_docs','Corregir la documentación'],['fix_orchestrator','Corregir en Orchestrator'],['fix_code','Corregir el código'],['expected','Es correcto así'],['escalate_dev','Derivar a desarrollo']];
+const DKIND = tmap('dkind.');
+const DDISMISS = () => tlist('ddismiss.', ['expected', 'false_positive', 'already_fixed', 'not_relevant']);
+const DRESP = () => tlist('dresp.', ['fix_docs', 'fix_orchestrator', 'fix_code', 'expected', 'escalate_dev']);
 // Documentos que se suben a mano a un proyecto. Se guardan en Markdown (documents/<proyecto>_<tipo>).
-const DOCS = [['pdd','PDD','Process Definition Document: el proceso de negocio, sus pasos y sus excepciones.'],['sdd','SDD','Solution Design Document: cómo está construida la solución, con sus colas, assets y triggers.'],['runbook','Runbook','Guía de operación: qué hacer ante cada falla y a quién escalar.']];
+const DOCS = () => [['pdd', 'PDD', tx('doc.pdd')], ['sdd', 'SDD', tx('doc.sdd')], ['runbook', 'Runbook', tx('doc.runbook')]];
 const DOC_MAX = 230 * 1024; // bytes de Markdown por documento (la base admite 256 KiB por documento)
 // Datos personales que se enmascaran al subir un documento: los mismos patrones de config/patrones-pii.json
 // (tests/scripts.test.mjs verifica que no se desvíen).
 const PII_DOC = [{"nombre":"documento_etiquetado","regex":"\\b(c\\.?\\s?c\\.?|t\\.?\\s?i\\.?|c[eé]dula|d\\.?n\\.?i\\.?|documento|identificaci[oó]n|n[uú]mero de id|nro\\.? doc\\.?|pasaporte)(\\s*(?:no\\.?|n[°º]|#)?\\s*[:=]?\\s*)[A-Z]{0,2}\\d[\\d.\\-]{4,14}","flags":"gi","reemplazo":"$1$2[DOCUMENTO]"},{"nombre":"nit","regex":"\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-\\d\\b","reemplazo":"[ID-FISCAL]"},{"nombre":"email","regex":"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}","reemplazo":"[EMAIL]"},{"nombre":"cuit_cuil","regex":"\\b\\d{2}-?\\d{8}-?\\d\\b","reemplazo":"[ID-FISCAL]"},{"nombre":"ruta_usuario","regex":"([Cc]:\\\\[Uu]sers\\\\)[^\\\\\\s]+","reemplazo":"$1[USUARIO]"}];
 const corto = (t, n = 90) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+const pl = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`; // en desuso: migrar a txp() (tests/i18n.test.mjs lo marca)
 const etiqueta = (lista, k) => (lista.find((d) => d[0] === k) || [0, k || ''])[1];
-const pl = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`;
+
+// Marco estático (fuera de las vistas): data-i18n = texto, data-i18n-aria = aria-label.
+function aplicarEstatico() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => { const v = tx(el.dataset.i18n); if (el.textContent !== v) el.textContent = v; });
+  document.querySelectorAll('[data-i18n-aria]').forEach((el) => { const v = tx(el.dataset.i18nAria); if (el.getAttribute('aria-label') !== v) el.setAttribute('aria-label', v); });
+}
 
 // ---------- utilidades ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -691,19 +717,19 @@ const nowIso = () => new Date().toISOString();
 function rel(iso) {
   if (!iso) return '—';
   const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
-  if (m < 1) return 'recién';
-  if (m < 60) return `hace ${m} min`;
+  if (m < 1) return tx('comun.recien');
+  if (m < 60) return tx('comun.haceMin', { n: m });
   const h = Math.round(m / 60);
-  if (h < 36) return `hace ${h} h`;
-  return `hace ${Math.round(h / 24)} d`;
+  if (h < 36) return tx('comun.haceH', { n: h });
+  return tx('comun.haceD', { n: Math.round(h / 24) });
 }
-const fecha = (iso) => iso ? new Date(iso).toLocaleString('es-AR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+const fecha = (iso) => iso ? new Date(iso).toLocaleString(LOCALE[LANG], { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
 const addDays = (d) => new Date(Date.now() + d * 86400000).toISOString();
 const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 function toast(msg, deshacer) {
   const t = $('#toast');
-  t.innerHTML = `<span>${esc(msg)}</span>${deshacer ? `<span data-inc="${esc(deshacer)}"><button data-act="deshacer">Deshacer</button></span>` : ''}`;
+  t.innerHTML = `<span>${esc(msg)}</span>${deshacer ? `<span data-inc="${esc(deshacer)}"><button data-act="deshacer">${esc(tx('comun.deshacer'))}</button></span>` : ''}`;
   t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, deshacer ? 8000 : 3200);
 }
 function md(src) {
@@ -877,7 +903,7 @@ async function docxAMarkdown(buf) {
 }
 
 // ---------- modelo de proyecto: uno o más procesos, cada uno con su repo ----------
-const ROLES = [['dispatcher', 'Dispatcher'], ['performer', 'Performer'], ['reporter', 'Reporter'], ['other', 'Otro']];
+const ROLES = () => tlist('prole.', ['dispatcher', 'performer', 'reporter', 'other']);
 const rolDe = (t) => /dispatch/i.test(t) ? 'dispatcher' : /perform/i.test(t) ? 'performer' : /report/i.test(t) ? 'reporter' : 'other';
 function procesosDe(p) {
   if (Array.isArray(p.processes) && p.processes.length) return p.processes;
@@ -938,7 +964,7 @@ function formProyectoHtml(clave, f, { boton, botonExtra } = {}) {
     ${f.procesos.length ? '' : '<p class="muted">Sin procesos cargados: se detectan solos. Cargalos solo para asignar un repo de Bitbucket de respaldo, documentación propia o una carpeta distinta.</p>'}
     <div class="procs">${f.procesos.map((x, i) => `<div class="proc">
       <div class="proc-h"><b>Proceso ${i + 1}</b>
-        <select class="w-auto" id="${fid('role', i)}" data-form="${esc(clave)}" data-k="role" data-i="${i}" aria-label="Rol del proceso ${i + 1}">${ROLES.map(([k, l]) => `<option value="${k}" ${x.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <select class="w-auto" id="${fid('role', i)}" data-form="${esc(clave)}" data-k="role" data-i="${i}" aria-label="Rol del proceso ${i + 1}">${ROLES().map(([k, l]) => `<option value="${k}" ${x.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
         ${f.procesos.length > 1 ? `<button class="btn ghost sm" data-act="quitar-proceso" data-form="${esc(clave)}" data-i="${i}" aria-label="Quitar el proceso ${i + 1}">Quitar</button>` : ''}</div>
       <div class="grid2"><label>Nombre${inp('label', i, x.label, 'Performer')}</label>
       <label>Nombre en Orchestrator${h('(opcional: el alta lo detecta)')}${inp('op', i, x.op, 'p. ej. VD_Performer')}</label></div>
@@ -1120,6 +1146,7 @@ function render() {
   const ks = {}; document.querySelectorAll('[data-ks]').forEach((el) => { if (el.id) ks[el.id] = el.scrollTop; });
   if (incAntes !== drawerInc) delete ks['dw-b'];
 
+  aplicarEstatico();
   renderShell();
   put($('#view'), vista(base));
   put($('#drawer'), drawerInc ? drawerHtml(drawerInc) : '');
@@ -1194,7 +1221,7 @@ function opcionesScope(c) {
   const q = norm(S.scopeQ);
   const ps = Object.values(S.projects).map((p) => ({ id: p.id, name: p.name || p.id, folder: (p.orchestrator || {}).folderPath || '', lvl: nivel(p), n: c[p.id] || 0 }))
     .filter((o) => !q || norm(`${o.name} ${o.folder}`).includes(q))
-    .sort((a, b) => (b.n > 0) - (a.n > 0) || a.name.localeCompare(b.name, 'es'));
+    .sort((a, b) => (b.n > 0) - (a.n > 0) || a.name.localeCompare(b.name, LANG));
   return q ? ps : [{ id: '', name: 'Todos los proyectos', folder: '', lvl: null, n: c[''] }, ...ps];
 }
 function scopeHtml() {
@@ -1282,7 +1309,7 @@ function ruleEditorHtml(r, ctx, inc) {
   // Cambio que propuso la rutina (revisión diaria): se carga en el formulario y lo confirma una persona.
   const sg = r.suggestion;
   const sugHtml = !sg ? '' : st.aplicada ? `<div class="banner note">${ico('tick')}<span class="grow">Sugerencia cargada en el formulario: revisala y guardá.</span></div>`
-    : `<div class="banner note"><span class="grow" style="min-width:200px"><b>La rutina sugiere ${esc(SUG[sg.kind] || 'un cambio')}</b>${sg.value && sg.kind !== 'retire' ? `: «${esc(sg.value)}»` : ''}<br><span class="muted">${esc(sg.why)}</span></span>
+    : `<div class="banner note"><span class="grow" style="min-width:200px"><b>La rutina sugiere ${esc(SUG[sg.kind] || tx('sug.default'))}</b>${sg.value && sg.kind !== 'retire' ? `: «${esc(sg.value)}»` : ''}<br><span class="muted">${esc(sg.why)}</span></span>
       <span class="actions" style="gap:6px"><button class="btn primary sm" data-act="re-sug-aplicar" ${at}>${sg.kind === 'retire' ? 'Desactivar' : 'Aplicar'}</button><button class="btn sm" data-act="re-sug-descartar" ${at}>No, gracias</button></span></div>`;
   return `<div class="redit" role="group" aria-label="Editar regla">${cab}${porque}${sugHtml}
     <label>Qué controla<textarea id="${esc(tid)}">${esc(S.drafts[tid] ?? r.text)}</textarea></label>
@@ -1342,12 +1369,12 @@ function panelHtml(i) {
       <span class="muted">La tarjeta se oculta hasta esa fecha. Vuelve antes si el problema empeora, y la rutina la vuelve a controlar al vencer. ${ayudaLink('posponer', 'Más sobre Posponer')}</span></div>`;
   }
   if (panel === 'descartar') {
-    return `<div class="panel" role="group" aria-label="Descartar"><span class="panel-t">¿Por qué se descarta?</span><div class="opts">${opt('motivo', DISMISS)}</div>
+    return `<div class="panel" role="group" aria-label="Descartar"><span class="panel-t">¿Por qué se descarta?</span><div class="opts">${opt('motivo', DISMISS())}</div>
       <input type="text" id="${id}-nota" aria-label="Nota opcional" placeholder="Nota opcional (por qué)" value="${d('nota')}">
       <div><button class="btn primary" data-act="descartar" ${sel.motivo ? '' : 'disabled'}>Descartar</button></div>
       <span class="muted">Con lo que indiques, la rutina actualiza la memoria del proyecto y puede proponer una regla. ${ayudaLink('descartar', 'Más sobre Descartar')}</span></div>`;
   }
-  return `<div class="panel" role="group" aria-label="Responder"><span class="panel-t">¿Qué se decidió?</span><div class="opts">${opt('decision', RESP)}</div>
+  return `<div class="panel" role="group" aria-label="Responder"><span class="panel-t">¿Qué se decidió?</span><div class="opts">${opt('decision', RESP())}</div>
     <textarea id="${id}-notas" aria-label="Notas de la respuesta" placeholder="Qué se encontró, qué se hizo o qué hay que hacer">${d('notas')}</textarea>
     ${sel.decision === 'fix_required' ? `<input type="text" id="${id}-ticket" aria-label="Ticket o referencia del fix" placeholder="Ticket o referencia del fix (opcional)" value="${d('ticket')}">` : ''}
     ${sel.decision === 'recheck' ? `<label class="muted">Volver a controlar el <input class="w-auto" type="date" id="${id}-recheck" value="${d('recheck')}"></label>` : ''}
@@ -1377,8 +1404,8 @@ function estadoHtml(i) {
   const notas = w.response && w.response.notes ? ` — ${esc(w.response.notes)}` : '';
   if (w.state === 'delegated' && w.assignee) return caja('user', `Delegado a ${who(w.assignee)}${w.delegatedBy ? ` por ${who(w.delegatedBy)}` : ''}${w.delegatedAt ? ` · ${esc(rel(w.delegatedAt))}` : ''}`);
   if (w.state === 'snoozed' && w.snoozeUntil && w.snoozeUntil > nowIso()) return caja('clock', `Pospuesto hasta ${esc(fecha(w.snoozeUntil))}${w.updatedBy ? ` por ${who(w.updatedBy)}` : ''}`, volver);
-  if (w.state === 'dismissed') return caja('x', `<b>Descartado:</b> ${esc(etiqueta(DISMISS, w.dismissReason))}${notas}${w.updatedBy ? ` · ${who(w.updatedBy)}` : ''}`, volver);
-  if (w.state === 'responded') return caja('reply', `<b>Respondido:</b> ${esc(etiqueta(RESP, (w.response || {}).decision))}${notas}${w.response && w.response.ticket ? ` <span class="mono">[${esc(w.response.ticket)}]</span>` : ''}${w.updatedBy ? ` · ${who(w.updatedBy)}` : ''}`, volver);
+  if (w.state === 'dismissed') return caja('x', `<b>Descartado:</b> ${esc(etiqueta(DISMISS(), w.dismissReason))}${notas}${w.updatedBy ? ` · ${who(w.updatedBy)}` : ''}`, volver);
+  if (w.state === 'responded') return caja('reply', `<b>Respondido:</b> ${esc(etiqueta(RESP(), (w.response || {}).decision))}${notas}${w.response && w.response.ticket ? ` <span class="mono">[${esc(w.response.ticket)}]</span>` : ''}${w.updatedBy ? ` · ${who(w.updatedBy)}` : ''}`, volver);
   return '';
 }
 
@@ -1539,8 +1566,8 @@ function viewFuera() {
     return 'triage'; };
   const motivo = (i) => { const w = S.work[i.id] || {}; const t = tipo(i);
     if (t === 'pospuestos') return `Pospuesto hasta ${fecha(w.snoozeUntil)}`;
-    if (t === 'descartados') return `Descartado: ${etiqueta(DISMISS, w.dismissReason)}`;
-    if (t === 'respondidos') return `Respondido: ${etiqueta(RESP, (w.response || {}).decision)}`;
+    if (t === 'descartados') return `Descartado: ${etiqueta(DISMISS(), w.dismissReason)}`;
+    if (t === 'respondidos') return `Respondido: ${etiqueta(RESP(), (w.response || {}).decision)}`;
     return DEC[i.decision] || i.decision; };
   const xs = Object.values(S.incidents).filter((i) => inFilter(i) && i.status === 'open' && (!reportable(i) || !visibleByWork(i))).sort(orden);
   const n = (t) => xs.filter((i) => tipo(i) === t).length;
@@ -1595,7 +1622,7 @@ function viewProyectos() {
   const rango = (p) => (p.status === 'error' ? 0 : p.status === 'review' ? 1 : nivel(p) === 'critical' ? 2 : nivel(p) === 'warn' ? 3 : p.status === 'active' ? 4 : 5);
   const todos = Object.values(S.projects);
   const ps = todos.filter((p) => !q || norm(`${p.name} ${(p.orchestrator || {}).folderPath || ''}`).includes(q))
-    .sort((a, b) => rango(a) - rango(b) || String(a.name).localeCompare(String(b.name), 'es'));
+    .sort((a, b) => rango(a) - rango(b) || String(a.name).localeCompare(String(b.name), LANG));
   const det = propuestos().length;
   // Lo abierto de cada proyecto: temas en la bandeja y discrepancias pendientes (que no van a la bandeja).
   const abierto = (p) => { const nd = discPendientes(p.id); return [c[p.id] ? pl(c[p.id], 'tema abierto', 'temas abiertos') : '', nd ? pl(nd, 'discrepancia', 'discrepancias') : ''].filter(Boolean).join(' · '); };
@@ -1636,8 +1663,8 @@ function discEstadoHtml(d) {
   let humano = '';
   if (w && !discPendiente(d)) {
     if (w.state === 'snoozed' && d.status === 'open') humano = caja('clock', `Pospuesta hasta ${esc(fecha(w.snoozeUntil))}${por}`, reabrir);
-    else if (w.state === 'dismissed') humano = caja('x', `<b>Descartada:</b> ${esc(etiqueta(DDISMISS, w.dismissReason))}${notas}${por}`, reabrir);
-    else if (w.state === 'responded') humano = caja('reply', `<b>Respondida:</b> ${esc(etiqueta(DRESP, (w.response || {}).decision))}${notas}${w.response && w.response.ticket ? ` <span class="mono">[${esc(w.response.ticket)}]</span>` : ''}${por}`, reabrir);
+    else if (w.state === 'dismissed') humano = caja('x', `<b>Descartada:</b> ${esc(etiqueta(DDISMISS(), w.dismissReason))}${notas}${por}`, reabrir);
+    else if (w.state === 'responded') humano = caja('reply', `<b>Respondida:</b> ${esc(etiqueta(DRESP(), (w.response || {}).decision))}${notas}${w.response && w.response.ticket ? ` <span class="mono">[${esc(w.response.ticket)}]</span>` : ''}${por}`, reabrir);
   }
   const resuelta = d.status === 'resolved' ? caja('check', `<b>Resuelta:</b> ${esc(String(d.resolvedReason || 'La rutina dejó de detectarla').replace(/\.$/, ''))}${d.resolvedAt ? ` · ${esc(fecha(d.resolvedAt))}` : ''}`) : '';
   return humano + resuelta;
@@ -1658,12 +1685,12 @@ function discPanelHtml(d) {
       <span class="muted">La discrepancia deja de estar pendiente hasta esa fecha. ${ayudaLink('disc-posponer', 'Más sobre Posponer')}</span></div>`;
   }
   if (panel === 'descartar') {
-    return `<div class="panel" role="group" aria-label="Descartar"><span class="panel-t">¿Por qué se descarta?</span><div class="opts">${opt('motivo', DDISMISS)}</div>
+    return `<div class="panel" role="group" aria-label="Descartar"><span class="panel-t">¿Por qué se descarta?</span><div class="opts">${opt('motivo', DDISMISS())}</div>
       <input type="text" id="${id}-dnota" aria-label="Nota opcional" placeholder="Nota opcional (por qué)" value="${dr('dnota')}">
       <div><button class="btn primary" data-act="disc-descartar" ${sel.motivo ? '' : 'disabled'}>Descartar</button></div>
       <span class="muted">La rutina lo anota en la memoria del proyecto y no la vuelve a mostrar como nueva. ${ayudaLink('disc-descartar', 'Más sobre Descartar')}</span></div>`;
   }
-  return `<div class="panel" role="group" aria-label="Responder"><span class="panel-t">¿Qué se decidió?</span><div class="opts">${opt('decision', DRESP)}</div>
+  return `<div class="panel" role="group" aria-label="Responder"><span class="panel-t">¿Qué se decidió?</span><div class="opts">${opt('decision', DRESP())}</div>
     <textarea id="${id}-dnotas" aria-label="Notas de la respuesta" placeholder="Qué se va a corregir, quién lo toma o por qué está bien así">${dr('dnotas')}</textarea>
     ${String(sel.decision || '').startsWith('fix_') ? `<input type="text" id="${id}-dticket" aria-label="Ticket o referencia de la corrección" placeholder="Ticket o referencia de la corrección (opcional)" value="${dr('dticket')}">` : ''}
     <div><button class="btn primary" data-act="disc-responder" ${sel.decision ? '' : 'disabled'}>Enviar respuesta</button></div>
@@ -1684,7 +1711,7 @@ function discHtml(d) {
   </article>`;
 }
 function discrepanciasHtml(p) {
-  const todas = discsDe(p.id).sort((a, b) => String(b.lastSeenAt || '').localeCompare(String(a.lastSeenAt || '')) || String(a.title).localeCompare(String(b.title), 'es'));
+  const todas = discsDe(p.id).sort((a, b) => String(b.lastSeenAt || '').localeCompare(String(a.lastSeenAt || '')) || String(a.title).localeCompare(String(b.title), LANG));
   if (!todas.length) return '<p class="muted">Sin discrepancias. El análisis del proyecto cruza el código, la documentación y Orchestrator: lo que no coincide aparece acá.</p>';
   const pend = todas.filter(discPendiente); const aten = todas.filter((d) => !discPendiente(d));
   const ver = S.disc === 'atendidas' ? aten : pend;
@@ -1700,7 +1727,7 @@ const kb = (txt) => `${Math.max(1, Math.round(new TextEncoder().encode(txt || ''
 function docsHtml(p) {
   const pid = esc(p.id); const docs = S.docs[p.id]; const borr = S.docDraft[p.id];
   if (!docs) return '<p class="muted">Cargando…</p>';
-  const filas = DOCS.map(([k, nombre, desc]) => {
+  const filas = DOCS().map(([k, nombre, desc]) => {
     const d = docs[k]; const b = borr && borr.kind === k ? borr : null;
     const at = `data-pid="${pid}" data-kind="${k}"`;
     const subir = (txt) => `<label class="btn sm" data-tip="doc-subir">${ico('plus')}${txt}<input class="sr" type="file" id="doc-f-${pid}-${k}" data-doc-file="${k}" data-pid="${pid}" accept=".docx,.md,.markdown,.txt"></label>`;
@@ -1785,7 +1812,7 @@ function viewProyecto(id) {
   return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${pl(procs.length, 'proceso', 'procesos')} · ${esc(p.status === 'active' ? NIVEL[l] : PSTATUS[p.status] || p.status)}${nDisc ? ` · ${pl(nDisc, 'discrepancia pendiente', 'discrepancias pendientes')}` : ''}`, { back, actions: acciones })
     + (S.isAdmin && p.status === 'review' ? `<div class="banner note">${ico('check')}<span class="grow"><b>El alta está lista para revisar.</b> Mirá la memoria de proceso, las discrepancias, el inventario y las reglas propuestas. Cuando esté bien, activá el control.</span><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')
     + (p.statusNote ? `<div class="banner info">${ico('alert')}<span class="grow">${esc(p.statusNote)}</span></div>` : '')
-    + seccion('Procesos', procs.length || null, `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
+    + seccion('Procesos', procs.length || null, `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES().find((r) => r[0] === x.role) || ROLES()[3])[1])}</span>
       <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span>${extra(x)}${x.repo ? `<span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo))}</span>` : ''}${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<p class="muted">Los procesos de la carpeta se detectan solos en la próxima corrida.</p>'}
       ${S.isAdmin ? `<div><button class="btn ghost sm" data-act="tab" data-t="config" style="margin-left:-8px">Editar configuración</button></div>` : ''}</div>`)
     + `<div class="tabs" role="tablist" aria-label="Secciones del proyecto">${tabs.map(([k, t]) => `<button role="tab" id="tab-${k}" data-act="tab" data-t="${k}" aria-selected="${tab === k}" aria-controls="tabpanel" tabindex="${tab === k ? 0 : -1}">${t}</button>`).join('')}${ayudaBtn('proyecto-' + tab, 'pestaña ' + (tabs.find((x) => x[0] === tab) || tabs[0])[1])}</div>
@@ -1823,7 +1850,7 @@ function rulesTable(reglas, enProyecto) {
 
 function viewReglas() {
   const reglas = Object.values(S.rules).filter((r) => !S.filter || r.projectId === S.filter || r.projectId === '*');
-  const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name), 'es'));
+  const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name), LANG));
   const form = S.isAdmin ? seccion('Nueva regla', null, `<div class="box form">
     <div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,2fr)"><label>Proyecto<select id="nr-proj">${['*', ...ps.map((p) => p.id)].map((id) => `<option value="${esc(id)}" ${(S.drafts['nr-proj'] || S.filter || '*') === id ? 'selected' : ''}>${esc(id === '*' ? 'Todos los proyectos' : projName(id))}</option>`).join('')}</select></label>
     <label>Regla en lenguaje natural<input type="text" id="nr-text" placeholder="Ej.: si se ven más de 10 errores de login seguidos, escalar" value="${esc(S.drafts['nr-text'] || '')}"></label></div>
@@ -2244,7 +2271,7 @@ async function accion(act, b, { id, inc, draft, clear, did }) {
   if (act === 'descartar') {
     const motivo = (S.sel[id] || {}).motivo; if (!motivo) return;
     const nota = draft('nota');
-    if (await writeWork(inc, { state: 'dismissed', dismissReason: motivo, response: { notes: nota || null } }, { type: 'dismiss', text: `descartó: ${etiqueta(DISMISS, motivo)}${nota ? ' — ' + nota : ''}` })) { S.panel[id] = null; clear('nota'); toast('Descartado. Queda en Fuera de bandeja.', id); }
+    if (await writeWork(inc, { state: 'dismissed', dismissReason: motivo, response: { notes: nota || null } }, { type: 'dismiss', text: `descartó: ${etiqueta(DISMISS(), motivo)}${nota ? ' — ' + nota : ''}` })) { S.panel[id] = null; clear('nota'); toast('Descartado. Queda en Fuera de bandeja.', id); }
     return;
   }
   if (act === 'responder') {
@@ -2252,7 +2279,7 @@ async function accion(act, b, { id, inc, draft, clear, did }) {
     const notas = draft('notas');
     if (dec === 'recheck' && !draft('recheck')) return toast('Elegí la fecha del re-control');
     const response = { decision: dec, notes: notas || null, ticket: draft('ticket') || null, recheckAt: dec === 'recheck' ? new Date(draft('recheck') + 'T09:00:00').toISOString() : null };
-    if (await writeWork(inc, { state: 'responded', response }, { type: 'respond', text: `respondió: ${etiqueta(RESP, dec)}${notas ? ' — ' + notas : ''}` })) { S.panel[id] = null; clear('notas', 'ticket', 'recheck'); toast('Respuesta enviada. La rutina actualiza la memoria en la próxima corrida.', id); }
+    if (await writeWork(inc, { state: 'responded', response }, { type: 'respond', text: `respondió: ${etiqueta(RESP(), dec)}${notas ? ' — ' + notas : ''}` })) { S.panel[id] = null; clear('notas', 'ticket', 'recheck'); toast('Respuesta enviada. La rutina actualiza la memoria en la próxima corrida.', id); }
     return;
   }
   if (act === 'reabrir') {
@@ -2373,7 +2400,7 @@ async function accion(act, b, { id, inc, draft, clear, did }) {
       toast(`${pl(det.length, 'proyecto registrado', 'proyectos registrados')}: la rutina analiza hasta 3 por corrida`);
     } else if (act === 'doc-guardar') {
       const pid = b.dataset.pid; const kind = b.dataset.kind; const dr = S.docDraft[pid]; if (!dr || dr.kind !== kind) return;
-      const nombre = etiqueta(DOCS, kind);
+      const nombre = etiqueta(DOCS(), kind);
       // Se vuelve a enmascarar: el texto pudo pegarse o editarse después de la conversión.
       const m = enmascarar(String(S.drafts['doc-md-' + pid] || '').replace(/\r\n?/g, '\n').trim());
       if (!m.texto) return toast('El documento está vacío');
@@ -2386,7 +2413,7 @@ async function accion(act, b, { id, inc, draft, clear, did }) {
       const pid = b.dataset.pid; const kind = b.dataset.kind;
       await S.db.doc(`documents/${pid}_${kind}`).delete();
       S.docDel[pid] = null; if (S.docView[pid] === kind) S.docView[pid] = null;
-      toast(`${etiqueta(DOCS, kind)} quitado`);
+      toast(`${etiqueta(DOCS(), kind)} quitado`);
     } else if (act === 'guardar-proyecto') {
       const pid = b.dataset.pid; const p = S.projects[pid];
       const r = proyectoDesdeForm(S.forms['cfg-' + pid] || formDesde(p));
@@ -2454,7 +2481,7 @@ async function start() {
   coll('incidentWork', 'work', () => resolveNames(Object.values(S.work).flatMap((w) => [w.assignee, w.delegatedBy, w.updatedBy])));
   db.collection('incidents').where('status', '==', 'open').onSnapshot((s) => { clearTimeout(timer); S.incidents = {}; for (const d of s.docs) S.incidents[d.id] = { id: d.id, ...d.data() }; S.loaded.incidents = true; schedule(); }, onErr);
   db.collection('runs').orderBy('startedAt', 'desc').limit(50).onSnapshot((s) => { S.runs = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.loaded.runs = true; schedule(); }, onErr);
-  db.doc('config/settings').onSnapshot((d) => { S.settings = d.exists ? d.data() : null; schedule(); }, () => {});
+  db.doc('config/settings').onSnapshot((d) => { S.settings = d.exists ? d.data() : null; setIdioma(S.settings && S.settings.language); schedule(); }, () => {});
   db.doc('config/discovery').onSnapshot((d) => { S.discovery = d.exists ? d.data() : null; schedule(); }, () => {});
   coll('libraries', 'libraries');
   // Colecciones nuevas: si fallan (p. ej. el tablero publicado todavía no las conoce) el resto sigue funcionando.
@@ -2464,6 +2491,7 @@ async function start() {
   db.collection('requests').where('status', '==', 'pending').onSnapshot((s) => { S.pendReq = s.docs.map((d) => ({ id: d.id, ...d.data() })); schedule(); }, () => {});
   setInterval(schedule, 60000); // refresca los "hace X min"
 }
+document.documentElement.lang = LANG; document.title = tx('comun.titulo');
 start();
 })();
 </script>
