@@ -10,15 +10,40 @@ Los roles se asignan desde el menú **Compartir** del tablero.
 | Operador | Contributor | Responder, delegar, posponer, descartar y comentar incidentes |
 | Admin | Editor | Además: registrar proyectos, aprobar reglas, editar criterios y ajustes |
 
-## La pantalla principal
+## Cómo moverse
 
-- **Arriba:** un chip por proyecto con un punto de color. Verde: todo bien. Ámbar: hay avisos. Rojo: hay problemas P1/P2. Gris: pausado o sin datos. **Un clic filtra todo por ese proyecto.**
-- **A la derecha:** cuándo fue el último control. Si la rutina dejó de correr, se ve en rojo.
+El menú está siempre a la vista: a la izquierda en una computadora, abajo en el teléfono.
+
+| Sección | Para qué |
+|---|---|
+| **Bandeja** | Lo que hay que mirar ahora. El número indica cuántos temas hay abiertos. |
+| **Proyectos** | Estado, memoria, reglas e inventario de cada proyecto. Desde acá se registran proyectos nuevos (Admin). |
+| **Corridas** | Cada ejecución de la rutina: qué revisó y qué encontró. |
+| **Reglas** | Puntos de control en lenguaje natural. El número indica cuántas propuestas esperan aprobación. |
+| **Fuera de bandeja** | Temas abiertos que no se muestran en la bandeja: pospuestos, respondidos, descartados y los que el triage decidió no reportar. En el teléfono está dentro de **Más**. |
+| **Ajustes** (Admin) | Criterios de triage, umbrales y retención. En el teléfono está dentro de **Más**. |
+
+Abajo del menú se ve el **estado de la rutina** y cuándo fue el último control. Si la rutina dejó de correr, se marca en rojo y la bandeja lo avisa arriba.
+
+### Filtrar por proyecto
+
+Arriba a la derecha de la Bandeja, Corridas, Reglas y Fuera de bandeja está el selector **Proyecto**:
+
+1. Tocalo y escribí parte del nombre o de la carpeta.
+2. Elegí el proyecto con un clic, o con las flechas y Enter.
+
+Cada proyecto muestra un punto de color (verde: sin novedades; ámbar: con avisos; rojo: con problemas P1/P2; gris: pausado o sin datos) y cuántos temas tiene abiertos. Primero aparecen los que tienen temas abiertos.
+
+El filtro queda aplicado en todas esas secciones hasta que lo quites con la **×** al lado del selector.
+
+## La bandeja
+
 - **Para revisar** (solo Admin): reglas propuestas y proyectos recién analizados.
 - **Para vos:** incidentes que te delegaron.
 - **Requiere acción:** incidentes escalados, ordenados por severidad.
 - **Avisos:** cosas para saber, en formato compacto.
-- **Ver más**, al pie: corridas, no reportados, proyectos, reglas y ajustes.
+
+Los botones de arriba (**Todo**, **Para vos**, **Requiere acción**, **Avisos**) muestran solo esa parte. El buscador filtra por título, proyecto, categoría o severidad.
 
 ## Cada tarjeta es un tema
 
@@ -30,8 +55,22 @@ Si el problema vuelve a ocurrir, **no se crea otra tarjeta**. La misma muestra "
 | **Posponer** | Oculta la tarjeta hasta una fecha. Vuelve antes si el problema empeora. |
 | **Descartar** | Con un motivo: esperado, falso positivo, dato de negocio o sistema externo. La rutina lo anota en la memoria del proyecto y puede proponer una regla para no volver a avisar. |
 | **Responder** | Con una decisión, por ejemplo "requiere fix" (con ticket) o "volver a controlar en…" (con fecha), más notas. Queda en la memoria de producción. |
-| **Comentar** | Nota para el equipo, en la actividad de la tarjeta. |
-| **Ver detalle** | Muestra el porqué del triage, el análisis previo (hipótesis, código y documentación relacionados, acciones sugeridas), la evidencia y la actividad. |
+
+Después de posponer, descartar o responder aparece un aviso con **Deshacer** durante unos segundos.
+
+### El detalle de un tema
+
+Un clic en la tarjeta (o en **Ver detalle**) abre el detalle en un panel al costado, sin perder el lugar en la lista. Se cierra con la **×**, con Esc o tocando fuera.
+
+El detalle muestra, en este orden:
+
+1. Las acciones (las mismas de la tarjeta).
+2. **Por qué está acá:** el porqué del triage, la decisión y las reglas que aplicaron.
+3. **Análisis previo:** hipótesis, acciones sugeridas, código y documentación relacionados.
+4. **Evidencia** redactada.
+5. **Actividad**, con un cuadro para **comentar** (nota para el equipo).
+
+Si el tema está pospuesto, respondido o descartado, el detalle lo dice arriba y ofrece **Devolver a la bandeja**. Esos temas se encuentran en **Fuera de bandeja**.
 
 **La Torre de Control nunca cambia nada en Orchestrator ni en el código.** Sugiere qué hacer, y lo hace una persona.
 
@@ -39,7 +78,7 @@ Si el problema vuelve a ocurrir, **no se crea otra tarjeta**. La misma muestra "
 
 Un **proyecto es una carpeta de Orchestrator**. La rutina detecta sola sus procesos (Dispatcher, Performer, Reporter…), las librerías que usan y la documentación. Todo sale de los paquetes publicados, en la versión que está en producción.
 
-1. Ver más → **Registrar proyecto**. Hay dos formas:
+1. **Proyectos** → **Registrar proyecto**. Hay dos formas:
    - En **Carpetas detectadas sin registrar**, tocá **Registrar** en la carpeta que quieras.
    - O escribí el nombre y la carpeta a mano.
 2. La próxima corrida lo analiza y genera la **memoria de proceso** y reglas propuestas.
@@ -58,11 +97,11 @@ Normalmente no hace falta.
 
 - **`ValidarEPS · LoginFamisanar`**: el error ocurrió dentro de esa actividad de la librería. El análisis lee el código de la librería en la versión que usa el proceso. El detalle dice qué otros proyectos usan la misma librería.
 - **`Nueva versión 1.0.129`**: se desplegó una versión nueva después de abrirse la tarjeta. La rutina la vuelve a analizar y explica qué cambió.
-- **Volver a analizar**, en el detalle: pide un análisis nuevo en la próxima corrida.
+- **Volver a analizar**, en el detalle, junto a **Análisis previo**: pide un análisis nuevo en la próxima corrida.
 
 ## Corregir la configuración de un proyecto (Admin)
 
-1. Entrá al proyecto (Ver más → Proyectos) y tocá **Editar configuración**, o andá a la pestaña **Configuración**.
+1. Entrá al proyecto desde **Proyectos** y tocá **Editar configuración**, o andá a la pestaña **Configuración**.
 2. Ahí podés cambiar:
    - el nombre;
    - la carpeta;

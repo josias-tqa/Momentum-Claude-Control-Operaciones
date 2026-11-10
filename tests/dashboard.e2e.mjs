@@ -45,23 +45,39 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.equal(titulos.filter((t) => /login/i.test(t)).length, 1, 'una sola tarjeta de login');
   assert.ok(await visible(page, 'text=Para revisar'), 'admin ve Para revisar');
   assert.ok(await visible(page, 'text=×7'), 'badge de recurrencia');
-  paso('admin: bandeja ordenada, una tarjeta por tema, recurrencia visible');
+  assert.equal(await page.getAttribute('#nav a[aria-current="page"]', 'href'), '#inicio', 'la navegación marca la vista actual');
+  assert.ok(await page.isVisible('#nav a[href="#proyectos"]') && await page.isVisible('#nav a[href="#no-reportados"]'), 'navegación siempre visible');
+  paso('admin: bandeja ordenada, una tarjeta por tema, recurrencia visible, navegación lateral');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'admin-escritorio.png'), fullPage: true });
 
   // Detalle con análisis.
   const login = page.locator('.card', { hasText: 'login' }).first();
-  await login.locator('[data-act="detalle"]').click();
-  // Esperar al render (requestAnimationFrame) en vez de leer en el mismo tick.
-  await page.waitForSelector('text=Análisis previo', { timeout: 3000 });
+  const scrollAntes = await page.evaluate(() => window.scrollY);
+  await login.locator('.c-title a').click();
+  // El detalle se abre en un panel sobre la lista (diálogo modal), sin perder el lugar.
+  await page.waitForSelector('#dw[role="dialog"] >> text=Análisis previo', { timeout: 3000 });
+  assert.equal(await page.evaluate(() => document.getElementById('app').inert), true, 'el fondo queda inerte');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'dw', 'el foco entra al panel');
   await page.waitForSelector('text=Framework/InitAllApplications.xaml:42', { timeout: 3000 });
   assert.ok(await visible(page, 'text=LIB_Sap · LoginSap'), 'etiqueta de librería');
   assert.ok(await visible(page, 'text=Nueva versión 1.4.0'), 'etiqueta de deploy');
   assert.ok(await visible(page, 'text=También la usan: Conciliación bancaria'));
-  await login.locator('[data-act="reanalizar-inc"]').click();
+  await page.locator('#dw [data-act="reanalizar-inc"]').click();
   await page.waitForTimeout(100);
   assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path.startsWith('requests/') && w.data.type === 'reanalyze_incident'));
-  paso('detalle: triage, análisis, librería, deploy y volver a analizar');
-  if (CAPT) await page.screenshot({ path: join(CAPT, 'detalle.png'), fullPage: true });
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'detalle.png') });
+  // Comentar desde la actividad del detalle.
+  await page.fill('#dw textarea[id$="-coment"]', 'Avisé a soporte SAP');
+  await page.click('#dw [data-act="comentar"]');
+  await page.waitForTimeout(150);
+  assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path.startsWith('activity/') && w.data.type === 'comment'));
+  // Esc cierra, devuelve el foco a la tarjeta y la lista sigue donde estaba.
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#dw', { state: 'detached', timeout: 3000 });
+  assert.ok((await page.evaluate(() => document.activeElement.id)).startsWith('t-'), 'el foco vuelve a la tarjeta');
+  assert.equal(await page.evaluate(() => document.getElementById('app').inert), false);
+  assert.equal(await page.evaluate(() => window.scrollY), scrollAntes, 'la bandeja no pierde el scroll');
+  paso('detalle en panel lateral: análisis, librería, deploy, comentar, re-analizar; Esc cierra y devuelve el foco');
 
   // Descartar: la tarjeta sale de la bandeja y se escribe incidentWork + activity.
   const antes = await page.locator('main .card').count();
@@ -77,6 +93,32 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.ok(writes.some((w) => w.path.startsWith('activity/') && w.data.type === 'dismiss'));
   paso('descartar: escribe incidentWork y activity, la tarjeta sale de la bandeja');
 
+  // Deshacer desde el aviso: la tarjeta vuelve.
+  await page.click('#toast [data-act="deshacer"]');
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('main .card').count(), antes, 'deshacer devuelve la tarjeta');
+  assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path.startsWith('activity/') && w.data.type === 'reopen'));
+  // Posponer, y recuperarla desde "Fuera de bandeja".
+  const c3 = page.locator('.card', { hasText: 'abandonado' }).first();
+  await c3.locator('[data-act="panel"][data-p="posponer"]').click();
+  await c3.locator('[data-act="posponer"][data-d="3"]').click();
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('main .card').count(), antes - 1, 'la tarjeta pospuesta sale de la bandeja');
+  await page.click('#nav a[href="#no-reportados"]');
+  await page.waitForSelector('h1 >> text=Fuera de bandeja', { timeout: 3000 });
+  await page.click('[data-act="seg"][data-v="pospuestos"]');
+  await page.click('main a.rowi >> nth=0');
+  await page.waitForSelector('#dw >> text=Pospuesto hasta', { timeout: 3000 });
+  await page.click('#dw [data-act="reabrir"]');
+  await page.waitForTimeout(200);
+  const wr = (await page.evaluate(() => window.__WRITES__)).filter((w) => w.path.startsWith('incidentWork/')).pop();
+  assert.equal(wr.data.state, 'open'); assert.equal(wr.data.snoozeUntil, undefined, 'se limpia la fecha');
+  await page.keyboard.press('Escape');
+  await page.click('#nav a[href="#inicio"]');
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator('main .card').count(), antes, 'vuelve a la bandeja');
+  paso('deshacer, posponer y devolver a la bandeja desde "Fuera de bandeja"');
+
   // Posponer y delegar.
   const c2 = page.locator('main .card').first();
   await c2.locator('[data-act="panel"][data-p="delegar"]').click();
@@ -87,12 +129,35 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.data.state === 'delegated' && w.data.assignee === 'u_oper0000000000000000002'));
   paso('delegar: buscador de personas y asignación');
 
-  // Filtro por proyecto: un clic.
-  await page.click('[data-filter="conciliacion"]');
+  // Filtro por proyecto: selector con búsqueda, operable solo con teclado.
+  await page.click('#scope-btn');
+  await page.waitForSelector('#scope-q:focus', { timeout: 3000 });
+  assert.equal(await page.locator('#scope-list [role="option"]').count(), 4, 'Todos + 3 proyectos');
+  await page.keyboard.type('concil');
   await page.waitForTimeout(100);
+  assert.equal(await page.locator('#scope-list [role="option"]').count(), 1, 'la búsqueda acota la lista');
+  await page.keyboard.press('Enter');
   assert.ok(await visible(page, 'text=Todo en orden'));
-  await page.click('[data-filter=""]');
-  paso('filtro por proyecto con un clic');
+  assert.equal(await page.getAttribute('#scope-btn', 'aria-expanded'), 'false');
+  assert.ok((await page.textContent('#scope-btn')).includes('Conciliación bancaria'), 'el filtro activo se ve en el selector');
+  await page.click('#scope-x');
+  await page.waitForTimeout(100);
+  // Con mouse y Esc.
+  await page.click('#scope-btn');
+  await page.click('[data-act="scope-pick"][data-id="facturacion"]');
+  await page.waitForTimeout(100);
+  assert.ok(await page.locator('main .card').count() > 0);
+  await page.click('#scope-btn');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#scope-pop').count(), 0, 'Esc cierra el selector');
+  await page.click('#scope-x');
+  // Búsqueda dentro de la bandeja.
+  await page.fill('#q-inbox', 'login');
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('main .card').count(), 1, 'la búsqueda filtra la bandeja');
+  await page.fill('#q-inbox', '');
+  paso('filtro por proyecto con búsqueda y teclado; búsqueda en la bandeja');
 
   // Corridas y detalle de corrida.
   await page.evaluate(() => { location.hash = '#corridas'; });
@@ -101,22 +166,43 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForTimeout(100);
   assert.ok(await visible(page, 'text=Punto de control'));
   assert.ok(await visible(page, 'text=Hallazgos y triage'));
-  paso('corridas: checks y triage por proyecto');
   if (CAPT) await page.screenshot({ path: join(CAPT, 'corrida.png'), fullPage: true });
+  await page.click('main .list a.rowi >> nth=0');
+  await page.waitForSelector('#dw[role="dialog"]', { timeout: 3000 });
+  await page.click('#dw-x');
+  await page.waitForSelector('#dw', { state: 'detached', timeout: 3000 });
+  assert.ok(await visible(page, 'text=Punto de control'), 'al cerrar se vuelve a la corrida');
+  paso('corridas: checks y triage por proyecto; el hallazgo abre el detalle');
 
   // Proyecto en revisión + reglas propuestas.
-  await page.evaluate(() => { location.hash = '#reglas'; });
+  await page.click('#nav a[href="#reglas"]');
   await page.waitForTimeout(100);
+  assert.ok(await visible(page, 'text=Propuestas para aprobar'));
   await page.locator('[data-act="regla"][data-s="active"]').first().click();
   await page.waitForTimeout(100);
   assert.ok((await page.evaluate(() => window.__WRITES__)).some((w) => w.path === 'rules/facturacion-abandonados' && w.data.status === 'active'));
   paso('reglas: aprobar una propuesta');
-  await page.evaluate(() => { location.hash = '#proyecto-facturacion'; });
+  await page.click('#nav a[href="#proyectos"]');
+  await page.click('main a.rowi[href="#proyecto-facturacion"]');
   await page.waitForTimeout(150);
   assert.ok(await visible(page, 'text=Registra en SAP las facturas'));
-  paso('proyecto: memoria de proceso');
+  assert.equal(await page.getAttribute('#nav a[aria-current="page"]', 'href'), '#proyectos');
+  // Pestañas con teclado.
+  await page.focus('#tab-memoria');
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(100);
+  assert.equal(await page.getAttribute('#tab-produccion', 'aria-selected'), 'true');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'tab-produccion');
+  await page.keyboard.press('ArrowLeft');
+  // Del proyecto a sus temas en la bandeja.
+  await page.click('[data-act="ver-bandeja"]');
+  await page.waitForSelector('h1 >> text=Bandeja', { timeout: 3000 });
+  assert.ok((await page.textContent('#scope-btn')).includes('Facturación'));
+  await page.click('#scope-x');
+  paso('proyectos: lista, memoria de proceso, pestañas con teclado y salto a la bandeja');
   // Registrar proyecto: solo nombre y carpeta; los procesos se detectan solos.
-  await page.evaluate(() => { location.hash = '#registrar'; });
+  await page.click('#nav a[href="#proyectos"]');
+  await page.click('main a[href="#registrar"] >> nth=0');
   await page.waitForTimeout(100);
   await page.fill('#f-nuevo-p-nombre', 'Cobranzas');
   await page.fill('#f-nuevo-p-carpeta', 'Produccion/Cobranzas');
@@ -204,8 +290,23 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   const { page, ctx } = await abrir({ viewport: { width: 390, height: 844 }, oscuro: true });
   const ancho = await page.evaluate(() => document.documentElement.scrollWidth);
   assert.ok(ancho <= 390, `sin scroll horizontal (ancho ${ancho})`);
-  paso('teléfono: sin scroll horizontal, tema oscuro');
-  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-oscuro.png'), fullPage: true });
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-oscuro.png') });
+  assert.ok(await page.isVisible('#tabbar') && !(await page.isVisible('#nav')), 'barra inferior en vez del riel');
+  await page.click('#tabbar a[href="#mas"]');
+  await page.click('main a[href="#no-reportados"]');
+  await page.waitForSelector('h1 >> text=Fuera de bandeja', { timeout: 3000 });
+  await page.click('#tabbar a[href="#inicio"]');
+  await page.click('main .card .c-title a >> nth=0');
+  await page.waitForSelector('#dw[role="dialog"]', { timeout: 3000 });
+  assert.ok(await page.evaluate(() => document.getElementById('dw').getBoundingClientRect().width >= document.documentElement.clientWidth), 'detalle a pantalla completa');
+  assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'sin scroll horizontal con el detalle abierto');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-detalle.png') });
+  await page.keyboard.press('Escape');
+  await page.click('#scope-btn');
+  await page.waitForSelector('#scope-q', { timeout: 3000 });
+  assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 390, 'sin scroll horizontal con el selector abierto');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'telefono-selector.png') });
+  paso('teléfono: barra inferior, detalle a pantalla completa, sin scroll horizontal, tema oscuro');
   await ctx.close();
 }
 

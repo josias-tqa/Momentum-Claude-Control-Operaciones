@@ -1,180 +1,374 @@
 <title>Torre de Control Momentum</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
 <style>
-/* Layout: una columna de trabajo (bandeja de acción) bajo una barra fina de estado por proyecto;
-   todo lo secundario vive en vistas "Ver más" enrutadas por #hash. */
+/* Layout: riel de navegación fijo a la izquierda (barra inferior en teléfono); una columna de trabajo con
+   cabecera de vista y selector de proyecto; el detalle de cada tema se abre en un panel lateral sobre la lista. */
 :root{
-  --bg:#f2f4f3; --surface:#ffffff; --surface-2:#e9edeb; --fg:#16201d; --muted:#5d6a66; --line:#d5dcd9;
-  --accent:#0d6b5f; --accent-fg:#ffffff;
-  --p1:#c62828; --p2:#d9640c; --p3:#b88a00; --p4:#7a8580; --ok:#2e7d4f;
-  --p1-bg:#fdecea; --p2-bg:#fdf0e6; --p3-bg:#fbf5dd; --p4-bg:#eef1f0; --ok-bg:#e6f3ec;
-  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#e9edf2; --hover:#f6f8fb; --fg:#121a24; --muted:#566273; --line:#dce2ea; --line-2:#c2cbd6;
+  --accent:#2446d8; --accent-fg:#ffffff; --accent-soft:#e7ecfd;
+  --rail:#0d1a28; --rail-fg:#e6edf5; --rail-muted:#9aabbd; --rail-line:#22364b; --rail-hover:#15273a; --rail-on:#1d3550;
+  --rail-ok:#4cc38a; --rail-warn:#e5b53f; --rail-bad:#ff6b63;
+  --p1:#c22525; --p2:#a84c08; --p3:#8a6a00; --p4:#566273; --ok:#1f7a4a;
+  --p1-bg:#fdeceb; --p2-bg:#fdf0e3; --p3-bg:#fbf4d9; --p4-bg:#e9edf2; --ok-bg:#e4f4ea;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 12px 32px rgba(16,24,40,.12); --scrim:rgba(10,16,24,.48);
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Archivo","Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  --r:10px;
+  --r:12px; --r-s:8px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1513; --surface:#161e1b; --surface-2:#1e2824; --fg:#e3ebe8; --muted:#93a39e; --line:#2a3632;
-  --accent:#3fb8a6; --accent-fg:#0b1412;
-  --p1:#ef6a62; --p2:#f0924a; --p3:#e3bc3f; --p4:#8f9b97; --ok:#5cc28a;
-  --p1-bg:#3a1c1a; --p2-bg:#3a2617; --p3-bg:#352d12; --p4-bg:#232c29; --ok-bg:#16301f; color-scheme:dark}}
+  --bg:#0a1017; --surface:#111923; --surface-2:#1a2431; --hover:#15202c; --fg:#e5ebf2; --muted:#9aa8b8; --line:#222e3c; --line-2:#36465a;
+  --accent:#8fa8ff; --accent-fg:#0a1017; --accent-soft:#1a2648;
+  --rail:#070c12; --rail-fg:#e1e8f0; --rail-muted:#8b9bad; --rail-line:#1a2532; --rail-hover:#101924; --rail-on:#18263a;
+  --rail-ok:#4cc38a; --rail-warn:#e5b53f; --rail-bad:#ff6b63;
+  --p1:#ff8279; --p2:#ffa657; --p3:#e3b341; --p4:#9aa8b8; --ok:#5bd08a;
+  --p1-bg:#3b1a1c; --p2-bg:#3a2613; --p3-bg:#33290f; --p4-bg:#1a2431; --ok-bg:#12301f;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55); --scrim:rgba(0,0,0,.62); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f1513; --surface:#161e1b; --surface-2:#1e2824; --fg:#e3ebe8; --muted:#93a39e; --line:#2a3632;
-  --accent:#3fb8a6; --accent-fg:#0b1412;
-  --p1:#ef6a62; --p2:#f0924a; --p3:#e3bc3f; --p4:#8f9b97; --ok:#5cc28a;
-  --p1-bg:#3a1c1a; --p2-bg:#3a2617; --p3-bg:#352d12; --p4-bg:#232c29; --ok-bg:#16301f; color-scheme:dark}
+  --bg:#0a1017; --surface:#111923; --surface-2:#1a2431; --hover:#15202c; --fg:#e5ebf2; --muted:#9aa8b8; --line:#222e3c; --line-2:#36465a;
+  --accent:#8fa8ff; --accent-fg:#0a1017; --accent-soft:#1a2648;
+  --rail:#070c12; --rail-fg:#e1e8f0; --rail-muted:#8b9bad; --rail-line:#1a2532; --rail-hover:#101924; --rail-on:#18263a;
+  --rail-ok:#4cc38a; --rail-warn:#e5b53f; --rail-bad:#ff6b63;
+  --p1:#ff8279; --p2:#ffa657; --p3:#e3b341; --p4:#9aa8b8; --ok:#5bd08a;
+  --p1-bg:#3b1a1c; --p2-bg:#3a2613; --p3-bg:#33290f; --p4-bg:#1a2431; --ok-bg:#12301f;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55); --scrim:rgba(0,0,0,.62); color-scheme:dark}
+
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.45;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
-.wrap{max-width:880px;margin:0 auto}
+html.lock{overflow:hidden}
+html.lock .app{padding-right:var(--sbw,0px)}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+p{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .mono{font-family:var(--mono);font-size:12.5px}
 .muted{color:var(--muted)}
-.hidden{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+svg{flex:none}
+.i{width:16px;height:16px}
+.skip{position:fixed;left:12px;top:calc(8px + env(safe-area-inset-top,0px));z-index:50;transform:translateY(-200%);background:var(--accent);color:var(--accent-fg);border:0;border-radius:var(--r-s);padding:8px 12px;font-weight:600}
+.skip:focus-visible{transform:none;outline-color:var(--fg)}
 
-/* Barra superior */
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line)}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-.row1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.brand{font-weight:600;font-size:15px;letter-spacing:.01em;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--fg)}
-.brand svg{width:20px;height:20px;color:var(--accent)}
-.pulse{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--p4);flex:none}
-.dot.ok{background:var(--ok)} .dot.warn{background:var(--p3)} .dot.critical{background:var(--p1)} .dot.unknown,.dot.off{background:var(--p4)}
-.role{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted)}
-.chips{display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
-.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap}
-.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
-.chip[aria-pressed="true"] .dot{box-shadow:0 0 0 2px var(--accent-fg)}
-.chip .n{font-family:var(--mono);font-size:11.5px;opacity:.8}
+/* ---------- Estructura ---------- */
+.app{display:grid;grid-template-columns:244px minmax(0,1fr)}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  background:var(--rail);color:var(--rail-fg);display:flex;flex-direction:column;gap:22px;padding:20px 12px 14px;padding-left:max(12px,env(safe-area-inset-left,0px));overflow-y:auto}
+.rail :focus-visible,.mtop :focus-visible{outline-color:var(--rail-fg)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--rail-fg);padding:2px 8px;font-family:var(--display);font-stretch:112%;font-weight:650;font-size:15px;line-height:1.2;letter-spacing:.005em}
+.brand svg{width:26px;height:26px;color:var(--rail-ok)}
+.brand small{display:block;font-family:var(--sans);font-stretch:100%;font-weight:400;font-size:11.5px;color:var(--rail-muted);letter-spacing:0}
+.nav{display:grid;gap:2px}
+.nav a{display:flex;align-items:center;gap:10px;min-height:38px;padding:7px 10px;border-radius:var(--r-s);color:var(--rail-muted);text-decoration:none;font-weight:500;font-size:13.5px}
+.nav a:hover{background:var(--rail-hover);color:var(--rail-fg)}
+.nav a[aria-current="page"]{background:var(--rail-on);color:var(--rail-fg)}
+.nav .i{width:18px;height:18px}
+.nav .sep{height:1px;background:var(--rail-line);margin:8px 6px}
+.badge{margin-left:auto;font-family:var(--mono);font-size:11.5px;font-weight:500;line-height:1;padding:4px 7px;border-radius:999px;background:var(--rail-line);color:var(--rail-fg);font-variant-numeric:tabular-nums}
+.badge.hot{background:var(--rail-fg);color:var(--rail)}
+.rail-foot{margin-top:auto;display:grid;gap:10px;border-top:1px solid var(--rail-line);padding:14px 8px 0}
+.pulse{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.35}
+.pulse b{display:block;font-weight:600;color:var(--rail-fg)}
+.pulse span.d{color:var(--rail-muted)}
+.pulse .dot{margin-top:4px}
+.quien{display:flex;gap:9px;align-items:center;font-size:12.5px;color:var(--rail-muted);min-width:0}
+.quien b{display:block;color:var(--rail-fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quien .av{width:26px;height:26px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--p4);flex:none;display:inline-block}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--p3)} .dot.critical{background:var(--p1)}
+.dot.off{background:none;box-shadow:inset 0 0 0 2px var(--p4)}
+.rail .dot.ok,.mtop .dot.ok{background:var(--rail-ok)} .rail .dot.warn,.mtop .dot.warn{background:var(--rail-warn)} .rail .dot.critical,.mtop .dot.critical{background:var(--rail-bad)} .rail .dot.unknown,.mtop .dot.unknown{background:var(--rail-muted)}
+.content{min-width:0}
+.vw{max-width:1040px;margin:0 auto;padding-block:30px 64px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}
+.vw:focus{outline:none}
+.mtop,.tabbar{display:none}
 
-/* Secciones */
-main{padding-top:18px;display:grid;gap:22px}
-.sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
-.sec-h h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin:0;color:var(--muted)}
-.sec-h .cnt{font-family:var(--mono);font-size:12px;color:var(--muted)}
-.list{display:grid;gap:10px}
+/* ---------- Cabecera de vista ---------- */
+.vh{display:grid;gap:10px;margin-bottom:22px}
+.crumb{display:inline-flex;align-items:center;gap:4px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;width:max-content;min-height:28px}
+.crumb:hover{color:var(--fg)}
+.vh-row{display:flex;gap:14px 20px;align-items:flex-start;flex-wrap:wrap}
+.vh-t{flex:1;min-width:min(100%,260px);display:grid;gap:4px}
+h1{font-family:var(--display);font-stretch:112%;font-size:27px;line-height:1.15;font-weight:650;letter-spacing:-.012em;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+h1:focus{outline:none}
+.vh-t p{max-width:68ch}
+.vh-a{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-/* Tarjeta de incidente */
-.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--p4);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px;min-width:0}
-.card.P1{border-left-color:var(--p1)} .card.P2{border-left-color:var(--p2)} .card.P3{border-left-color:var(--p3)}
-.c-head{display:flex;gap:10px;align-items:flex-start;min-width:0}
-.ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;background:var(--p4-bg);color:var(--p4)}
-.P1 .ico{background:var(--p1-bg);color:var(--p1)} .P2 .ico{background:var(--p2-bg);color:var(--p2)} .P3 .ico{background:var(--p3-bg);color:var(--p3)}
-.ico svg{width:17px;height:17px}
-.c-main{min-width:0;flex:1;display:grid;gap:3px}
-.c-title{font-weight:600;font-size:14.5px;text-wrap:balance;overflow-wrap:anywhere}
-.c-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
-.pill{font-family:var(--mono);font-size:11.5px;font-weight:500;border-radius:5px;padding:1px 6px;background:var(--p4-bg);color:var(--p4)}
-.pill.P1{background:var(--p1-bg);color:var(--p1)} .pill.P2{background:var(--p2-bg);color:var(--p2)} .pill.P3{background:var(--p3-bg);color:var(--p3)}
-.tag{font-size:12px;border:1px solid var(--line);border-radius:5px;padding:0 6px}
-.tag.rec{border-color:transparent;background:var(--surface-2);color:var(--fg);font-family:var(--mono);font-size:11.5px}
-.tag.reo{border-color:var(--p2);color:var(--p2)}
-.why{color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:5px 10px;font-size:13px;display:inline-flex;gap:6px;align-items:center}
-.btn:hover{border-color:var(--muted)}
-.btn svg{width:14px;height:14px}
-.btn.on{border-color:var(--accent);color:var(--accent)}
+/* ---------- Selector de proyecto ---------- */
+.scope{position:relative;display:flex;gap:6px;align-items:center;min-width:0}
+.scope-btn{display:inline-flex;align-items:center;gap:8px;min-height:38px;max-width:100%;padding:6px 10px 6px 12px;border:1px solid var(--line-2);background:var(--surface);border-radius:10px;min-width:0}
+.scope-btn:hover{border-color:var(--muted)}
+.scope-btn .k{color:var(--muted);font-size:12.5px}
+.scope-btn .v{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+.scope.on .scope-btn{border-color:var(--accent);background:var(--accent-soft)}
+.pop{position:absolute;top:calc(100% + 6px);right:0;z-index:8;width:min(400px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.pop-q{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--line);color:var(--muted)}
+.pop-q:focus-within{box-shadow:inset 0 0 0 2px var(--accent)}
+.pop-q input[type=text]{border:0;background:none;padding:0;min-height:24px;outline:none;width:100%;color:var(--fg);border-radius:0}
+.pop ul{list-style:none;margin:0;padding:6px;max-height:min(340px,50vh);overflow:auto}
+.pop li{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-radius:var(--r-s);cursor:pointer;min-height:40px}
+.pop li.act{background:var(--surface-2)}
+.pop li .nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pop li .fp{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pop li[aria-selected="true"] .nm{font-weight:600;color:var(--accent)}
+.pop li .n{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pop .none{padding:16px;text-align:center}
+
+/* ---------- Controles ---------- */
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-s);padding:6px 12px;min-height:34px;font-size:13.5px;font-weight:500;display:inline-flex;gap:7px;align-items:center;justify-content:center;text-decoration:none;color:var(--fg);white-space:nowrap}
+.btn:hover{border-color:var(--muted);background:var(--hover)}
+.btn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.btn.link{border-color:transparent;background:none;color:var(--muted);padding-inline:4px}
-input[type=text],input[type=date],input[type=number],select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:6px 9px;font-size:13px;width:100%}
-textarea{min-height:70px;resize:vertical}
-.panel{border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:8px}
-.opts{display:flex;flex-wrap:wrap;gap:6px}
-.opt{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 11px;font-size:13px}
-.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
-.people{display:grid;gap:4px}
-.person{display:flex;gap:8px;align-items:center;border:1px solid transparent;border-radius:7px;padding:4px 6px;background:none;text-align:left}
-.person:hover{border-color:var(--line)}
-.av{width:22px;height:22px;border-radius:50%;flex:none}
-.who{display:inline-flex;align-items:center;gap:6px}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--fg)}
+.btn.ghost.on{background:var(--accent-soft);color:var(--accent)}
+.btn.sm{min-height:30px;padding:4px 9px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.icon-btn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:var(--r-s);border:1px solid transparent;background:none;color:var(--muted);text-decoration:none;flex:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--fg)}
+input[type=text],input[type=search],input[type=date],input[type=number],select,textarea{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-s);padding:7px 10px;font-size:14px;width:100%;min-height:36px}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
+textarea{min-height:76px;resize:vertical;line-height:1.45}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);flex:none}
+.w-auto{width:auto!important}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:5px 12px;min-height:32px;font-size:13px;font-weight:500;display:inline-flex;gap:7px;align-items:center;color:var(--muted)}
+.seg button:hover{border-color:var(--muted);color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.seg .n{font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;opacity:.85}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.search{position:relative;margin-left:auto;flex:0 1 250px;min-width:170px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search input{padding-left:33px}
 
-/* Detalle */
-.detail{display:grid;gap:14px;border-top:1px solid var(--line);padding-top:12px}
-.detail h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13px}
-.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
-.ev{display:grid;gap:4px;max-height:260px;overflow:auto}
-.ev .l{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:6px;padding:5px 8px;overflow-wrap:anywhere}
-.hyp{display:grid;gap:6px;padding-left:0;margin:0;list-style:none}
-.hyp li{display:grid;gap:2px;border-left:3px solid var(--line);padding-left:9px}
-.hyp li.alta{border-color:var(--p2)}
-.tl{display:grid;gap:8px;list-style:none;margin:0;padding:0}
-.tl li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:13px}
-.tl time{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+/* ---------- Secciones y listas ---------- */
+.sec{display:grid;gap:9px;margin-bottom:26px;min-width:0}
+.sec-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2{font-family:var(--display);font-stretch:108%;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin:0;color:var(--muted)}
+.cnt{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sec-h .hint{font-size:12.5px;color:var(--muted);margin-left:auto}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.list>*+*{border-top:1px solid var(--line)}
+.list>:first-child{border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0}
+.list>:last-child{border-radius:0 0 calc(var(--r) - 1px) calc(var(--r) - 1px)}
+.list>:only-child{border-radius:calc(var(--r) - 1px)}
 
-/* Estado vacío y avisos */
-.empty{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:34px 18px;text-align:center;display:grid;gap:6px;justify-items:center}
-.empty svg{width:44px;height:44px;color:var(--ok)}
-.empty b{font-size:17px}
-.banner{border-radius:var(--r);padding:10px 14px;font-size:13.5px;display:flex;gap:10px;align-items:center}
-.banner.bad{background:var(--p1-bg);color:var(--p1)} .banner.info{background:var(--surface-2);color:var(--fg)}
-.mini{display:flex;gap:8px;flex-wrap:wrap}
-.mini a{display:inline-flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;text-decoration:none;color:var(--fg);font-size:13px}
-.mini a .n{font-family:var(--mono)}
-.card.compact{padding:10px 14px;gap:6px}
-.card.compact .c-title{font-size:14px;font-weight:500}
+/* Tema (tarjeta de incidente) */
+.card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px 16px;cursor:pointer;min-width:0}
+.card:hover{background:var(--hover)}
+.card.sel{background:var(--accent-soft)}
+.pill{display:inline-grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.02em;border-radius:7px;min-width:34px;height:26px;padding:0 6px;background:var(--p4-bg);color:var(--p4);border:1px solid transparent;flex:none}
+.pill.P1{background:var(--p1);color:var(--surface)} .pill.P2{background:var(--p2-bg);color:var(--p2);border-color:var(--p2)} .pill.P3{background:var(--p3-bg);color:var(--p3)}
+.c-main{min-width:0;display:grid;gap:6px}
+.c-title{margin:0;font-family:var(--sans);font-size:14.5px;font-weight:600;line-height:1.35;text-wrap:balance;overflow-wrap:anywhere;letter-spacing:0;text-transform:none;color:var(--fg)}
+.c-title a{color:inherit;text-decoration:none}
+.c-title a:hover{text-decoration:underline}
+.c-meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.c-meta .cat{display:inline-flex;align-items:center;gap:5px;color:var(--fg)}
+.c-meta .cat .i{width:14px;height:14px;color:var(--muted)}
+.tag{font-size:12px;border:1px solid var(--line-2);border-radius:6px;padding:0 6px;line-height:1.6;color:var(--fg);overflow-wrap:anywhere}
+.tag.rec{border-color:transparent;background:var(--surface-2);font-family:var(--mono);font-size:11.5px}
+.tag.reo{border-color:var(--p2);color:var(--p2)}
+.tag.dec{border-color:transparent;background:var(--surface-2);color:var(--muted)}
+.why{color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:78ch}
+.actions{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.card .actions{margin-left:-8px}
 .actions .sp{flex:1}
-.procs{display:grid;gap:10px}
-.proc{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:8px;background:var(--bg)}
-.proc-h{display:flex;align-items:center;gap:8px}
-.proc-h b{flex:1;font-size:13px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:620px){.grid2{grid-template-columns:1fr}}
-.role-b{font-family:var(--mono);font-size:11px;border-radius:5px;padding:1px 6px;background:var(--surface-2);color:var(--muted)}
-.plist{display:grid;gap:6px}
-.pitem{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline;font-size:13px}
+.go{display:inline-flex;align-items:center;gap:2px;font-size:13px;font-weight:500;text-decoration:none;color:var(--muted);min-height:30px;padding:0 4px}
+.go:hover{color:var(--accent)}
+.panel{border:1px solid var(--line);background:var(--bg);border-radius:var(--r-s);padding:12px;display:grid;gap:10px;cursor:default}
+.panel-t{font-weight:600;font-size:13px}
+.opts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.opt{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:5px 12px;min-height:32px;font-size:13px}
+.opt:hover{border-color:var(--muted)}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
+.people{display:grid;gap:2px}
+.person{display:flex;gap:9px;align-items:center;border:1px solid transparent;border-radius:var(--r-s);padding:6px 8px;min-height:36px;background:none;text-align:left}
+.person:hover{background:var(--surface-2)}
+.av{width:22px;height:22px;border-radius:50%;flex:none;background:var(--surface-2)}
+.who{display:inline-flex;align-items:center;gap:6px;vertical-align:middle}
+.who .av{width:18px;height:18px}
 
-/* Ver más */
-nav.more{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:16px}
-nav.more a{color:var(--muted);text-decoration:none;font-size:13px;border-radius:7px;padding:5px 10px;border:1px solid transparent}
-nav.more a:hover,nav.more a[aria-current="page"]{border-color:var(--line);color:var(--fg);background:var(--surface)}
-.back{color:var(--muted);text-decoration:none;font-size:13px}
-.view-h{display:grid;gap:4px}
-.view-h h1{font-size:20px;margin:0;text-wrap:balance}
-.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;min-width:0}
-.rows{display:grid}
-.rowi{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--fg);min-width:0}
-.rowi:last-child{border-bottom:0}
-.rowi .t{min-width:0;overflow-wrap:anywhere}
+/* Filas enlazables */
+.rowi{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 16px;text-decoration:none;color:var(--fg);min-width:0}
+a.rowi:hover{background:var(--hover)}
+a.rowi:focus-visible{outline-offset:-2px}
+.rowi .t{min-width:0;overflow-wrap:anywhere;display:grid;gap:1px}
+.rowi .t b{font-weight:600}
+.rowi .chev{color:var(--muted)}
+.rowi.two{grid-template-columns:minmax(0,1fr) auto}
+.rowi .end{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .nums{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.tabs{display:flex;gap:4px;flex-wrap:wrap}
-.tabs button{border:1px solid transparent;background:none;border-radius:7px;padding:5px 10px;color:var(--muted)}
-.tabs button[aria-selected="true"]{border-color:var(--line);background:var(--surface);color:var(--fg)}
-.md{min-width:0;overflow-wrap:anywhere}
-.md h1,.md h2,.md h3{font-size:15px;margin:14px 0 4px} .md p{margin:6px 0} .md ul{margin:6px 0;padding-left:20px}
-.md code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:0 4px;border-radius:4px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.st.ok{background:var(--ok-bg);color:var(--ok)} .st.warn{background:var(--p3-bg);color:var(--p3)} .st.bad{background:var(--p1-bg);color:var(--p1)} .st.info{background:var(--accent-soft);color:var(--accent)}
+.ico-b{width:30px;height:30px;border-radius:var(--r-s);display:grid;place-items:center;background:var(--surface-2);color:var(--muted);flex:none}
+.ico-b.info{background:var(--accent-soft);color:var(--accent)} .ico-b.bad{background:var(--p1-bg);color:var(--p1)}
+
+/* Cajas, avisos y estados vacíos */
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.banner{border-radius:var(--r);padding:11px 14px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start;margin-bottom:18px;border:1px solid var(--line);background:var(--surface)}
+.banner .i{margin-top:2px}
+.banner.bad{background:var(--p1-bg);color:var(--p1);border-color:transparent} .banner.bad a{color:inherit;font-weight:600}
+.banner.info{background:var(--surface-2);border-color:transparent}
+.banner.note{background:var(--accent-soft);border-color:transparent}
+.banner .grow{flex:1;min-width:0}
+.empty{background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r);padding:44px 20px;text-align:center;display:grid;gap:8px;justify-items:center}
+.empty svg{width:40px;height:40px;color:var(--ok)}
+.empty b{font-family:var(--display);font-stretch:110%;font-size:18px;font-weight:650}
+.empty.plain svg{color:var(--muted)}
+.skel{display:grid;gap:10px}
+.skel i{display:block;height:72px;border-radius:var(--r);background:var(--surface-2)}
+
+/* Proyecto */
+.plist{display:grid;gap:8px}
+.pitem{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:baseline;font-size:13px}
+.role-b{font-family:var(--mono);font-size:11px;border-radius:5px;padding:1px 6px;background:var(--surface-2);color:var(--muted)}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:22px 0 16px}
+.tabs button{border:0;background:none;padding:9px 12px;min-height:38px;color:var(--muted);font-weight:500;font-size:13.5px;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:6px 6px 0 0}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.md{min-width:0;overflow-wrap:anywhere;max-width:76ch}
+.md h2,.md h3,.md h4{font-family:var(--sans);font-stretch:100%;font-size:15px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--fg);margin:16px 0 4px} .md>:first-child{margin-top:0}
+.md p{margin:6px 0} .md ul{margin:6px 0;padding-left:20px}
+.md code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
 .tblw{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
 th{font-weight:500;color:var(--muted);font-size:12px}
-.form{display:grid;gap:10px}
-.form label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
-.ok-ico{color:var(--ok)} .al-ico{color:var(--p2)} .om-ico{color:var(--p4)}
-.ico-s{width:15px;height:15px;vertical-align:-3px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);border-radius:8px;padding:8px 14px;font-size:13px;z-index:20}
-@media (max-width:520px){.pulse .txt{display:none}.kv{grid-template-columns:1fr}.kv dt{margin-top:4px}}
-@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+h3.lbl,h4.lbl{font-family:var(--display);font-stretch:108%;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin:0;color:var(--muted)}
+
+/* Formularios */
+.form{display:grid;gap:12px}
+.form label{display:grid;gap:5px;font-size:13px;font-weight:500;color:var(--fg)}
+.form label .h{font-weight:400;color:var(--muted)}
+.form label.chk{display:flex;gap:9px;align-items:center;font-weight:400}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.procs{display:grid;gap:10px}
+.proc{border:1px solid var(--line);border-radius:var(--r-s);padding:12px;display:grid;gap:10px;background:var(--bg)}
+.proc-h{display:flex;align-items:center;gap:8px}
+.proc-h b{flex:1;font-size:13px}
+details>summary{cursor:pointer;color:var(--muted);font-weight:500;width:max-content;border-radius:4px}
+details>summary:hover{color:var(--fg)}
+details[open]>summary{margin-bottom:12px}
+
+/* ---------- Panel de detalle ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:30;cursor:default}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:31;width:min(740px,100%);background:var(--bg);border-left:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer:focus{outline:none}
+.dw-h{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 20px 16px;padding-right:max(14px,env(safe-area-inset-right,0px));display:grid;gap:8px}
+.dw-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:34px}
+.dw-top .sp{flex:1}
+.dw-h h2{font-family:var(--display);font-stretch:110%;font-size:20px;line-height:1.25;font-weight:650;text-transform:none;letter-spacing:-.005em;color:var(--fg);text-wrap:balance;overflow-wrap:anywhere}
+.dw-b{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px 36px;padding-right:max(20px,env(safe-area-inset-right,0px));display:grid;gap:18px;align-content:start}
+.dw-b section{display:grid;gap:8px;min-width:0}
+.dw-b .box{padding:14px}
+.lead{font-size:14.5px;max-width:70ch}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 16px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.ev{display:grid;gap:4px;max-height:280px;overflow:auto}
+.ev .l{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:6px;padding:6px 9px;overflow-wrap:anywhere}
+.hyp{display:grid;gap:10px;padding:0;margin:0;list-style:none}
+.hyp li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:baseline}
+.hyp li .muted{grid-column:2}
+.lk{font-size:11.5px;font-weight:600;border-radius:5px;padding:1px 7px;background:var(--surface-2);color:var(--muted);text-transform:capitalize}
+.lk.alta{background:var(--p2-bg);color:var(--p2)} .lk.media{background:var(--p3-bg);color:var(--p3)}
+.steps{margin:0;padding-left:20px;display:grid;gap:4px}
+.refs{display:grid;gap:6px;font-size:13px}
+.refs>div{overflow-wrap:anywhere}
+.tl{display:grid;gap:10px;list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;font-size:13px}
+.tl time{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:2px}
+.tl span{overflow-wrap:anywhere}
+.composer{display:grid;gap:8px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);border-radius:10px;padding:9px 14px;font-size:13.5px;z-index:60;display:flex;gap:12px;align-items:center;max-width:min(520px,calc(100vw - 32px));box-shadow:var(--shadow)}
+.toast button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;padding:2px 4px;border-radius:4px}
+.toast :focus-visible{outline-color:var(--bg)}
+
+/* ---------- Teléfono y pantallas angostas ---------- */
+@media (max-width:900px){
+  .app{display:block}
+  .rail{display:none}
+  body::before{background:var(--rail)}
+  .mtop{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:7;background:var(--rail);color:var(--rail-fg);min-height:52px;padding-block:8px;
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .mtop .brand{padding:0;font-size:14.5px}
+  .mtop .brand svg{width:22px;height:22px}
+  .mtop .pulse{margin-left:auto;align-items:center;font-size:12px;color:var(--rail-muted);text-align:right}
+  .mtop .pulse .dot{margin-top:0}
+  .vw{padding-block:20px calc(92px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  h1{font-size:23px}
+  .tabbar{display:flex;position:fixed;inset:auto 0 0;z-index:7;background:var(--surface);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
+  .tabbar a{flex:1;min-width:0;display:grid;justify-items:center;gap:2px;padding:9px 2px 8px;font-size:11px;font-weight:500;color:var(--muted);text-decoration:none;position:relative}
+  .tabbar a[aria-current="page"]{color:var(--accent)}
+  .tabbar .i{width:22px;height:22px}
+  .tabbar a:focus-visible{outline-offset:-3px}
+  .tabbar .badge{position:absolute;top:4px;left:calc(50% + 5px);margin:0;padding:3px 5px;font-size:10.5px;background:var(--accent);color:var(--accent-fg)}
+  .toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  .vh-a,.scope{width:100%}
+  .scope-btn{flex:1;justify-content:flex-start}
+  .scope-btn .v{flex:1;text-align:left;max-width:none}
+  .pop{left:0;right:0;width:auto}
+  .search{flex:1 1 100%;margin-left:0}
+  .drawer{left:0;width:auto;border-left:0}
+  .dw-h{padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .dw-b{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+}
+@media (max-width:620px){
+  .grid2{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr;gap:2px}.kv dt{margin-top:6px}
+  .card{grid-template-columns:minmax(0,1fr);gap:8px}
+  .card>.pill{justify-self:start}
+  .rowi{grid-template-columns:auto minmax(0,1fr) auto}
+  .rowi>.nums,.rowi>.st,.rowi>.end{grid-column:2/-1;justify-self:start}
+  .rowi .chev{display:none}
+  .rowi.two{grid-template-columns:minmax(0,1fr)}
+  .tl li{grid-template-columns:1fr;gap:0}
+  .btn.ghost.sm .i{display:none}
+}
+@media (pointer:coarse){
+  input[type=text],input[type=search],input[type=date],input[type=number],select,textarea{font-size:16px;min-height:42px}
+  .btn{min-height:40px} .btn.sm{min-height:38px} .opt,.seg button{min-height:38px} .icon-btn{width:40px;height:40px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .card,.rowi,.btn,.nav a,.seg button{transition:background-color .12s,border-color .12s,color .12s}
+  #drawer.opening .drawer{animation:entra .2s cubic-bezier(.2,.8,.2,1)}
+  #drawer.opening .scrim{animation:aparece .2s ease-out}
+  @keyframes entra{from{transform:translateX(28px);opacity:0}}
+  @keyframes aparece{from{opacity:0}}
+}
 </style>
 
-<div class="wrap">
-  <header class="top">
-    <div class="row1">
-      <a class="brand" href="#inicio" aria-label="Inicio">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M5 22l2.5-10h9L19 22M8.5 8h7l1 4h-9z"/><path d="M4 6a11 11 0 0 1 4-3M20 6a11 11 0 0 0-4-3"/></svg>
-        Torre de Control
+<button class="skip" data-act="saltar">Saltar al contenido</button>
+<div class="app" id="app">
+  <aside class="rail">
+    <a class="brand" href="#inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M5 22l2.5-10h9L19 22M8.5 8h7l1 4h-9z"/><path d="M4 6a11 11 0 0 1 4-3M20 6a11 11 0 0 0-4-3"/></svg>
+      <span>Torre de Control<small>Operaciones UiPath</small></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Principal"></nav>
+    <div class="rail-foot"><div class="pulse" id="pulse"></div><div class="quien" id="quien"></div></div>
+  </aside>
+  <div class="content">
+    <header class="mtop">
+      <a class="brand" href="#inicio" aria-label="Torre de Control, ir a la bandeja">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4M5 22l2.5-10h9L19 22M8.5 8h7l1 4h-9z"/><path d="M4 6a11 11 0 0 1 4-3M20 6a11 11 0 0 0-4-3"/></svg>
+        <span>Torre de Control</span>
       </a>
-      <span class="role" id="role">…</span>
-      <div class="pulse" id="pulse"><span class="dot unknown"></span><span class="txt">Conectando…</span></div>
-    </div>
-    <div class="chips" id="chips" role="group" aria-label="Filtrar por proyecto"></div>
-  </header>
-  <main id="view" aria-live="polite"></main>
+      <div class="pulse" id="mpulse"></div>
+    </header>
+    <main class="vw" id="view" tabindex="-1"></main>
+  </div>
+  <nav class="tabbar" id="tabbar" aria-label="Principal"></nav>
 </div>
-<div class="toast hidden" id="toast" role="status"></div>
+<div id="drawer"></div>
+<div class="toast" id="toast" role="status" hidden></div>
 
 <script>
 (() => {
@@ -195,17 +389,29 @@ const P = {
   monitoring:'<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/>',
   application:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
   check:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/>',
+  tick:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   x:'<path d="M6 6l12 12M18 6L6 18"/>',
   reply:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v5"/>',
   send:'<path d="M4 12l16-8-6 16-2.5-6.5z"/>',
   chev:'<path d="M9 6l6 6-6 6"/>',
+  left:'<path d="M15 6l-6 6 6 6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   alert:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>',
   minus:'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+  inbox:'<path d="M3 13l3-8h12l3 8v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 3h5L16 13h5"/>',
+  folder:'<path d="M3 7a1 1 0 0 1 1-1h5l2 2.5h8a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>',
+  runs:'<path d="M3 12h4l2.5-6 4 12 2.5-6h5"/>',
+  rule:'<path d="M4 6.5L5.5 8 8 5M4 12.5L5.5 14 8 11M4 18.5L5.5 20 8 17M11.5 7H20M11.5 13H20M11.5 19H20"/>',
+  archive:'<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/>',
+  more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
+  undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
 };
 P.data = P.business; P.other = P.application; P.sla = P.scheduling;
-const ico = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || P.application}</svg>`;
+const ico = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || P.application}</svg>`;
 
 // ---------- textos ----------
 const CAT = { business:'Negocio', application:'Sistema', login:'Login / credenciales', selector:'Selector / UI', app_down:'Aplicación caída', data:'Datos', infrastructure:'Infraestructura', configuration:'Configuración', scheduling:'Programación', sla:'SLA', regression:'Regresión', silent_failure:'Falla silenciosa', monitoring:'Monitoreo', deploy:'Deploy', other:'Otro' };
@@ -215,7 +421,11 @@ const RESP = [['fix_required','Requiere fix'],['expected_behavior','Comportamien
 const HIST = { incident_resolved:'Resuelto', fix_required:'Requiere fix', expected_behavior:'Comportamiento esperado', data_issue:'Problema de datos', external_system:'Sistema externo', false_positive:'Falso positivo', recheck_scheduled:'Re-control agendado', recheck_done:'Re-control OK', deploy_detected:'Deploy', rule_added:'Regla nueva', onboarding:'Alta', note:'Nota' };
 const PSTATUS = { pending_analysis:'Esperando análisis', analyzing:'Analizando', review:'En revisión', active:'Activo', paused:'Pausado', error:'Con error' };
 const RSTATUS = { pending_compile:'Por compilar', proposed:'Propuesta', active:'Activa', disabled:'Desactivada', rejected:'Rechazada' };
+const NIVEL = { ok:'Sin novedades', warn:'Con avisos', critical:'Con problemas', unknown:'Sin datos todavía', off:'Sin control activo' };
+const ROLTXT = { admin:'Admin', operador:'Operador', lector:'Lector' };
 const SEV_ORD = { P1:1, P2:2, P3:3, P4:4 };
+const etiqueta = (lista, k) => (lista.find((d) => d[0] === k) || [0, k || ''])[1];
+const pl = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`;
 
 // ---------- utilidades ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -232,8 +442,13 @@ function rel(iso) {
 }
 const fecha = (iso) => iso ? new Date(iso).toLocaleString('es-AR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
 const addDays = (d) => new Date(Date.now() + d * 86400000).toISOString();
-const slug = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add('hidden'), 2600); }
+const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+function toast(msg, deshacer) {
+  const t = $('#toast');
+  t.innerHTML = `<span>${esc(msg)}</span>${deshacer ? `<span data-inc="${esc(deshacer)}"><button data-act="deshacer">Deshacer</button></span>` : ''}`;
+  t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, deshacer ? 8000 : 3200);
+}
 function md(src) {
   // Markdown mínimo y seguro: el texto se escapa primero.
   const lines = esc(src || '').split('\n'); let out = ''; let inList = false; let inTable = false;
@@ -306,28 +521,29 @@ function proyectoDesdeForm(f) {
 function formProyectoHtml(clave, f, { boton, botonExtra } = {}) {
   const fid = (k, i) => `f-${clave}-${i ?? 'p'}-${k}`;
   const inp = (k, i, v, ph = '') => `<input type="text" id="${fid(k, i)}" data-form="${esc(clave)}" data-k="${k}" ${i !== undefined ? `data-i="${i}"` : ''} value="${esc(v)}" placeholder="${esc(ph)}">`;
+  const h = (t) => ` <span class="h">${t}</span>`;
   return `<div class="form">
     <div class="grid2"><label>Nombre del proyecto${inp('nombre', undefined, f.nombre, 'Validación de derechos')}</label>
     <label>Carpeta de Orchestrator (producción)${inp('carpeta', undefined, f.carpeta, 'Produccion/Finanzas')}</label></div>
-    <p class="muted" style="margin:0">El código, las librerías y la documentación se toman solos de los paquetes de Orchestrator, en la versión desplegada. Todos los procesos de la carpeta quedan bajo control.</p>
-    <details data-adv="${esc(clave)}" ${S.adv[clave] ? 'open' : ''}><summary class="muted" style="cursor:pointer">Opciones avanzadas</summary><div class="form" style="margin-top:10px">
-    <label style="display:flex;gap:8px;align-items:center;color:var(--fg)"><input type="checkbox" id="${fid('solo')}" data-form="${esc(clave)}" data-k="soloLista" ${f.soloLista ? 'checked' : ''} style="width:auto"> Controlar solo los procesos de esta lista</label>
-    <div class="sec-h" style="margin:6px 0 0"><h2>Procesos</h2><span class="cnt">${f.procesos.length}</span></div>
-    ${f.procesos.length ? '' : '<span class="muted">Sin procesos cargados: se detectan solos. Cargalos solo para asignar un repo de Bitbucket de respaldo, documentación propia o una carpeta distinta.</span>'}
+    <p class="muted">El código, las librerías y la documentación se toman solos de los paquetes de Orchestrator, en la versión desplegada. Todos los procesos de la carpeta quedan bajo control.</p>
+    <details data-adv="${esc(clave)}" ${S.adv[clave] ? 'open' : ''}><summary>Opciones avanzadas</summary><div class="form">
+    <label class="chk"><input type="checkbox" id="${fid('solo')}" data-form="${esc(clave)}" data-k="soloLista" ${f.soloLista ? 'checked' : ''}> Controlar solo los procesos de esta lista</label>
+    <div class="sec-h"><h3 class="lbl">Procesos</h3><span class="cnt">${f.procesos.length}</span></div>
+    ${f.procesos.length ? '' : '<p class="muted">Sin procesos cargados: se detectan solos. Cargalos solo para asignar un repo de Bitbucket de respaldo, documentación propia o una carpeta distinta.</p>'}
     <div class="procs">${f.procesos.map((x, i) => `<div class="proc">
       <div class="proc-h"><b>Proceso ${i + 1}</b>
-        <select id="${fid('role', i)}" data-form="${esc(clave)}" data-k="role" data-i="${i}" aria-label="Rol" style="width:auto">${ROLES.map(([k, l]) => `<option value="${k}" ${x.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
-        ${f.procesos.length > 1 ? `<button class="btn link" data-act="quitar-proceso" data-form="${esc(clave)}" data-i="${i}">Quitar</button>` : ''}</div>
+        <select class="w-auto" id="${fid('role', i)}" data-form="${esc(clave)}" data-k="role" data-i="${i}" aria-label="Rol del proceso ${i + 1}">${ROLES.map(([k, l]) => `<option value="${k}" ${x.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        ${f.procesos.length > 1 ? `<button class="btn ghost sm" data-act="quitar-proceso" data-form="${esc(clave)}" data-i="${i}" aria-label="Quitar el proceso ${i + 1}">Quitar</button>` : ''}</div>
       <div class="grid2"><label>Nombre${inp('label', i, x.label, 'Performer')}</label>
-      <label>Nombre en Orchestrator (opcional: el alta lo detecta)${inp('op', i, x.op, 'p. ej. VD_Performer')}</label></div>
-      <label>Repo de Bitbucket de respaldo (opcional)${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
+      <label>Nombre en Orchestrator${h('(opcional: el alta lo detecta)')}${inp('op', i, x.op, 'p. ej. VD_Performer')}</label></div>
+      <label>Repo de Bitbucket de respaldo${h('(opcional)')}${inp('repo', i, x.repo, 'https://bitbucket.org/workspace/repo')}</label>
       <div class="grid2"><label>Rama${inp('rama', i, x.rama, 'main')}</label>
-      <label>Documentación adicional (opcional, separada por coma)${inp('docs', i, x.docs, 'docs/SDD.md')}</label></div>
-      <label>Carpeta propia (solo si no usa la del proyecto)${inp('carpeta', i, x.carpeta, '')}</label>
+      <label>Documentación adicional${h('(opcional, separada por coma)')}${inp('docs', i, x.docs, 'docs/SDD.md')}</label></div>
+      <label>Carpeta propia${h('(solo si no usa la del proyecto)')}${inp('carpeta', i, x.carpeta, '')}</label>
     </div>`).join('')}</div>
-    <div><button class="btn" data-act="agregar-proceso" data-form="${esc(clave)}">+ Agregar proceso</button></div>
-    <label>Documentación común adicional (opcional)${inp('docs', undefined, f.docs, 'docs/PDD.md')}</label>
-    <label>Criterios de triage del proyecto (opcional)<textarea id="${fid('crit')}" data-form="${esc(clave)}" data-k="crit">${esc(f.crit)}</textarea></label>
+    <div><button class="btn sm" data-act="agregar-proceso" data-form="${esc(clave)}">${ico('plus')}Agregar proceso</button></div>
+    <label>Documentación común adicional${h('(opcional)')}${inp('docs', undefined, f.docs, 'docs/PDD.md')}</label>
+    <label>Criterios de triage del proyecto${h('(opcional)')}<textarea id="${fid('crit')}" data-form="${esc(clave)}" data-k="crit">${esc(f.crit)}</textarea></label>
     </div></details>
     <div class="actions">${boton}${botonExtra || ''}</div></div>`;
 }
@@ -337,10 +553,12 @@ const S = {
   db: null, user: null, me: null, role: 'lector', canWrite: false, isAdmin: false,
   projects: {}, incidents: {}, work: {}, rules: {}, runs: [], settings: null, health: null,
   loaded: { projects:false, incidents:false, work:false, runs:false },
-  filter: null, open: {}, panel: {}, drafts: {}, names: {}, sel: {}, activity: {}, history: {}, memory: {},
+  filter: null, panel: {}, drafts: {}, names: {}, sel: {}, activity: {}, history: {}, memory: {}, undo: {},
   projTab: 'memoria', peopleHits: {}, error: null, stale: false, forms: {}, adv: {}, discovery: null, libraries: {},
+  tab: 'todo', q: '', qp: '', fuera: 'todos', scopeOpen: false, scopeQ: '', scopeIdx: 0, scopeScroll: false, focusNext: null,
 };
 try { S.filter = localStorage.getItem('torre.filtro') || null; } catch {}
+function setFiltro(id) { S.filter = id || null; try { S.filter ? localStorage.setItem('torre.filtro', S.filter) : localStorage.removeItem('torre.filtro'); } catch {} }
 
 const visibleByWork = (inc) => {
   const w = S.work[inc.id];
@@ -355,11 +573,32 @@ const reportable = (i) => i.status === 'open' && (i.decision === 'escalate' || i
 const inFilter = (i) => !S.filter || i.projectId === S.filter;
 const orden = (a, b) => (SEV_ORD[a.severity] - SEV_ORD[b.severity]) || ((a.decision === 'escalate' ? 0 : 1) - (b.decision === 'escalate' ? 0 : 1)) || String(b.lastSeenAt).localeCompare(String(a.lastSeenAt));
 const projName = (id) => (S.projects[id] && S.projects[id].name) || id;
+const nivel = (p) => (p.status !== 'active' ? 'off' : ((p.health && p.health.level) || 'unknown'));
 function procLabel(i) {
   const p = S.projects[i.projectId]; if (!p) return '';
   const ps = procesosDe(p); if (ps.length < 2) return '';
   const x = ps.find((y) => y.id === i.processId) || ps.find((y) => y.orchestratorProcess && y.orchestratorProcess === i.process);
   return x ? x.label : '';
+}
+// Temas en la bandeja: total ('') y por proyecto.
+function conteos() {
+  const c = { '': 0 };
+  for (const i of Object.values(S.incidents)) if (reportable(i) && visibleByWork(i)) { c[''] += 1; c[i.projectId] = (c[i.projectId] || 0) + 1; }
+  return c;
+}
+// Pulso de la rutina: último control y alarma si está detenida.
+function pulso() {
+  const ult = S.runs[0];
+  if (!ult) {
+    if (S.error) return { cls: 'critical', t: 'Sin conexión', d: S.error };
+    return { cls: 'unknown', t: S.loaded.runs ? 'Sin corridas todavía' : 'Conectando…', d: S.loaded.runs ? 'La rutina todavía no corrió.' : '' };
+  }
+  const cuando = ult.finishedAt || ult.startedAt;
+  const intervalo = (S.settings && S.settings.intervalMinutes) || 60;
+  const d = `Último control ${rel(cuando)}`;
+  if ((Date.now() - Date.parse(cuando)) / 60000 > intervalo * 2.2) return { cls: 'critical', t: 'Rutina detenida', d, detenida: true };
+  if (ult.status !== 'ok') return { cls: 'warn', t: 'Última corrida con errores', d };
+  return { cls: 'ok', t: 'Rutina al día', d };
 }
 
 // ---------- personas (solo ids guardados; nombres resueltos al mostrar) ----------
@@ -382,125 +621,217 @@ function who(id) {
 }
 
 // ---------- escritura ----------
-async function writeWork(inc, patch, activity) {
-  if (!S.canWrite) return toast('Tu acceso es de solo lectura');
-  const ref = S.db.doc(`incidentWork/${inc.id}`);
-  const data = { ...(S.work[inc.id] || {}), ...patch, updatedAt: nowIso(), updatedBy: S.me || null };
-  delete data.id;
+async function writeWork(inc, patch, activity, quitar = []) {
+  if (!S.canWrite) { toast('Tu acceso es de solo lectura'); return false; }
+  const prev = S.work[inc.id] ? { ...S.work[inc.id] } : null;
+  const data = { ...(prev || {}), ...patch, updatedAt: nowIso(), updatedBy: S.me || null };
+  delete data.id; for (const k of quitar) delete data[k];
   try {
-    await ref.set(data);
+    await S.db.doc(`incidentWork/${inc.id}`).set(data);
     if (activity) await S.db.collection('activity').add({ incidentId: inc.id, projectId: inc.projectId, at: nowIso(), by: S.me || null, ...activity });
+    S.undo[inc.id] = prev;
     return true;
   } catch (e) { toast(e && e.code === 'invalid_argument' ? 'No tenés permiso para esta acción' : 'No se pudo guardar. Probá de nuevo.'); return false; }
 }
 
+// ---------- rutas ----------
+// Vista base (bandeja, proyectos, corridas…) y, encima, el detalle de un tema (#incidente-<id>).
+const ruta = () => (location.hash || '#inicio').slice(1) || 'inicio';
+let base = 'inicio'; let drawerInc = null; let prevHash = ruta();
+const navKey = (b) => (b.startsWith('corrida') ? 'corridas' : (b.startsWith('proyecto') || b === 'registrar') ? 'proyectos' : b);
+
 // ---------- render ----------
 let pending = false;
 function schedule() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; render(); }); }
+// Solo toca el DOM si el HTML cambió: conserva hover, selección y scroll entre refrescos de datos.
+function put(el, html) { if (el._h === html) return; el._h = html; el.innerHTML = html; }
 
 function render() {
-  // Conservar foco y borradores entre renders.
+  const h = ruta();
+  const incAntes = drawerInc;
+  if (h.startsWith('incidente-')) drawerInc = h.slice(10); else { base = h; drawerInc = null; }
+  if (S.loaded.projects && S.filter && !S.projects[S.filter]) setFiltro(null);
+  // Conservar foco, cursor y scroll interno entre renders.
   const act = document.activeElement; const actId = act && act.id; const selStart = act && act.selectionStart;
-  renderTop();
-  const h = (location.hash || '#inicio').slice(1);
-  const v = $('#view');
-  if (h === 'inicio' || h === '') v.innerHTML = viewInicio();
-  else if (h === 'corridas') v.innerHTML = viewCorridas();
-  else if (h.startsWith('corrida-')) v.innerHTML = viewCorrida(h.slice(8));
-  else if (h === 'no-reportados') v.innerHTML = viewNoReportados();
-  else if (h === 'proyectos') v.innerHTML = viewProyectos();
-  else if (h.startsWith('proyecto-')) v.innerHTML = viewProyecto(h.slice(9));
-  else if (h === 'reglas') v.innerHTML = viewReglas();
-  else if (h === 'ajustes') v.innerHTML = viewAjustes();
-  else if (h === 'registrar') v.innerHTML = viewRegistrar();
-  else if (h.startsWith('incidente-')) v.innerHTML = viewIncidente(h.slice(10));
-  else v.innerHTML = viewInicio();
-  if (actId) { const el = document.getElementById(actId); if (el) { el.focus(); try { if (selStart != null) el.setSelectionRange(selStart, selStart); } catch {} } }
+  const ks = {}; document.querySelectorAll('[data-ks]').forEach((el) => { if (el.id) ks[el.id] = el.scrollTop; });
+  if (incAntes !== drawerInc) delete ks['dw-b'];
+
+  renderShell();
+  put($('#view'), vista(base));
+  put($('#drawer'), drawerInc ? drawerHtml(drawerInc) : '');
+  $('#app').inert = Boolean(drawerInc);
+  // Bloquear el scroll del fondo sin que la página salte por el ancho de la barra de scroll.
+  const raiz = document.documentElement;
+  if (Boolean(drawerInc) !== raiz.classList.contains('lock')) {
+    if (drawerInc) raiz.style.setProperty('--sbw', `${window.innerWidth - raiz.clientWidth}px`);
+    raiz.classList.toggle('lock', Boolean(drawerInc));
+  }
+
+  for (const [id, y] of Object.entries(ks)) { const el = document.getElementById(id); if (el) el.scrollTop = y; }
+  if (S.scopeOpen && S.scopeScroll) { const a = $('#scope-list .act'); if (a) a.scrollIntoView({ block: 'nearest' }); S.scopeScroll = false; }
+  if (S.focusNext) {
+    const el = document.getElementById(S.focusNext) || document.getElementById('vt');
+    if (el) el.focus({ preventScroll: el.id === 'vt' });
+    S.focusNext = null;
+  } else if (act && act !== document.body && !act.isConnected) {
+    const el = (actId && document.getElementById(actId)) || (drawerInc ? document.getElementById('dw') : $('#view'));
+    if (el) { el.focus({ preventScroll: true }); try { if (selStart != null && el.id === actId) el.setSelectionRange(selStart, selStart); } catch {} }
+  }
 }
 
-function renderTop() {
-  $('#role').textContent = { admin:'Admin', operador:'Operador', lector:'Lector' }[S.role];
-  // Pulso de la rutina: último run y alarma si está detenida.
-  const ult = S.runs[0];
-  const intervalo = (S.settings && S.settings.intervalMinutes) || 60;
-  let cls = 'unknown', txt = 'Sin corridas todavía';
-  if (ult) {
-    const min = (Date.now() - Date.parse(ult.finishedAt || ult.startedAt)) / 60000;
-    const detenida = min > intervalo * 2.2;
-    cls = detenida ? 'critical' : ult.status === 'ok' ? 'ok' : 'warn';
-    txt = detenida ? `Rutina detenida · último control ${rel(ult.finishedAt || ult.startedAt)}` : `Último control ${rel(ult.finishedAt || ult.startedAt)}`;
-  } else if (S.error) { cls = 'critical'; txt = S.error; }
-  $('#pulse').innerHTML = `<span class="dot ${cls}"></span><span class="txt">${esc(txt)}</span>`;
-  // Chips por proyecto con salud.
-  const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-  const abiertos = (pid) => Object.values(S.incidents).filter((i) => i.projectId === pid && reportable(i) && visibleByWork(i)).length;
-  const chip = (id, label, dot, n) => `<button class="chip" data-filter="${esc(id)}" aria-pressed="${(S.filter || '') === id}">${dot}${esc(label)}${n ? ` <span class="n">${n}</span>` : ''}</button>`;
-  const total = Object.values(S.incidents).filter((i) => reportable(i) && visibleByWork(i)).length;
-  $('#chips').innerHTML = chip('', 'Todos', '', total) + ps.map((p) => {
-    const lvl = p.status !== 'active' ? 'off' : ((p.health && p.health.level) || 'unknown');
-    return chip(p.id, p.name || p.id, `<span class="dot ${lvl}" title="${esc(p.status !== 'active' ? PSTATUS[p.status] || p.status : lvl)}"></span>`, abiertos(p.id));
-  }).join('');
+function vista(b) {
+  if (b === 'corridas') return viewCorridas();
+  if (b.startsWith('corrida-')) return viewCorrida(b.slice(8));
+  if (b === 'no-reportados') return viewFuera();
+  if (b === 'proyectos') return viewProyectos();
+  if (b.startsWith('proyecto-')) return viewProyecto(b.slice(9));
+  if (b === 'reglas') return viewReglas();
+  if (b === 'ajustes') return viewAjustes();
+  if (b === 'registrar') return viewRegistrar();
+  if (b === 'mas') return viewMas();
+  return viewInicio();
+}
+
+function renderShell() {
+  const cur = navKey(base); const c = conteos(); const pu = pulso();
+  const prop = S.isAdmin ? Object.values(S.rules).filter((r) => r.status === 'proposed').length : 0;
+  const link = (h, t, ic, on, n, nTxt) => `<a href="#${h}" ${on ? 'aria-current="page"' : ''}>${ico(ic)}<span>${t}</span>${n ? `<span class="badge${h === 'inicio' ? ' hot' : ''}">${n}<span class="sr"> ${nTxt}</span></span>` : ''}</a>`;
+  put($('#nav'), link('inicio', 'Bandeja', 'inbox', cur === 'inicio', c[''], 'temas abiertos')
+    + link('proyectos', 'Proyectos', 'folder', cur === 'proyectos')
+    + link('corridas', 'Corridas', 'runs', cur === 'corridas')
+    + link('reglas', 'Reglas', 'rule', cur === 'reglas', prop, 'propuestas para aprobar')
+    + link('no-reportados', 'Fuera de bandeja', 'archive', cur === 'no-reportados')
+    + (S.isAdmin ? '<div class="sep" role="presentation"></div>' + link('ajustes', 'Ajustes', 'configuration', cur === 'ajustes') : ''));
+  put($('#tabbar'), link('inicio', 'Bandeja', 'inbox', cur === 'inicio', c[''], 'temas abiertos')
+    + link('proyectos', 'Proyectos', 'folder', cur === 'proyectos')
+    + link('corridas', 'Corridas', 'runs', cur === 'corridas')
+    + link('reglas', 'Reglas', 'rule', cur === 'reglas', prop, 'propuestas para aprobar')
+    + link('mas', 'Más', 'more', ['mas', 'no-reportados', 'ajustes'].includes(cur)));
+  put($('#pulse'), `<span class="dot ${pu.cls}"></span><div><b>${esc(pu.t)}</b><span class="d">${esc(pu.d)}</span></div>`);
+  put($('#mpulse'), `<span class="dot ${pu.cls}"></span><span>${esc(pu.detenida || pu.cls === 'unknown' || !S.runs[0] ? pu.t : rel(S.runs[0].finishedAt || S.runs[0].startedAt))}<span class="sr"> · ${esc(pu.t)}</span></span>`);
+  const yo = S.me && S.names[S.me];
+  put($('#quien'), `${yo ? `<img class="av" alt="" src="${esc(yo.avatarUrl)}">` : ''}<div style="min-width:0">${yo && yo.name ? `<b>${esc(yo.name)}</b>` : ''}<span>Acceso de ${ROLTXT[S.role]}</span></div>`);
+}
+
+// Cabecera de cada vista: migas, título, acciones y selector de proyecto (solo donde filtra algo).
+function head(title, sub, { back, scope, actions } = {}) {
+  return `<header class="vh">${back ? `<a class="crumb" href="#${back[0]}">${ico('left')}${esc(back[1])}</a>` : ''}
+    <div class="vh-row"><div class="vh-t"><h1 id="vt" tabindex="-1">${esc(title)}</h1>${sub ? `<p class="muted">${sub}</p>` : ''}</div>
+    ${actions || scope ? `<div class="vh-a">${actions || ''}${scope ? scopeHtml() : ''}</div>` : ''}</div></header>`;
+}
+
+// ---------- selector de proyecto (combobox con búsqueda) ----------
+function opcionesScope(c) {
+  const q = norm(S.scopeQ);
+  const ps = Object.values(S.projects).map((p) => ({ id: p.id, name: p.name || p.id, folder: (p.orchestrator || {}).folderPath || '', lvl: nivel(p), n: c[p.id] || 0 }))
+    .filter((o) => !q || norm(`${o.name} ${o.folder}`).includes(q))
+    .sort((a, b) => (b.n > 0) - (a.n > 0) || a.name.localeCompare(b.name, 'es'));
+  return q ? ps : [{ id: '', name: 'Todos los proyectos', folder: '', lvl: null, n: c[''] }, ...ps];
+}
+function scopeHtml() {
+  const c = conteos(); const p = S.filter && S.projects[S.filter];
+  let pop = '';
+  if (S.scopeOpen) {
+    const os = opcionesScope(c); const idx = Math.max(0, Math.min(S.scopeIdx, os.length - 1));
+    pop = `<div class="pop" id="scope-pop">
+      <div class="pop-q">${ico('search')}<input type="text" id="scope-q" role="combobox" aria-expanded="true" aria-controls="scope-list" aria-autocomplete="list" ${os.length ? `aria-activedescendant="scope-o-${idx}"` : ''} aria-label="Buscar proyecto" placeholder="Buscar por nombre o carpeta…" value="${esc(S.scopeQ)}" autocomplete="off" spellcheck="false"></div>
+      ${os.length ? `<ul id="scope-list" role="listbox" aria-label="Proyectos" data-ks>${os.map((o, k) => `<li role="option" id="scope-o-${k}" class="${k === idx ? 'act' : ''}" data-act="scope-pick" data-id="${esc(o.id)}" aria-selected="${o.id === (S.filter || '')}">
+        ${o.lvl ? `<span class="dot ${o.lvl}" title="${esc(NIVEL[o.lvl])}"></span>` : '<span></span>'}
+        <span style="min-width:0"><span class="nm">${esc(o.name)}</span>${o.folder ? `<span class="fp">${esc(o.folder)}</span>` : ''}</span>
+        <span class="n">${o.n ? `${o.n}<span class="sr"> ${o.n === 1 ? 'tema abierto' : 'temas abiertos'}</span>` : ''}</span></li>`).join('')}</ul>`
+        : '<p class="none muted">Ningún proyecto coincide con la búsqueda.</p>'}
+    </div>`;
+  }
+  return `<div class="scope${p ? ' on' : ''}" id="scope">
+    <button class="scope-btn" id="scope-btn" data-act="scope" aria-haspopup="listbox" aria-expanded="${S.scopeOpen}">
+      <span class="k">Proyecto</span>${p ? `<span class="dot ${nivel(p)}"></span>` : ''}<span class="v">${esc(p ? p.name || p.id : 'Todos')}</span>${ico('down')}</button>
+    ${p ? `<button class="icon-btn" id="scope-x" data-act="scope-clear" aria-label="Quitar el filtro de proyecto" title="Quitar el filtro">${ico('x')}</button>` : ''}
+    ${pop}</div>`;
+}
+function elegirScope(id) { setFiltro(id); S.scopeOpen = false; S.focusNext = 'scope-btn'; schedule(); }
+
+// ---------- tema: tarjeta, acciones y detalle ----------
+function metaHtml(i, conProyecto) {
+  const w = S.work[i.id] || {}; const rec = i.recurrences || []; const pr = procLabel(i);
+  return `<div class="c-meta">
+    <span class="cat">${ico(i.category)}${esc(CAT[i.category] || i.category)}</span>
+    ${conProyecto ? `<span class="tag">${esc(projName(i.projectId))}</span>` : ''}
+    ${pr ? `<span class="tag">${esc(pr)}</span>` : ''}
+    ${rec.length > 1 || i.occurrences > 1 ? `<span class="tag rec" title="Ocurrencias acumuladas en esta tarjeta">×${esc(i.occurrences)} · última ${esc(rel(i.lastSeenAt))}</span>` : `<span>${esc(rel(i.lastSeenAt))}</span>`}
+    ${i.reopenCount ? '<span class="tag reo">Reapareció</span>' : ''}
+    ${i.library ? `<span class="tag" title="El error ocurrió en una librería">${esc(i.library.name)}${i.library.activity ? ' · ' + esc(i.library.activity) : ''}</span>` : ''}
+    ${i.deploy && i.deploy.version ? `<span class="tag reo" title="Hubo un deploy después de abrirse la tarjeta">Nueva versión ${esc(i.deploy.version)}</span>` : ''}
+    ${i.decision === 'notify' ? '<span class="tag dec">Aviso</span>' : ''}
+    ${w.state === 'delegated' && w.assignee ? `<span>→ ${who(w.assignee)}</span>` : ''}
+  </div>`;
+}
+const sevHtml = (s) => `<span class="pill ${esc(s)}" role="img" aria-label="Severidad ${esc(s)}" title="Severidad ${esc(s)}">${esc(s)}</span>`;
+
+// ctx: 'c' tarjeta, 'a' aviso compacto, 'd' detalle.
+function accionesHtml(i, ctx, sinPanel) {
+  if (!S.canWrite) return '';
+  const panel = sinPanel ? null : S.panel[i.id];
+  const bt = (p, icono, txt, cls) => `<button class="btn ${cls}${panel === p ? ' on' : ''}" id="b-${ctx}-${esc(i.id)}-${p}" data-act="panel" data-p="${p}" aria-expanded="${panel === p}">${ico(icono)}${txt}</button>`;
+  const cls = ctx === 'd' ? '' : 'ghost sm';
+  return bt('responder', 'reply', 'Responder', ctx === 'd' && !panel ? 'primary' : cls) + bt('posponer', 'clock', 'Posponer', cls) + bt('descartar', 'x', 'Descartar', cls)
+    + (ctx === 'a' ? '' : bt('delegar', 'user', 'Delegar', cls));
+}
+function panelHtml(i) {
+  const panel = S.panel[i.id]; if (!panel || !S.canWrite) return '';
+  const id = esc(i.id); const d = (k) => esc(S.drafts[`${i.id}-${k}`] || ''); const sel = S.sel[i.id] || {};
+  const opt = (k, lista) => lista.map(([v, l]) => `<button class="opt" id="${id}-o-${v}" data-act="sel" data-k="${k}" data-v="${v}" aria-pressed="${sel[k] === v}">${l}</button>`).join('');
+  if (panel === 'delegar') {
+    const hits = S.peopleHits[i.id] || [];
+    return `<div class="panel" role="group" aria-label="Delegar"><span class="panel-t">¿Quién lo revisa?</span>
+      <input type="text" id="${id}-buscar" aria-label="Buscar persona por nombre" placeholder="Buscar persona por nombre…" value="${d('buscar')}" data-act="buscar" autocomplete="off">
+      <div class="people">${hits.map((p) => `<button class="person" data-act="asignar" data-uid="${esc(p.id)}"><img class="av" alt="" src="${esc(p.avatarUrl)}"><span>${esc(p.name)}</span></button>`).join('') || '<span class="muted">Escribí para buscar en tu organización.</span>'}</div>
+      <span class="muted">Le aparece en su sección “Para vos”.</span></div>`;
+  }
+  if (panel === 'posponer') {
+    return `<div class="panel" role="group" aria-label="Posponer"><span class="panel-t">¿Hasta cuándo?</span><div class="opts">
+      <button class="opt" data-act="posponer" data-d="1">1 día</button><button class="opt" data-act="posponer" data-d="3">3 días</button><button class="opt" data-act="posponer" data-d="7">1 semana</button>
+      <input class="w-auto" type="date" id="${id}-fecha" value="${d('fecha')}" aria-label="Posponer hasta la fecha"><button class="btn sm" data-act="posponer-fecha">Hasta esa fecha</button></div>
+      <span class="muted">La tarjeta se oculta hasta esa fecha. Vuelve antes si el problema empeora, y la rutina la vuelve a controlar al vencer.</span></div>`;
+  }
+  if (panel === 'descartar') {
+    return `<div class="panel" role="group" aria-label="Descartar"><span class="panel-t">¿Por qué se descarta?</span><div class="opts">${opt('motivo', DISMISS)}</div>
+      <input type="text" id="${id}-nota" aria-label="Nota opcional" placeholder="Nota opcional (por qué)" value="${d('nota')}">
+      <div><button class="btn primary" data-act="descartar" ${sel.motivo ? '' : 'disabled'}>Descartar</button></div>
+      <span class="muted">Con lo que indiques, la rutina actualiza la memoria del proyecto y puede proponer una regla.</span></div>`;
+  }
+  return `<div class="panel" role="group" aria-label="Responder"><span class="panel-t">¿Qué se decidió?</span><div class="opts">${opt('decision', RESP)}</div>
+    <textarea id="${id}-notas" aria-label="Notas de la respuesta" placeholder="Qué se encontró, qué se hizo o qué hay que hacer">${d('notas')}</textarea>
+    ${sel.decision === 'fix_required' ? `<input type="text" id="${id}-ticket" aria-label="Ticket o referencia del fix" placeholder="Ticket o referencia del fix (opcional)" value="${d('ticket')}">` : ''}
+    ${sel.decision === 'recheck' ? `<label class="muted">Volver a controlar el <input class="w-auto" type="date" id="${id}-recheck" value="${d('recheck')}"></label>` : ''}
+    <div><button class="btn primary" data-act="responder" ${sel.decision ? '' : 'disabled'}>Enviar respuesta</button></div>
+    <span class="muted">Queda en la memoria de producción del proyecto.</span></div>`;
 }
 
 function cardHtml(i, compacta = false) {
-  const w = S.work[i.id] || {};
-  const rec = i.recurrences || [];
-  const open = S.open[i.id];
-  const panel = S.panel[i.id];
-  const d = (k) => esc(S.drafts[`${i.id}-${k}`] || '');
-  const sel = S.sel[i.id] || {};
-  const can = S.canWrite;
-  let html = `<article class="card ${esc(i.severity)}${compacta ? ' compact' : ''}" data-inc="${esc(i.id)}">
-    <div class="c-head">
-      <div class="ico" title="${esc(CAT[i.category] || i.category)}">${ico(i.category)}</div>
-      <div class="c-main">
-        <div class="c-title">${esc(i.title)}</div>
-        <div class="c-meta">
-          <span class="pill ${esc(i.severity)}">${esc(i.severity)}</span>
-          <span>${esc(CAT[i.category] || i.category)}</span>
-          ${S.filter ? '' : `<span class="tag">${esc(projName(i.projectId))}</span>`}
-          ${procLabel(i) ? `<span class="tag">${esc(procLabel(i))}</span>` : ''}
-          ${rec.length > 1 || i.occurrences > 1 ? `<span class="tag rec" title="Ocurrencias acumuladas en esta tarjeta">×${esc(i.occurrences)} · última ${esc(rel(i.lastSeenAt))}</span>` : `<span>${esc(rel(i.lastSeenAt))}</span>`}
-          ${i.reopenCount ? '<span class="tag reo">Reapareció</span>' : ''}
-          ${i.library ? `<span class="tag" title="El error ocurrió en una librería">${esc(i.library.name)}${i.library.activity ? ' · ' + esc(i.library.activity) : ''}</span>` : ''}
-          ${i.deploy && i.deploy.version ? `<span class="tag reo" title="Hubo un deploy después de abrirse la tarjeta">Nueva versión ${esc(i.deploy.version)}</span>` : ''}
-          ${i.decision === 'notify' ? '<span class="tag">Aviso</span>' : ''}
-          ${w.state === 'delegated' && w.assignee ? `<span>→ ${who(w.assignee)}</span>` : ''}
-        </div>
-      </div>
-    </div>
-    ${compacta && !open && !panel ? '' : `<div class="why">${esc(i.triage && i.triage.rationale)}</div>`}`;
-  const bt = (p, icono, txt) => `<button class="btn ${panel === p ? 'on' : ''}" data-act="panel" data-p="${p}">${ico(icono)}${txt}</button>`;
-  html += `<div class="actions">
-    ${can && !compacta ? bt('delegar', 'user', 'Delegar') + bt('posponer', 'clock', 'Posponer') + bt('descartar', 'x', 'Descartar') + bt('responder', 'reply', 'Responder') + bt('comentar', 'send', 'Comentar') : ''}
-    ${can && compacta ? bt('descartar', 'x', 'Descartar') + bt('posponer', 'clock', 'Posponer') + bt('responder', 'reply', 'Responder') : ''}
-    <span class="sp"></span><button class="btn link" data-act="detalle" aria-expanded="${Boolean(open)}">${open ? 'Ocultar detalle' : 'Ver detalle'}</button>
-  </div>`;
-  if (panel === 'comentar') {
-    html += `<div class="panel"><textarea id="${esc(i.id)}-coment" placeholder="Comentario para el equipo">${d('coment')}</textarea><div><button class="btn primary" data-act="comentar">Agregar comentario</button></div></div>`;
-  } else if (panel === 'delegar') {
-    const hits = S.peopleHits[i.id] || [];
-    html += `<div class="panel"><input type="text" id="${esc(i.id)}-buscar" placeholder="Buscar persona por nombre…" value="${d('buscar')}" data-act="buscar" autocomplete="off">
-      <div class="people">${hits.map((p) => `<button class="person" data-act="asignar" data-uid="${esc(p.id)}"><img class="av" alt="" src="${esc(p.avatarUrl)}"><span>${esc(p.name)}</span></button>`).join('') || '<span class="muted">Escribí para buscar en tu organización.</span>'}</div></div>`;
-  } else if (panel === 'posponer') {
-    html += `<div class="panel"><div class="opts">
-      <button class="opt" data-act="posponer" data-d="1">1 día</button><button class="opt" data-act="posponer" data-d="3">3 días</button><button class="opt" data-act="posponer" data-d="7">1 semana</button>
-      <input type="date" id="${esc(i.id)}-fecha" value="${d('fecha')}" style="width:auto" aria-label="Hasta"><button class="btn" data-act="posponer-fecha">Hasta esa fecha</button></div>
-      <span class="muted">La tarjeta se oculta hasta esa fecha. Vuelve antes si el problema empeora, y la rutina la vuelve a controlar al vencer.</span></div>`;
-  } else if (panel === 'descartar') {
-    html += `<div class="panel"><div class="opts">${DISMISS.map(([k, l]) => `<button class="opt" data-act="sel" data-k="motivo" data-v="${k}" aria-pressed="${sel.motivo === k}">${l}</button>`).join('')}</div>
-      <input type="text" id="${esc(i.id)}-nota" placeholder="Nota opcional (por qué)" value="${d('nota')}">
-      <div><button class="btn primary" data-act="descartar" ${sel.motivo ? '' : 'disabled'}>Descartar</button></div>
-      <span class="muted">Con lo que indiques, la rutina actualiza la memoria del proyecto y puede proponer una regla.</span></div>`;
-  } else if (panel === 'responder') {
-    html += `<div class="panel"><div class="opts">${RESP.map(([k, l]) => `<button class="opt" data-act="sel" data-k="decision" data-v="${k}" aria-pressed="${sel.decision === k}">${l}</button>`).join('')}</div>
-      <textarea id="${esc(i.id)}-notas" placeholder="Qué se encontró, qué se hizo o qué hay que hacer">${d('notas')}</textarea>
-      ${sel.decision === 'fix_required' ? `<input type="text" id="${esc(i.id)}-ticket" placeholder="Ticket o referencia del fix (opcional)" value="${d('ticket')}">` : ''}
-      ${sel.decision === 'recheck' ? `<label class="muted">Volver a controlar el <input type="date" id="${esc(i.id)}-recheck" value="${d('recheck')}" style="width:auto"></label>` : ''}
-      <div><button class="btn primary" data-act="responder" ${sel.decision ? '' : 'disabled'}>Enviar respuesta</button></div></div>`;
-  }
-  if (open) html += detailHtml(i);
-  return html + '</article>';
+  const id = esc(i.id); const abierto = drawerInc === i.id;
+  const panel = abierto ? '' : panelHtml(i);
+  return `<article class="card${abierto ? ' sel' : ''}" data-inc="${id}" aria-labelledby="t-${id}">
+    ${sevHtml(i.severity)}
+    <div class="c-main">
+      <h3 class="c-title"><a id="t-${id}" href="#incidente-${id}">${esc(i.title)}</a></h3>
+      ${metaHtml(i, !S.filter)}
+      ${compacta && !panel ? '' : `<p class="why">${esc(i.triage && i.triage.rationale)}</p>`}
+      <div class="actions">${accionesHtml(i, compacta ? 'a' : 'c', abierto)}<span class="sp"></span><a class="go" href="#incidente-${id}" tabindex="-1" aria-hidden="true">Ver detalle${ico('chev')}</a></div>
+      ${panel}
+    </div></article>`;
+}
+
+// Lado humano del tema: quién lo tiene o por qué ya no está en la bandeja.
+function estadoHtml(i) {
+  const w = S.work[i.id]; if (!w) return '';
+  const volver = S.canWrite ? `<button class="btn sm" data-act="reabrir">${ico('undo')}Devolver a la bandeja</button>` : '';
+  const caja = (icono, txt, btn = '') => `<div class="banner note" style="margin:0">${ico(icono)}<span class="grow">${txt}</span>${btn}</div>`;
+  const notas = w.response && w.response.notes ? ` — ${esc(w.response.notes)}` : '';
+  if (w.state === 'delegated' && w.assignee) return caja('user', `Delegado a ${who(w.assignee)}${w.delegatedBy ? ` por ${who(w.delegatedBy)}` : ''}${w.delegatedAt ? ` · ${esc(rel(w.delegatedAt))}` : ''}`);
+  if (w.state === 'snoozed' && w.snoozeUntil && w.snoozeUntil > nowIso()) return caja('clock', `Pospuesto hasta ${esc(fecha(w.snoozeUntil))}${w.updatedBy ? ` por ${who(w.updatedBy)}` : ''}`, volver);
+  if (w.state === 'dismissed') return caja('x', `<b>Descartado:</b> ${esc(etiqueta(DISMISS, w.dismissReason))}${notas}${w.updatedBy ? ` · ${who(w.updatedBy)}` : ''}`, volver);
+  if (w.state === 'responded') return caja('reply', `<b>Respondido:</b> ${esc(etiqueta(RESP, (w.response || {}).decision))}${notas}${w.response && w.response.ticket ? ` <span class="mono">[${esc(w.response.ticket)}]</span>` : ''}${w.updatedBy ? ` · ${who(w.updatedBy)}` : ''}`, volver);
+  return '';
 }
 
 // Librería del error: quién más la usa y cuántas tarjetas abiertas tiene en otros proyectos.
@@ -508,45 +839,73 @@ function libreriaHtml(i) {
   const l = i.library;
   const usan = Object.values(S.projects).filter((p) => p.id !== i.projectId && ((p.inventory || {}).processes || []).some((x) => (x.libraries || []).some((y) => y.name === l.name)));
   const otras = Object.values(S.incidents).filter((x) => x.id !== i.id && x.projectId !== i.projectId && x.status === 'open' && x.library && x.library.name === l.name).length;
-  return `<section><h4>Librería</h4><p style="margin:0"><b>${esc(l.name)} ${esc(l.version || '')}</b>${l.activity ? ` · actividad <span class="mono">${esc(l.activity)}</span>` : ''}</p>
-    ${usan.length ? `<p class="muted" style="margin:4px 0 0">También la usan: ${usan.map((p) => esc(p.name)).join(', ')}${otras ? ` · ${otras} tarjeta(s) abierta(s) en esos proyectos` : ''}</p>` : ''}</section>`;
+  return `<section><h3 class="lbl">Librería</h3><div class="box"><p><b>${esc(l.name)} ${esc(l.version || '')}</b>${l.activity ? ` · actividad <span class="mono">${esc(l.activity)}</span>` : ''}</p>
+    ${usan.length ? `<p class="muted">También la usan: ${usan.map((p) => esc(p.name)).join(', ')}${otras ? ` · ${otras} tarjeta(s) abierta(s) en esos proyectos` : ''}</p>` : ''}</div></section>`;
 }
 
-function detailHtml(i) {
-  const ev = i.evidence || {}; const u = ev.ultima || ev.primera || {};
-  const a = i.analysis || {}; const t = i.triage || {};
+function analisisHtml(i) {
+  const a = i.analysis || {};
+  const pedir = S.canWrite ? `<button class="btn ghost sm" data-act="reanalizar-inc" style="margin-left:auto">${a.status === 'done' ? 'Volver a analizar' : 'Pedir análisis'}</button>` : '';
+  let cuerpo;
+  if (a.status === 'done') {
+    cuerpo = `<p class="lead">${esc(a.summary)}</p>
+      ${(a.hypotheses || []).length ? `<h4 class="lbl">Hipótesis</h4><ul class="hyp">${a.hypotheses.map((h) => `<li><span class="lk ${esc(h.likelihood)}">${esc(h.likelihood)}</span><b>${esc(h.text)}</b><span class="muted">${esc(h.evidence)}</span></li>`).join('')}</ul>` : ''}
+      ${(a.suggestedActions || []).length ? `<h4 class="lbl">Acciones sugeridas</h4><ol class="steps">${a.suggestedActions.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
+      ${(a.codeRefs || []).length ? `<h4 class="lbl">Código</h4><div class="refs">${a.codeRefs.map((c) => `<div><span class="mono">${esc(c.file)}${c.line ? ':' + esc(c.line) : ''}</span> <span class="mono muted">${c.pkg ? esc(c.pkg) : '@' + esc(String(c.sha || '').slice(0, 7))}</span> — ${esc(c.note)}</div>`).join('')}</div>` : ''}
+      ${(a.docRefs || []).length ? `<h4 class="lbl">Documentación</h4><div class="refs">${a.docRefs.map((c) => `<div><span class="mono">${esc(c.file)}</span> · ${esc(c.section)} — ${esc(c.note)}</div>`).join('')}</div>` : ''}
+      ${a.changes ? `<h4 class="lbl">Qué cambió en el deploy</h4><p>${esc(a.changes)}</p>` : ''}
+      ${a.source ? `<p class="muted">Código analizado: ${a.source.kind === 'repo' ? 'repo de respaldo' : 'paquete'} ${esc(a.source.package)} ${esc(a.source.version)}${a.source.kind === 'package' ? ' (versión desplegada)' : ''}${a.source.library ? ' · librería ' + esc(a.source.library) : ''}.</p>`
+        : a.repo && !a.repo.matchesDeployedVersion ? '<p class="muted">El código analizado es de la rama configurada, no del tag de la versión desplegada.</p>' : ''}`;
+  } else if (a.status === 'pending') cuerpo = '<p class="muted">Pendiente: lo completa la próxima corrida.</p>';
+  else cuerpo = '<p class="muted">Este tema no tiene análisis previo.</p>';
+  return `<section><div class="sec-h"><h3 class="lbl">Análisis previo</h3>${pedir}</div><div class="box">${cuerpo}</div></section>`;
+}
+
+function detalleHtml(i) {
+  const ev = i.evidence || {}; const u = ev.ultima || ev.primera || {}; const t = i.triage || {};
   const lines = [];
   for (const l of (u.logs || []).slice(-6)) lines.push(`<div class="l">${esc(fecha(l.fecha))} · ${esc(l.nivel)} · ${esc(l.mensaje)}</div>`);
   for (const q of (u.queueItems || []).slice(0, 6)) lines.push(`<div class="l">Item ${esc(q.referenciaHash || q.id)} · ${esc(q.estado)} ${esc(q.tipoExcepcion || '')} · ${esc(q.motivo || '')}</div>`);
   for (const j of (u.jobs || []).slice(0, 6)) lines.push(`<div class="l">Job ${esc(String(j.key).slice(0, 8))} · ${esc(j.estado || '')} · ${esc(fecha(j.fin || j.creado))}${j.maquina ? ' · ' + esc(j.maquina) : ''}</div>`);
   if (u.regla) lines.push(`<div class="l">Regla: ${esc(u.regla.texto)} · observado ${esc(u.regla.observado)} (umbral ${esc(u.regla.umbral)})</div>`);
   if (u.errores) for (const e of u.errores.slice(0, 5)) lines.push(`<div class="l">${esc(e)}</div>`);
-  const acts = (S.activity[i.id] || []);
   if (!S.activity[i.id]) loadActivity(i.id);
-  return `<div class="detail">
-    ${i.library ? libreriaHtml(i) : ''}
-    <section><h4>Triage</h4><dl class="kv">
+  const acts = S.activity[i.id] || [];
+  const id = esc(i.id);
+  return `${estadoHtml(i)}
+    ${S.canWrite ? `<section aria-label="Acciones"><div class="actions" style="gap:8px">${accionesHtml(i, 'd')}</div>${panelHtml(i)}</section>` : ''}
+    <section><h3 class="lbl">Por qué está acá</h3><div class="box"><p class="lead">${esc(t.rationale)}</p><dl class="kv">
       <dt>Decisión</dt><dd>${esc(DEC[i.decision] || i.decision)} · confianza ${esc(t.confidence || '—')}</dd>
-      <dt>Por qué</dt><dd>${esc(t.rationale)}</dd>
       ${(t.matchedRules || []).length ? `<dt>Reglas</dt><dd class="mono">${(t.matchedRules).map(esc).join(', ')}</dd>` : ''}
       ${(t.memoryRefs || []).length ? `<dt>Memoria</dt><dd class="mono">${(t.memoryRefs).map(esc).join(', ')}</dd>` : ''}
       <dt>Visto</dt><dd>desde ${esc(fecha(i.firstSeenAt))} · ${esc(i.occurrences)} ocurrencia(s) en ${esc((i.recurrences || []).length)} corrida(s)</dd>
       ${i.process ? `<dt>Proceso</dt><dd class="mono">${esc(i.process)}</dd>` : ''}${i.queue ? `<dt>Cola</dt><dd class="mono">${esc(i.queue)}</dd>` : ''}
-    </dl></section>
-    ${a.status === 'done' ? `<section><h4>Análisis previo</h4>
-      <p style="margin:0 0 8px">${esc(a.summary)}</p>
-      ${(a.hypotheses || []).length ? `<ul class="hyp">${a.hypotheses.map((h) => `<li class="${esc(h.likelihood)}"><b>${esc(h.text)}</b><span class="muted">Probabilidad ${esc(h.likelihood)} · ${esc(h.evidence)}</span></li>`).join('')}</ul>` : ''}
-      ${(a.suggestedActions || []).length ? `<h4 style="margin-top:10px">Acciones sugeridas</h4><ul style="margin:0;padding-left:18px">${a.suggestedActions.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
-      ${(a.codeRefs || []).length ? `<h4 style="margin-top:10px">Código</h4>${a.codeRefs.map((c) => `<div class="mono">${esc(c.file)}${c.line ? ':' + esc(c.line) : ''} <span class="muted">${c.pkg ? esc(c.pkg) : '@' + esc(String(c.sha || '').slice(0, 7))}</span> — ${esc(c.note)}</div>`).join('')}` : ''}
-      ${(a.docRefs || []).length ? `<h4 style="margin-top:10px">Documentación</h4>${a.docRefs.map((c) => `<div><span class="mono">${esc(c.file)}</span> · ${esc(c.section)} — ${esc(c.note)}</div>`).join('')}` : ''}
-      ${a.source ? `<p class="muted">Código analizado: ${a.source.kind === 'repo' ? 'repo de respaldo' : 'paquete'} ${esc(a.source.package)} ${esc(a.source.version)}${a.source.kind === 'package' ? ' (versión desplegada)' : ''}${a.source.library ? ' · librería ' + esc(a.source.library) : ''}.</p>`
-        : a.repo && !a.repo.matchesDeployedVersion ? '<p class="muted">El código analizado es de la rama configurada, no del tag de la versión desplegada.</p>' : ''}
-      ${a.changes ? `<h4 style="margin-top:10px">Qué cambió en el deploy</h4><p style="margin:0">${esc(a.changes)}</p>` : ''}
-    </section>` : a.status === 'pending' ? '<section><h4>Análisis previo</h4><p class="muted" style="margin:0">Pendiente: lo completa la próxima corrida.</p></section>' : ''}
-    ${lines.length ? `<section><h4>Evidencia (redactada)</h4><div class="ev">${lines.join('')}</div></section>` : ''}
-    ${S.canWrite ? `<div><button class="btn link" data-act="reanalizar-inc" style="padding-left:0">Volver a analizar</button></div>` : ''}
-    <section><h4>Actividad</h4>${acts.length ? `<ul class="tl">${acts.map((x) => `<li><time>${esc(fecha(x.at))}</time><span>${who(x.by)} ${esc(x.text || '')}</span></li>`).join('')}</ul>` : '<span class="muted">Sin actividad todavía.</span>'}</section>
-  </div>`;
+    </dl></div></section>
+    ${analisisHtml(i)}
+    ${i.library ? libreriaHtml(i) : ''}
+    ${lines.length ? `<section><h3 class="lbl">Evidencia (redactada)</h3><div class="ev" tabindex="0" role="group" aria-label="Evidencia redactada">${lines.join('')}</div></section>` : ''}
+    <section><h3 class="lbl">Actividad</h3><div class="box">
+      ${acts.length ? `<ul class="tl">${acts.map((x) => `<li><time>${esc(fecha(x.at))}</time><span>${who(x.by)} ${esc(x.text || '')}</span></li>`).join('')}</ul>` : '<p class="muted">Sin actividad todavía.</p>'}
+      ${S.canWrite ? `<div class="composer"><textarea id="${id}-coment" aria-label="Comentario para el equipo" placeholder="Comentario para el equipo">${esc(S.drafts[`${i.id}-coment`] || '')}</textarea>
+        <div class="actions" style="gap:10px"><button class="btn" data-act="comentar">${ico('send')}Comentar</button><span class="muted">Ctrl + Enter para enviar</span></div></div>` : ''}
+    </div></section>`;
+}
+
+function drawerHtml(id) {
+  const i = S.incidents[id];
+  const cerrar = `<a class="icon-btn" id="dw-x" href="#${esc(base)}" aria-label="Cerrar el detalle" title="Cerrar (Esc)">${ico('x')}</a>`;
+  const marco = (attrs, top, titulo, meta, cuerpo) => `<a class="scrim" href="#${esc(base)}" tabindex="-1" aria-hidden="true"></a>
+    <div class="drawer" id="dw" role="dialog" aria-modal="true" aria-labelledby="dw-t" tabindex="-1" ${attrs}>
+      <header class="dw-h"><div class="dw-top">${top}<span class="sp"></span>${cerrar}</div><h2 id="dw-t">${titulo}</h2>${meta}</header>
+      <div class="dw-b" id="dw-b" data-ks>${cuerpo}</div></div>`;
+  if (!i) {
+    return S.loaded.incidents
+      ? marco('', '<span class="muted">Tema</span>', 'Este tema ya no está abierto', '', '<p class="muted">Se cerró o se depuró por retención. Lo que se aprendió queda en la memoria de producción de su proyecto.</p>')
+      : marco('', '<span class="muted">Tema</span>', 'Cargando…', '', '');
+  }
+  return marco(`data-inc="${esc(i.id)}"`,
+    `${sevHtml(i.severity)}<span class="st">${esc(DEC[i.decision] || i.decision)}</span><a class="tag" href="#proyecto-${esc(i.projectId)}">${esc(projName(i.projectId))}</a>`,
+    esc(i.title), metaHtml(i, false), detalleHtml(i));
 }
 
 const subs = {};
@@ -559,43 +918,84 @@ function loadActivity(id) {
   }, () => {});
 }
 
+// ---------- vistas ----------
+const seg = (k, opciones, label) => `<div class="seg" role="group" aria-label="${label}">${opciones.map(([v, t, n]) => `<button id="seg-${k}-${v}" data-act="seg" data-k="${k}" data-v="${v}" aria-pressed="${S[k] === v}">${t}<span class="n">${n}</span></button>`).join('')}</div>`;
+const buscador = (id, valor, label) => `<div class="search">${ico('search')}<input type="search" id="${id}" value="${esc(valor)}" placeholder="${label}" aria-label="${label}" autocomplete="off"></div>`;
+const seccion = (titulo, n, cuerpo, hint = '') => `<section class="sec"><div class="sec-h"><h2>${titulo}</h2>${n != null ? `<span class="cnt">${n}</span>` : ''}${hint ? `<span class="hint">${hint}</span>` : ''}</div>${cuerpo}</section>`;
+
 function viewInicio() {
-  if (!S.db) return `<div class="banner info">${esc(S.error || 'Conectando con el tablero…')}</div>`;
-  if (!S.loaded.incidents || !S.loaded.projects) return `<div class="banner info">${S.stale ? 'Los datos tardan en llegar. Puede que estés sin conexión.' : 'Cargando…'}</div>`;
-  const todos = Object.values(S.incidents).filter((i) => reportable(i) && visibleByWork(i) && inFilter(i)).sort(orden);
-  const mios = todos.filter((i) => { const w = S.work[i.id]; return w && w.state === 'delegated' && w.assignee && w.assignee === S.me; });
-  const accion = todos.filter((i) => !mios.includes(i) && i.decision === 'escalate');
-  const avisos = todos.filter((i) => !mios.includes(i) && i.decision !== 'escalate');
-  let html = '';
+  const p = S.filter && S.projects[S.filter]; const pu = pulso();
+  if (!S.db) return head('Bandeja', '') + `<div class="banner info">${ico('alert')}<span>${esc(S.error || 'Conectando con el tablero…')}</span></div>`;
+  if (!S.loaded.incidents || !S.loaded.projects) {
+    return head('Bandeja', S.stale ? 'Los datos tardan en llegar. Puede que estés sin conexión.' : 'Cargando…') + '<div class="skel" aria-hidden="true"><i></i><i></i><i></i></div>';
+  }
+  const enBandeja = Object.values(S.incidents).filter((i) => reportable(i) && visibleByWork(i) && inFilter(i)).sort(orden);
+  const q = norm(S.q);
+  const todos = q ? enBandeja.filter((i) => norm(`${i.title} ${projName(i.projectId)} ${CAT[i.category] || ''} ${i.process || ''} ${i.severity}`).includes(q)) : enBandeja;
+  const esMio = (i) => { const w = S.work[i.id]; return Boolean(w && w.state === 'delegated' && w.assignee && w.assignee === S.me); };
+  const mios = todos.filter(esMio);
+  const accion = todos.filter((i) => !esMio(i) && i.decision === 'escalate');
+  const avisos = todos.filter((i) => !esMio(i) && i.decision !== 'escalate');
+  const nProy = new Set(enBandeja.map((i) => i.projectId)).size;
   const ult = S.runs[0];
-  if (ult && ult.status !== 'ok') html += `<div class="banner bad">${ico('alert', 'ico-s')} La última corrida terminó con errores de colecta. <a href="#corrida-${esc(ult.id)}">Ver detalle</a></div>`;
-  if (S.isAdmin) {
+
+  let html = head('Bandeja', `${enBandeja.length ? pl(enBandeja.length, 'tema abierto', 'temas abiertos') : 'Sin temas abiertos'}${p ? ` en ${esc(p.name)}` : nProy > 1 ? ` en ${nProy} proyectos` : ''}${pu.d ? ` · ${esc(pu.d.toLowerCase())}` : ''}`, { scope: true });
+  if (pu.detenida) html += `<div class="banner bad">${ico('alert')}<span class="grow"><b>La rutina está detenida.</b> ${esc(pu.d)}: lo que ves puede estar desactualizado.</span></div>`;
+  else if (ult && ult.status !== 'ok') html += `<div class="banner bad">${ico('alert')}<span class="grow">La última corrida terminó con errores de colecta. <a href="#corrida-${esc(ult.id)}">Ver la corrida</a></span></div>`;
+
+  if (enBandeja.length) {
+    const tabs = [['todo', 'Todo', todos.length]];
+    if (mios.length || S.tab === 'mios') tabs.push(['mios', 'Para vos', mios.length]);
+    tabs.push(['accion', 'Requiere acción', accion.length], ['avisos', 'Avisos', avisos.length]);
+    html += `<div class="tools">${seg('tab', tabs, 'Filtrar la bandeja')}${buscador('q-inbox', S.q, 'Buscar en la bandeja')}</div>`;
+  }
+  const ver = (k) => S.tab === 'todo' || S.tab === k;
+  if (S.isAdmin && S.tab === 'todo' && !q) {
     const prop = Object.values(S.rules).filter((r) => r.status === 'proposed' && (!S.filter || r.projectId === S.filter)).length;
-    const rev = Object.values(S.projects).filter((p) => p.status === 'review' && (!S.filter || p.id === S.filter));
-    const err = Object.values(S.projects).filter((p) => p.status === 'error' && (!S.filter || p.id === S.filter));
+    const rev = Object.values(S.projects).filter((x) => x.status === 'review' && (!S.filter || x.id === S.filter));
+    const err = Object.values(S.projects).filter((x) => x.status === 'error' && (!S.filter || x.id === S.filter));
+    const fila = (href, icono, cls, txt) => `<a class="rowi" href="${href}"><span class="ico-b ${cls}">${ico(icono)}</span><span class="t">${txt}</span><span></span>${ico('chev', 'chev')}</a>`;
     const items = [];
-    if (prop) items.push(`<a href="#reglas"><b class="n">${prop}</b> regla(s) propuesta(s) para aprobar</a>`);
-    for (const p of rev) items.push(`<a href="#proyecto-${esc(p.id)}">Revisar alta de <b>${esc(p.name)}</b></a>`);
-    for (const p of err) items.push(`<a href="#proyecto-${esc(p.id)}">${ico('alert', 'ico-s al-ico')} <b>${esc(p.name)}</b>: ${esc(PSTATUS.error)}</a>`);
-    if (items.length) html += `<section><div class="sec-h"><h2>Para revisar</h2></div><div class="mini">${items.join('')}</div></section>`;
+    if (prop) items.push(fila('#reglas', 'rule', 'info', `<b>${pl(prop, 'regla propuesta', 'reglas propuestas')} para aprobar</b><span class="muted">Nacen de respuestas a incidentes.</span>`));
+    for (const x of rev) items.push(fila(`#proyecto-${esc(x.id)}`, 'folder', 'info', `<b>Revisar alta de ${esc(x.name)}</b><span class="muted">El análisis inicial terminó. Revisalo y activá el control.</span>`));
+    for (const x of err) items.push(fila(`#proyecto-${esc(x.id)}`, 'alert', 'bad', `<b>${esc(x.name)}: ${esc(PSTATUS.error)}</b><span class="muted">${esc(x.statusNote || 'El alta o el control falló.')}</span>`));
+    if (items.length) html += seccion('Para revisar', items.length, `<div class="list">${items.join('')}</div>`, 'Solo Admin');
   }
-  if (mios.length) html += `<section><div class="sec-h"><h2>Para vos</h2><span class="cnt">${mios.length}</span></div><div class="list">${mios.map((i) => cardHtml(i)).join('')}</div></section>`;
-  if (accion.length) html += `<section><div class="sec-h"><h2>Requiere acción</h2><span class="cnt">${accion.length}</span></div><div class="list">${accion.map((i) => cardHtml(i)).join('')}</div></section>`;
-  if (avisos.length) html += `<section><div class="sec-h"><h2>Avisos</h2><span class="cnt">${avisos.length}</span></div><div class="list">${avisos.map((i) => cardHtml(i, true)).join('')}</div></section>`;
-  if (!todos.length) {
-    const p = S.filter && S.projects[S.filter];
+  if (ver('mios') && mios.length) html += seccion('Para vos', mios.length, `<div class="list">${mios.map((i) => cardHtml(i)).join('')}</div>`, 'Te los delegaron');
+  if (ver('accion') && accion.length) html += seccion('Requiere acción', accion.length, `<div class="list">${accion.map((i) => cardHtml(i)).join('')}</div>`, 'Por severidad');
+  if (ver('avisos') && avisos.length) html += seccion('Avisos', avisos.length, `<div class="list">${avisos.map((i) => cardHtml(i, true)).join('')}</div>`, 'Para saber, sin urgencia');
+
+  const visibles = (ver('mios') ? mios.length : 0) + (ver('accion') ? accion.length : 0) + (ver('avisos') ? avisos.length : 0);
+  if (!enBandeja.length) {
     html += `<div class="empty">${ico('check')}<b>Todo en orden</b><span class="muted">${p ? `Nada pendiente en ${esc(p.name)}.` : 'No hay incidentes que requieran acción.'}${ult ? ` Último control ${esc(rel(ult.finishedAt || ult.startedAt))}.` : ''}</span>
-      ${!Object.keys(S.projects).length ? `<span class="muted">Todavía no hay proyectos. ${S.isAdmin ? '<a href="#registrar">Registrá el primero</a>.' : 'Un Admin tiene que registrarlos.'}</span>` : ''}</div>`;
+      ${!Object.keys(S.projects).length ? `<span class="muted">Todavía no hay proyectos. ${S.isAdmin ? '<a href="#registrar">Registrá el primero</a>.' : 'Un Admin tiene que registrarlos.'}</span>` : ''}
+      ${p ? '<button class="btn sm" data-act="scope-clear">Ver todos los proyectos</button>' : ''}</div>`;
+  } else if (!visibles) {
+    html += `<div class="empty plain">${ico('search')}<b>Nada coincide</b><span class="muted">${q ? 'Ningún tema abierto coincide con la búsqueda.' : 'No hay temas en esta vista.'}</span><button class="btn sm" data-act="limpiar">Ver toda la bandeja</button></div>`;
   }
-  return html + navMore('inicio');
+  return html;
 }
 
-function navMore(cur) {
-  const l = [['inicio', 'Bandeja'], ['corridas', 'Corridas'], ['no-reportados', 'No reportados'], ['proyectos', 'Proyectos'], ['reglas', 'Reglas']];
-  if (S.isAdmin) l.push(['registrar', 'Registrar proyecto'], ['ajustes', 'Ajustes']);
-  return `<nav class="more" aria-label="Ver más">${l.map(([h, t]) => `<a href="#${h}" ${cur === h ? 'aria-current="page"' : ''}>${t}</a>`).join('')}</nav>`;
+function viewFuera() {
+  const tipo = (i) => { const w = S.work[i.id];
+    if (w && w.state === 'dismissed') return 'descartados';
+    if (w && w.state === 'responded') return 'respondidos';
+    if (w && w.state === 'snoozed' && w.snoozeUntil && w.snoozeUntil > nowIso()) return 'pospuestos';
+    return 'triage'; };
+  const motivo = (i) => { const w = S.work[i.id] || {}; const t = tipo(i);
+    if (t === 'pospuestos') return `Pospuesto hasta ${fecha(w.snoozeUntil)}`;
+    if (t === 'descartados') return `Descartado: ${etiqueta(DISMISS, w.dismissReason)}`;
+    if (t === 'respondidos') return `Respondido: ${etiqueta(RESP, (w.response || {}).decision)}`;
+    return DEC[i.decision] || i.decision; };
+  const xs = Object.values(S.incidents).filter((i) => inFilter(i) && i.status === 'open' && (!reportable(i) || !visibleByWork(i))).sort(orden);
+  const n = (t) => xs.filter((i) => tipo(i) === t).length;
+  const ver = xs.filter((i) => S.fuera === 'todos' || tipo(i) === S.fuera);
+  return head('Fuera de bandeja', 'Temas abiertos que no se muestran en la bandeja: los que el equipo pospuso, respondió o descartó, y los que el triage decidió no reportar.', { scope: true })
+    + (xs.length ? `<div class="tools">${seg('fuera', [['todos', 'Todos', xs.length], ['pospuestos', 'Pospuestos', n('pospuestos')], ['respondidos', 'Respondidos', n('respondidos')], ['descartados', 'Descartados', n('descartados')], ['triage', 'No reportados por el triage', n('triage')]], 'Filtrar por motivo')}</div>` : '')
+    + (ver.length ? `<div class="list">${ver.map((i) => `<a class="rowi" id="t-${esc(i.id)}" href="#incidente-${esc(i.id)}">${sevHtml(i.severity)}
+      <span class="t"><b>${esc(i.title)}</b><span class="muted">${esc(motivo(i))}${S.filter ? '' : ' · ' + esc(projName(i.projectId))} — ${esc(i.triage && i.triage.rationale)}</span></span><span class="nums">×${esc(i.occurrences)}</span>${ico('chev', 'chev')}</a>`).join('')}</div>`
+      : `<div class="empty plain">${ico('archive')}<b>Nada por aquí</b><span class="muted">${xs.length ? 'No hay temas con ese motivo.' : 'Todo lo abierto está en la bandeja.'}</span></div>`);
 }
-const head = (title, sub, back = '#inicio') => `<div class="view-h"><a class="back" href="${back}">← Volver</a><h1>${esc(title)}</h1>${sub ? `<span class="muted">${sub}</span>` : ''}</div>`;
 
 function viewCorridas() {
   const runs = S.runs.filter((r) => !S.filter || (r.projects || []).some((p) => p.projectId === S.filter));
@@ -604,57 +1004,56 @@ function viewCorridas() {
     const nuevos = ps.reduce((a, p) => a + (p.incidentsNew || []).length, 0);
     const rec = ps.reduce((a, p) => a + (p.incidentsUpdated || []).length, 0);
     const esc_ = ps.reduce((a, p) => a + (p.findings || []).filter((f) => f.decision === 'escalate').length, 0);
-    return `<a class="rowi" href="#corrida-${esc(r.id)}"><span class="dot ${r.status === 'ok' ? 'ok' : r.status === 'partial' ? 'warn' : 'critical'}"></span>
-      <span class="t">${esc(fecha(r.startedAt))} <span class="muted">· ${ps.length} proyecto(s)${r.trigger !== 'scheduled' ? ' · ' + esc(r.trigger) : ''}</span></span>
-      <span class="nums">${nuevos} nuevos · ${rec} recurrentes · ${esc_} escalados</span></a>`;
+    const st = r.status === 'ok' ? ['ok', 'Completa'] : r.status === 'partial' ? ['warn', 'Parcial'] : ['bad', 'Con errores'];
+    return `<a class="rowi" href="#corrida-${esc(r.id)}"><span class="st ${st[0]}">${st[1]}</span>
+      <span class="t"><b>${esc(fecha(r.startedAt))}</b><span class="muted">${esc(rel(r.finishedAt || r.startedAt))} · ${pl(ps.length, 'proyecto', 'proyectos')}${r.trigger !== 'scheduled' ? ' · ' + esc(r.trigger) : ''}</span></span>
+      <span class="nums">${nuevos} nuevos · ${rec} recurrentes · ${esc_} escalados</span>${ico('chev', 'chev')}</a>`;
   }).join('');
-  return head('Corridas', 'Cada ejecución de la rutina, con lo que revisó y encontró.') + `<div class="box"><div class="rows">${rows || '<span class="muted">Todavía no hay corridas.</span>'}</div></div>` + navMore('corridas');
+  return head('Corridas', 'Cada ejecución de la rutina, con lo que revisó y lo que encontró.', { scope: true })
+    + (rows ? `<div class="list">${rows}</div>` : `<div class="empty plain">${ico('runs')}<b>Todavía no hay corridas</b><span class="muted">${S.filter ? 'Ninguna corrida reciente incluyó este proyecto.' : 'Aparecen acá cuando la rutina corre por primera vez.'}</span></div>`);
 }
 
 function viewCorrida(id) {
   const r = S.runs.find((x) => x.id === id);
-  if (!r) return head('Corrida', 'No está entre las últimas 50 corridas.', '#corridas');
+  if (!r) return head('Corrida', S.loaded.runs ? 'No está entre las últimas 50 corridas.' : 'Cargando…', { back: ['corridas', 'Corridas'] });
   const ps = (r.projects || []).filter((p) => !S.filter || p.projectId === S.filter);
-  const icoRes = (res) => res === 'alerta' ? ico('alert', 'ico-s al-ico') : res === 'ok' ? ico('check', 'ico-s ok-ico') : ico('minus', 'ico-s om-ico');
-  return head(`Corrida del ${fecha(r.startedAt)}`, `${esc(r.status === 'ok' ? 'Completa' : r.status === 'partial' ? 'Parcial' : 'Con errores')} · duró ${r.finishedAt ? Math.max(1, Math.round((Date.parse(r.finishedAt) - Date.parse(r.startedAt)) / 60000)) + ' min' : '—'}${r.sessionUrl ? ` · <a href="${esc(r.sessionUrl)}" target="_blank" rel="noopener">sesión</a>` : ''}`, '#corridas')
-    + ps.map((p) => `<section class="box">
-      <div class="sec-h" style="margin:0"><h2>${esc(projName(p.projectId))}</h2><span class="cnt">${esc(fecha(p.window && p.window.desde))} → ${esc(fecha(p.window && p.window.hasta))}</span></div>
-      ${p.signals ? `<div class="nums">${esc(p.signals.jobs)} jobs · ${esc(p.signals.logsErrorFatal)} logs error/fatal · ${esc(p.signals.queueItemsFallidos)} items fallidos · ${esc(p.signals.queueItemsAbandonados)} abandonados</div>` : ''}
-      <div class="tblw"><table><thead><tr><th></th><th>Punto de control</th><th>Observado</th></tr></thead><tbody>
-      ${(p.checks || []).map((c) => `<tr><td>${icoRes(c.resultado)}</td><td>${esc(c.nombre)}</td><td class="mono">${esc(c.observado ?? '—')}</td></tr>`).join('')}</tbody></table></div>
-      ${(p.findings || []).length ? `<h4 class="muted" style="margin:4px 0 0;font-size:12px;text-transform:uppercase;letter-spacing:.07em">Hallazgos y triage</h4>
-        <div class="rows">${p.findings.map((f) => `<a class="rowi" href="#incidente-${esc(f.incidentId)}"><span class="pill ${esc(f.severity)}">${esc(f.severity)}</span>
-          <span class="t">${esc(f.title)}<br><span class="muted">${esc(DEC[f.decision])}${f.recurrence ? ' · recurrencia' : ' · nuevo'}${f.reopened ? ' · reabierto' : ''} — ${esc(f.rationale)}</span></span>${ico('chev', 'ico-s om-ico')}</a>`).join('')}</div>` : '<span class="muted">Sin hallazgos.</span>'}
+  const res = (x) => (x === 'alerta' ? `${ico('alert')}<span class="sr">Alerta</span>` : x === 'ok' ? `${ico('check')}<span class="sr">Correcto</span>` : `${ico('minus')}<span class="sr">Omitido</span>`);
+  const color = (x) => (x === 'alerta' ? 'var(--p2)' : x === 'ok' ? 'var(--ok)' : 'var(--p4)');
+  const dur = r.finishedAt ? Math.max(1, Math.round((Date.parse(r.finishedAt) - Date.parse(r.startedAt)) / 60000)) + ' min' : '—';
+  return head(`Corrida del ${fecha(r.startedAt)}`, `${r.status === 'ok' ? 'Completa' : r.status === 'partial' ? 'Parcial' : 'Con errores'} · duró ${dur}${r.sessionUrl ? ` · <a href="${esc(r.sessionUrl)}" target="_blank" rel="noopener">Abrir la sesión</a>` : ''}`, { back: ['corridas', 'Corridas'], scope: true })
+    + (ps.length ? '' : `<div class="empty plain">${ico('runs')}<b>Sin datos para este proyecto</b><span class="muted">Esta corrida no lo incluyó.</span></div>`)
+    + ps.map((p) => `<section class="sec"><div class="sec-h"><h2>${esc(projName(p.projectId))}</h2><span class="cnt">${esc(fecha(p.window && p.window.desde))} → ${esc(fecha(p.window && p.window.hasta))}</span></div>
+      <div class="box">
+      ${p.signals ? `<p class="nums" style="white-space:normal">${esc(p.signals.jobs)} jobs · ${esc(p.signals.logsErrorFatal)} logs error/fatal · ${esc(p.signals.queueItemsFallidos)} items fallidos · ${esc(p.signals.queueItemsAbandonados)} abandonados</p>` : ''}
+      ${(p.checks || []).length ? `<div class="tblw"><table><thead><tr><th scope="col"><span class="sr">Resultado</span></th><th scope="col">Punto de control</th><th scope="col">Observado</th></tr></thead><tbody>
+      ${p.checks.map((c) => `<tr><td style="color:${color(c.resultado)};width:28px">${res(c.resultado)}</td><td>${esc(c.nombre)}</td><td class="mono">${esc(c.observado ?? '—')}</td></tr>`).join('')}</tbody></table></div>` : ''}
       ${(p.errors || []).length ? `<div class="ev">${p.errors.map((e) => `<div class="l">${esc(e)}</div>`).join('')}</div>` : ''}
-    </section>`).join('') + navMore('');
-}
-
-function viewIncidente(id) {
-  const i = S.incidents[id];
-  if (!i) return head('Incidente', 'Este incidente ya no está abierto o se depuró por retención.', '#corridas');
-  S.open[id] = true;
-  return head(i.title, `${esc(projName(i.projectId))} · ${esc(DEC[i.decision])}`, '#inicio') + `<div class="list">${cardHtml(i)}</div>` + navMore('');
-}
-
-function viewNoReportados() {
-  const xs = Object.values(S.incidents).filter((i) => inFilter(i) && i.status === 'open' && (!reportable(i) || !visibleByWork(i))).sort(orden);
-  const motivo = (i) => {
-    const w = S.work[i.id];
-    if (w && w.state === 'snoozed') return `Pospuesto hasta ${fecha(w.snoozeUntil)}`;
-    if (w && w.state === 'dismissed') return `Descartado: ${(DISMISS.find((d) => d[0] === w.dismissReason) || [0, ''])[1]}`;
-    if (w && w.state === 'responded') return `Respondido: ${(RESP.find((d) => d[0] === (w.response || {}).decision) || [0, ''])[1]}`;
-    return DEC[i.decision];
-  };
-  return head('No reportados', 'Lo que el triage decidió no mostrar en la bandeja, y lo que el equipo ya respondió, pospuso o descartó.')
-    + `<div class="box"><div class="rows">${xs.map((i) => `<a class="rowi" href="#incidente-${esc(i.id)}"><span class="ico" style="width:24px;height:24px">${ico(i.category)}</span>
-      <span class="t">${esc(i.title)}<br><span class="muted">${esc(motivo(i))} — ${esc(i.triage && i.triage.rationale)}</span></span><span class="nums">×${esc(i.occurrences)}</span></a>`).join('') || '<span class="muted">Nada por aquí.</span>'}</div></div>` + navMore('no-reportados');
+      </div>
+      ${(p.findings || []).length ? `<h3 class="lbl" style="margin-top:6px">Hallazgos y triage</h3>
+        <div class="list">${p.findings.map((f) => `<a class="rowi" id="t-${esc(f.incidentId)}" href="#incidente-${esc(f.incidentId)}">${sevHtml(f.severity)}
+          <span class="t"><b>${esc(f.title)}</b><span class="muted">${esc(DEC[f.decision])}${f.recurrence ? ' · recurrencia' : ' · nuevo'}${f.reopened ? ' · reabierto' : ''} — ${esc(f.rationale)}</span></span><span></span>${ico('chev', 'chev')}</a>`).join('')}</div>` : '<p class="muted">Sin hallazgos.</p>'}
+    </section>`).join('');
 }
 
 function viewProyectos() {
-  const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-  return head('Proyectos', 'Estado, memoria y reglas de cada proyecto controlado.') + `<div class="box"><div class="rows">${ps.map((p) => `<a class="rowi" href="#proyecto-${esc(p.id)}">
-    <span class="dot ${p.status !== 'active' ? 'off' : (p.health && p.health.level) || 'unknown'}"></span><span class="t">${esc(p.name)}<br><span class="muted mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span></span>
-    <span class="nums">${esc(PSTATUS[p.status] || p.status)}</span></a>`).join('') || '<span class="muted">Sin proyectos todavía.</span>'}</div></div>` + navMore('proyectos');
+  const c = conteos(); const q = norm(S.qp);
+  const rango = (p) => (p.status === 'error' ? 0 : p.status === 'review' ? 1 : nivel(p) === 'critical' ? 2 : nivel(p) === 'warn' ? 3 : p.status === 'active' ? 4 : 5);
+  const todos = Object.values(S.projects);
+  const ps = todos.filter((p) => !q || norm(`${p.name} ${(p.orchestrator || {}).folderPath || ''}`).includes(q))
+    .sort((a, b) => rango(a) - rango(b) || String(a.name).localeCompare(String(b.name), 'es'));
+  const registradas = new Set(todos.map((p) => (p.orchestrator || {}).folderPath));
+  const det = ((S.discovery && S.discovery.folders) || []).filter((f) => !registradas.has(f.folderPath)).length;
+  const estado = (p) => { const l = nivel(p);
+    if (p.status !== 'active') return `<span class="st ${p.status === 'error' ? 'bad' : p.status === 'review' ? 'info' : ''}">${esc(PSTATUS[p.status] || p.status)}</span>`;
+    return `<span class="st ${l === 'critical' ? 'bad' : l === 'warn' ? 'warn' : l === 'ok' ? 'ok' : ''}">${esc(NIVEL[l])}</span>`; };
+  return head('Proyectos', `${pl(todos.length, 'proyecto controlado', 'proyectos controlados')}. Cada uno guarda su memoria, sus reglas y su inventario.`,
+    { actions: S.isAdmin ? `<a class="btn primary" href="#registrar">${ico('plus')}Registrar proyecto</a>` : '' })
+    + (S.isAdmin && det ? `<div class="banner note">${ico('folder')}<span class="grow">Hay ${pl(det, 'carpeta de Orchestrator', 'carpetas de Orchestrator')} con procesos que todavía no ${det === 1 ? 'es un proyecto' : 'son proyectos'}. <a href="#registrar">Revisarlas</a></span></div>` : '')
+    + (todos.length > 5 ? `<div class="tools">${buscador('q-proj', S.qp, 'Buscar proyecto por nombre o carpeta')}</div>` : '')
+    + (ps.length ? `<div class="list">${ps.map((p) => `<a class="rowi" href="#proyecto-${esc(p.id)}"><span class="dot ${nivel(p)}" aria-hidden="true"></span>
+      <span class="t"><b>${esc(p.name)}</b><span class="muted mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span></span>
+      <span class="end"><span class="nums">${c[p.id] ? pl(c[p.id], 'tema abierto', 'temas abiertos') : ''}</span>${estado(p)}</span>${ico('chev', 'chev')}</a>`).join('')}</div>`
+      : `<div class="empty plain">${ico('folder')}<b>${todos.length ? 'Ningún proyecto coincide' : 'Sin proyectos todavía'}</b><span class="muted">${todos.length ? 'Probá con otro nombre o carpeta.' : S.isAdmin ? 'Registrá el primero para empezar a controlar.' : 'Un Admin tiene que registrarlos.'}</span></div>`);
 }
 
 function subProject(id) {
@@ -667,16 +1066,17 @@ function subProject(id) {
 }
 
 function viewProyecto(id) {
-  const p = S.projects[id];
-  if (!p) return head('Proyecto', 'No se encontró el proyecto.', '#proyectos');
+  const p = S.projects[id]; const back = ['proyectos', 'Proyectos'];
+  if (!p) return head('Proyecto', S.loaded.projects ? 'No se encontró el proyecto.' : 'Cargando…', { back });
   subProject(id);
   const tab = S.projTab;
   const m = S.memory[id];
   const hist = S.history[id] || [];
   const reglas = Object.values(S.rules).filter((r) => r.projectId === id);
   const inv = p.inventory || {};
+  const abiertos = conteos()[id] || 0;
   let body = '';
-  if (tab === 'memoria') body = m && m.process ? `<div class="md">${md(m.process)}</div>` : '<span class="muted">La memoria de proceso se genera en el alta automática.</span>';
+  if (tab === 'memoria') body = m && m.process ? `<div class="md">${md(m.process)}</div>` : '<p class="muted">La memoria de proceso se genera en el alta automática.</p>';
   else if (tab === 'produccion') body = (m && m.productionSummary ? `<div class="md">${md(m.productionSummary)}</div>` : '')
     + `<ul class="tl">${hist.map((h) => `<li><time>${esc(fecha(h.at))}</time><span><b>${esc(HIST[h.type] || h.type)}</b> · ${esc(h.summary)}${h.ticket ? ` <span class="mono">[${esc(h.ticket)}]</span>` : ''} <span class="muted">${who(h.by)}</span></span></li>`).join('') || '<li><span></span><span class="muted">Sin historial todavía.</span></li>'}</ul>`;
   else if (tab === 'reglas') body = rulesTable(reglas, true);
@@ -690,17 +1090,20 @@ function viewProyecto(id) {
   const invP = (p.inventory && p.inventory.processes) || [];
   const extra = (x) => { const v = invP.find((y) => y.name === x.orchestratorProcess); if (!v) return '';
     return `<span class="muted"> · paquete </span><span class="mono">${esc(v.package || v.name)} ${esc(v.version || '')}</span>${(v.libraries || []).length ? `<span class="muted"> · librerías: </span><span class="mono">${v.libraries.map((l) => esc(l.name + ' ' + l.version)).join(', ')}</span>` : ''}`; };
-  return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${procs.length} proceso(s) · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos')
-    + `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
-      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span>${extra(x)}${x.repo ? `<span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo))}</span>` : ''}${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Los procesos de la carpeta se detectan solos en la próxima corrida.</span>'}
-      ${S.isAdmin ? `<div><button class="btn link" data-act="tab" data-t="config" style="padding-left:0">Editar configuración</button></div>` : ''}</div>`
-    + (p.statusNote ? `<div class="banner info">${esc(p.statusNote)}</div>` : '')
-    + (S.isAdmin && p.status === 'review' ? `<div><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')
-    + (S.isAdmin && p.status === 'active' ? `<div class="actions"><button class="btn" data-act="pausar" data-pid="${esc(p.id)}">Pausar control</button><button class="btn" data-act="reanalizar" data-pid="${esc(p.id)}">Pedir re-análisis</button></div>` : '')
-    + (S.isAdmin && p.status === 'paused' ? `<div><button class="btn" data-act="activar" data-pid="${esc(p.id)}">Reanudar control</button></div>` : '')
-    + `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-act="tab" data-t="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div><div class="box">${body}</div>` + navMore('');
+  const l = nivel(p);
+  const acciones = (abiertos ? `<button class="btn" data-act="ver-bandeja" data-pid="${esc(p.id)}">${ico('inbox')}Ver ${pl(abiertos, 'tema abierto', 'temas abiertos')}</button>` : '')
+    + (S.isAdmin && p.status === 'active' ? `<button class="btn" data-act="reanalizar" data-pid="${esc(p.id)}">Pedir re-análisis</button><button class="btn" data-act="pausar" data-pid="${esc(p.id)}">Pausar control</button>` : '')
+    + (S.isAdmin && p.status === 'paused' ? `<button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Reanudar control</button>` : '');
+  return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${pl(procs.length, 'proceso', 'procesos')} · ${esc(p.status === 'active' ? NIVEL[l] : PSTATUS[p.status] || p.status)}`, { back, actions: acciones })
+    + (S.isAdmin && p.status === 'review' ? `<div class="banner note">${ico('check')}<span class="grow"><b>El alta está lista para revisar.</b> Mirá la memoria de proceso, el inventario y las reglas propuestas. Cuando esté bien, activá el control.</span><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')
+    + (p.statusNote ? `<div class="banner info">${ico('alert')}<span class="grow">${esc(p.statusNote)}</span></div>` : '')
+    + seccion('Procesos', procs.length || null, `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
+      <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span>${extra(x)}${x.repo ? `<span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo))}</span>` : ''}${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<p class="muted">Los procesos de la carpeta se detectan solos en la próxima corrida.</p>'}
+      ${S.isAdmin ? `<div><button class="btn ghost sm" data-act="tab" data-t="config" style="margin-left:-8px">Editar configuración</button></div>` : ''}</div>`)
+    + `<div class="tabs" role="tablist" aria-label="Secciones del proyecto">${tabs.map(([k, t]) => `<button role="tab" id="tab-${k}" data-act="tab" data-t="${k}" aria-selected="${tab === k}" aria-controls="tabpanel" tabindex="${tab === k ? 0 : -1}">${t}</button>`).join('')}</div>
+      <div class="box" role="tabpanel" id="tabpanel" aria-labelledby="tab-${esc(tab)}">${body}</div>`;
 }
-const invTable = (t, cols, rows) => `<h4 class="muted" style="margin:6px 0 0;font-size:12px;text-transform:uppercase;letter-spacing:.07em">${esc(t)}</h4><div class="tblw"><table><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c ?? '—')}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="muted">—</td></tr>`}</tbody></table></div>`;
+const invTable = (t, cols, rows) => `<h3 class="lbl">${esc(t)}</h3><div class="tblw"><table><thead><tr>${cols.map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c ?? '—')}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="muted">—</td></tr>`}</tbody></table></div>`;
 
 function configProyecto(p) {
   if (!S.isAdmin) return `<dl class="kv"><dt>Criterios de triage</dt><dd>${esc(p.triageCriteria || '—')}</dd><dt>Documentación común</dt><dd class="mono">${esc(((p.docs || {}).paths || []).join(', ') || '—')}</dd></dl>`;
@@ -708,60 +1111,81 @@ function configProyecto(p) {
   if (!S.forms[clave]) S.forms[clave] = formDesde(p);
   return formProyectoHtml(clave, S.forms[clave], {
     boton: `<button class="btn primary" data-act="guardar-proyecto" data-pid="${esc(p.id)}" data-reanalizar="1">Guardar y re-analizar</button>`,
-    botonExtra: `<button class="btn" data-act="guardar-proyecto" data-pid="${esc(p.id)}">Solo guardar</button><button class="btn link" data-act="descartar-cambios" data-pid="${esc(p.id)}">Descartar cambios</button>
-      <span class="muted">Si cambiaste repos o procesos, conviene re-analizar: la rutina regenera la memoria y el inventario.</span>`,
+    botonExtra: `<button class="btn" data-act="guardar-proyecto" data-pid="${esc(p.id)}">Solo guardar</button><button class="btn ghost" data-act="descartar-cambios" data-pid="${esc(p.id)}">Descartar cambios</button>
+      <span class="muted" style="flex-basis:100%">Si cambiaste repos o procesos, conviene re-analizar: la rutina regenera la memoria y el inventario.</span>`,
   });
 }
 
 function rulesTable(reglas, enProyecto) {
   const ord = { proposed: 0, pending_compile: 1, active: 2, disabled: 3, rejected: 4 };
+  const stCls = { proposed: 'info', active: 'ok', pending_compile: 'warn' };
   reglas = reglas.slice().sort((a, b) => ord[a.status] - ord[b.status]);
-  return `<div class="rows">${reglas.map((r) => `<div class="rowi" style="grid-template-columns:1fr auto">
-    <span class="t"><b>${esc(r.text)}</b><br><span class="muted">${esc(RSTATUS[r.status] || r.status)}${enProyecto ? '' : ' · ' + esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}${r.compileNote ? ' — ' + esc(r.compileNote) : ''}</span></span>
-    <span class="actions">${S.isAdmin && r.status === 'proposed' ? `<button class="btn primary" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Aprobar</button><button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="rejected">Rechazar</button>` : ''}
-      ${S.isAdmin && r.status === 'active' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="disabled">Desactivar</button>` : ''}
-      ${S.isAdmin && r.status === 'disabled' ? `<button class="btn" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Activar</button>` : ''}</span></div>`).join('') || '<span class="muted">Sin reglas.</span>'}</div>`;
+  if (!reglas.length) return '<p class="muted">Sin reglas.</p>';
+  return `<div class="list" style="border:0">${reglas.map((r) => `<div class="rowi two" style="padding:9px 0">
+    <span class="t"><b>${esc(r.text)}</b><span class="muted"><span class="st ${stCls[r.status] || ''}">${esc(RSTATUS[r.status] || r.status)}</span>${enProyecto ? '' : ' · ' + esc(r.projectId === '*' ? 'Todos los proyectos' : projName(r.projectId))}${r.origin === 'learned' ? ' · aprendida de un incidente' : r.origin === 'onboarding' ? ' · del alta' : ''}${r.compileNote ? ' — ' + esc(r.compileNote) : ''}</span></span>
+    <span class="actions">${S.isAdmin && r.status === 'proposed' ? `<button class="btn primary sm" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Aprobar</button><button class="btn sm" data-act="regla" data-rid="${esc(r.id)}" data-s="rejected">Rechazar</button>` : ''}
+      ${S.isAdmin && r.status === 'active' ? `<button class="btn sm" data-act="regla" data-rid="${esc(r.id)}" data-s="disabled">Desactivar</button>` : ''}
+      ${S.isAdmin && r.status === 'disabled' ? `<button class="btn sm" data-act="regla" data-rid="${esc(r.id)}" data-s="active">Activar</button>` : ''}</span></div>`).join('')}</div>`;
 }
 
 function viewReglas() {
   const reglas = Object.values(S.rules).filter((r) => !S.filter || r.projectId === S.filter || r.projectId === '*');
-  const ps = Object.values(S.projects);
-  const form = S.isAdmin ? `<div class="box form"><b>Nueva regla</b>
-    <label>Proyecto<select id="nr-proj">${['*', ...ps.map((p) => p.id)].map((id) => `<option value="${esc(id)}" ${(S.drafts['nr-proj'] || S.filter || '*') === id ? 'selected' : ''}>${esc(id === '*' ? 'Todos los proyectos' : projName(id))}</option>`).join('')}</select></label>
-    <label>Regla en lenguaje natural<input type="text" id="nr-text" placeholder="Ej.: si se ven más de 10 errores de login seguidos, escalar" value="${esc(S.drafts['nr-text'] || '')}"></label>
-    <div><button class="btn primary" data-act="nueva-regla">Crear regla</button> <span class="muted">La rutina la traduce a un control en la próxima corrida y muestra cómo la entendió.</span></div></div>` : '';
-  return head('Reglas de control', 'Puntos de control definidos en lenguaje natural. Las propuestas nacen de respuestas a incidentes y las aprueba un Admin.') + form + `<div class="box">${rulesTable(reglas, false)}</div>` + navMore('reglas');
+  const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name), 'es'));
+  const form = S.isAdmin ? seccion('Nueva regla', null, `<div class="box form">
+    <div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(0,2fr)"><label>Proyecto<select id="nr-proj">${['*', ...ps.map((p) => p.id)].map((id) => `<option value="${esc(id)}" ${(S.drafts['nr-proj'] || S.filter || '*') === id ? 'selected' : ''}>${esc(id === '*' ? 'Todos los proyectos' : projName(id))}</option>`).join('')}</select></label>
+    <label>Regla en lenguaje natural<input type="text" id="nr-text" placeholder="Ej.: si se ven más de 10 errores de login seguidos, escalar" value="${esc(S.drafts['nr-text'] || '')}"></label></div>
+    <div class="actions" style="gap:10px"><button class="btn primary" data-act="nueva-regla">Crear regla</button><span class="muted">La rutina la traduce a un control en la próxima corrida y muestra cómo la entendió.</span></div></div>`) : '';
+  const prop = reglas.filter((r) => r.status === 'proposed'); const resto = reglas.filter((r) => r.status !== 'proposed');
+  return head('Reglas de control', 'Puntos de control escritos en lenguaje natural. Las propuestas nacen de respuestas a incidentes y las aprueba un Admin.', { scope: true })
+    + (prop.length ? seccion('Propuestas para aprobar', prop.length, `<div class="box">${rulesTable(prop, false)}</div>`) : '')
+    + form
+    + seccion('Reglas', resto.length, `<div class="box">${rulesTable(resto, false)}</div>`);
 }
 
 function viewAjustes() {
   if (!S.isAdmin) return head('Ajustes', 'Solo los Admin pueden ver los ajustes.');
   const s = S.settings || {};
   const d = (k, v) => esc(S.drafts['aj-' + k] ?? v ?? '');
-  return head('Ajustes', 'Criterios globales que usa el triage en todos los proyectos.') + `<div class="box form">
-    <label>Criterios de triage globales<textarea id="aj-crit" style="min-height:160px">${d('crit', s.triageCriteria)}</textarea></label>
-    <label>Matriz de severidad<textarea id="aj-sev">${d('sev', s.severityMatrix)}</textarea></label>
-    <label>Minutos máximos en Pending<input type="number" id="aj-pend" value="${d('pend', s.pendingMaxMinutes)}"></label>
-    <label>Retención de corridas (días)<input type="number" id="aj-runs" value="${d('runs', (s.retention || {}).runsDays)}"></label>
-    <label>Retención de incidentes cerrados (días)<input type="number" id="aj-inc" value="${d('inc', (s.retention || {}).closedIncidentsDays)}"></label>
-    <div><button class="btn primary" data-act="guardar-ajustes">Guardar ajustes</button></div>
-    <p class="muted" style="margin:0">Roles: Lector = acceso de Viewer, Operador = Contributor, Admin = Editor. Se asignan desde el menú Compartir del tablero.</p></div>` + navMore('ajustes');
+  return head('Ajustes', 'Criterios globales que usa el triage en todos los proyectos.')
+    + seccion('Criterios', null, `<div class="box form">
+      <label>Criterios de triage globales<textarea id="aj-crit" style="min-height:170px">${d('crit', s.triageCriteria)}</textarea></label>
+      <label>Matriz de severidad<textarea id="aj-sev" style="min-height:110px">${d('sev', s.severityMatrix)}</textarea></label></div>`)
+    + seccion('Umbrales y retención', null, `<div class="box form"><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <label>Minutos máximos en Pending<input type="number" min="1" id="aj-pend" value="${d('pend', s.pendingMaxMinutes)}"></label>
+      <label>Retención de corridas (días)<input type="number" min="1" id="aj-runs" value="${d('runs', (s.retention || {}).runsDays)}"></label>
+      <label>Retención de incidentes cerrados (días)<input type="number" min="1" id="aj-inc" value="${d('inc', (s.retention || {}).closedIncidentsDays)}"></label></div></div>`)
+    + `<div class="actions" style="gap:12px;margin-bottom:26px"><button class="btn primary" data-act="guardar-ajustes">Guardar ajustes</button></div>`
+    + seccion('Roles', null, `<div class="box"><p class="muted">Lector = acceso de Viewer, Operador = Contributor, Admin = Editor. Se asignan desde el menú Compartir del tablero.</p></div>`);
 }
 
 function viewRegistrar() {
-  if (!S.isAdmin) return head('Registrar proyecto', 'Solo los Admin pueden registrar proyectos.');
+  const back = ['proyectos', 'Proyectos'];
+  if (!S.isAdmin) return head('Registrar proyecto', 'Solo los Admin pueden registrar proyectos.', { back });
   if (!S.forms.nuevo) S.forms.nuevo = formDesde(null);
   const registradas = new Set(Object.values(S.projects).map((p) => (p.orchestrator || {}).folderPath));
   const det = ((S.discovery && S.discovery.folders) || []).filter((f) => !registradas.has(f.folderPath));
-  const lista = det.length ? `<section class="box"><div class="sec-h" style="margin:0"><h2>Carpetas detectadas sin registrar</h2><span class="cnt">${det.length}</span></div>
-    <div class="rows">${det.map((f) => `<div class="rowi" style="grid-template-columns:1fr auto"><span class="t"><b>${esc(f.name || f.folderPath)}</b><br><span class="muted mono">${esc(f.folderPath)}</span><span class="muted"> · ${esc((f.procesos || []).length)} proceso(s) · ${esc(f.jobs30d ?? 0)} jobs en 30 días</span></span>
-      <span><button class="btn primary" data-act="registrar-detectada" data-folder="${esc(f.folderPath)}" data-name="${esc(f.name || '')}">Registrar</button></span></div>`).join('')}</div></section>` : '';
-  return head('Registrar proyecto', 'Un proyecto es una carpeta de Orchestrator. La rutina detecta sus procesos, librerías y documentación, y genera la memoria; después lo revisás y activás.')
-    + lista + `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar">Registrar y analizar</button>' })}</div>` + navMore('registrar');
+  const lista = det.length ? seccion('Carpetas detectadas sin registrar', det.length, `<div class="list">${det.map((f) => `<div class="rowi two"><span class="t"><b>${esc(f.name || f.folderPath)}</b><span class="muted"><span class="mono">${esc(f.folderPath)}</span> · ${esc((f.procesos || []).length)} proceso(s) · ${esc(f.jobs30d ?? 0)} jobs en 30 días</span></span>
+      <span><button class="btn primary sm" data-act="registrar-detectada" data-folder="${esc(f.folderPath)}" data-name="${esc(f.name || '')}">Registrar</button></span></div>`).join('')}</div>`, 'Un clic las registra') : '';
+  return head('Registrar proyecto', 'Un proyecto es una carpeta de Orchestrator. La rutina detecta sus procesos, librerías y documentación, y genera la memoria; después lo revisás y activás.', { back })
+    + lista + seccion(det.length ? 'O cargalo a mano' : 'Datos del proyecto', null, `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar">Registrar y analizar</button>' })}</div>`);
+}
+
+// Solo en teléfono: lo que no entra en la barra inferior.
+function viewMas() {
+  const pu = pulso();
+  const fila = (h, icono, t, d) => `<a class="rowi" href="#${h}"><span class="ico-b">${ico(icono)}</span><span class="t"><b>${t}</b><span class="muted">${d}</span></span><span></span>${ico('chev', 'chev')}</a>`;
+  return head('Más', '')
+    + `<div class="list" style="margin-bottom:26px">${fila('no-reportados', 'archive', 'Fuera de bandeja', 'Pospuestos, respondidos, descartados y no reportados.')}
+      ${S.isAdmin ? fila('ajustes', 'configuration', 'Ajustes', 'Criterios de triage, umbrales y retención.') + fila('registrar', 'plus', 'Registrar proyecto', 'Sumar una carpeta de Orchestrator al control.') : ''}</div>`
+    + seccion('Estado', null, `<div class="box"><dl class="kv"><dt>Rutina</dt><dd><span class="dot ${pu.cls}" aria-hidden="true"></span> ${esc(pu.t)}${pu.d ? ' · ' + esc(pu.d) : ''}</dd><dt>Tu acceso</dt><dd>${ROLTXT[S.role]}</dd></dl></div>`);
 }
 
 // ---------- eventos ----------
 document.addEventListener('input', (e) => {
   const t = e.target; if (!t.id) return;
+  if (t.id === 'scope-q') { S.scopeQ = t.value; S.scopeIdx = 0; S.scopeScroll = true; return schedule(); }
+  if (t.id === 'q-inbox') { S.q = t.value; return schedule(); }
+  if (t.id === 'q-proj') { S.qp = t.value; return schedule(); }
   S.drafts[t.id] = t.value;
   if (t.type !== 'checkbox' && t.dataset.form && S.forms[t.dataset.form]) {
     const f = S.forms[t.dataset.form];
@@ -787,60 +1211,115 @@ document.addEventListener('focusin', (e) => {
   if (t.dataset && t.dataset.act === 'buscar' && S.user && !t.value) { const id = t.closest('[data-inc]').dataset.inc; S.user.search('').then((h) => { S.peopleHits[id] = h; schedule(); }); }
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id && e.target.id.endsWith('-coment')) { e.preventDefault(); e.target.closest('.card').querySelector('[data-act="comentar"]').click(); }
+  const t = e.target;
+  if (e.key === 'Escape') {
+    if (S.scopeOpen) { e.preventDefault(); S.scopeOpen = false; S.focusNext = 'scope-btn'; return schedule(); }
+    if (drawerInc) { e.preventDefault(); location.hash = '#' + base; }
+    return;
+  }
+  if (t.id === 'scope-q') {
+    const os = opcionesScope(conteos());
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (os.length) { S.scopeIdx = (Math.min(S.scopeIdx, os.length - 1) + (e.key === 'ArrowDown' ? 1 : os.length - 1)) % os.length; S.scopeScroll = true; schedule(); } }
+    else if (e.key === 'Enter') { e.preventDefault(); const o = os[Math.min(S.scopeIdx, os.length - 1)]; if (o) elegirScope(o.id); }
+    else if (e.key === 'Tab') { S.scopeOpen = false; schedule(); }
+    return;
+  }
+  if (t.getAttribute && t.getAttribute('role') === 'tab' && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+    const ts = [...t.parentElement.querySelectorAll('[role="tab"]')]; const k = ts.indexOf(t);
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? ts.length - 1 : (k + (e.key === 'ArrowRight' ? 1 : ts.length - 1)) % ts.length;
+    e.preventDefault(); S.projTab = ts[n].dataset.t; S.focusNext = ts[n].id; return schedule();
+  }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && t.id && t.id.endsWith('-coment')) { e.preventDefault(); const b = t.closest('[data-inc]').querySelector('[data-act="comentar"]'); if (b) b.click(); }
 });
+let ocupado = false;
 document.addEventListener('click', async (e) => {
-  const chip = e.target.closest('[data-filter]');
-  if (chip) { S.filter = chip.dataset.filter || null; try { S.filter ? localStorage.setItem('torre.filtro', S.filter) : localStorage.removeItem('torre.filtro'); } catch {} schedule(); return; }
-  const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
+  if (S.scopeOpen && !e.target.closest('#scope')) { S.scopeOpen = false; schedule(); }
+  const b = e.target.closest('[data-act]');
+  if (!b) {
+    // Clic en cualquier parte libre de una tarjeta: abre el detalle.
+    const c = e.target.closest('.card[data-inc]');
+    if (c && !e.target.closest('a,button,input,textarea,select,label,.panel') && !String(window.getSelection()).trim()) location.hash = '#incidente-' + c.dataset.inc;
+    return;
+  }
+  if (b.tagName === 'INPUT') return;
   const card = b.closest('[data-inc]'); const id = card && card.dataset.inc; const inc = id && S.incidents[id];
   const draft = (k) => (S.drafts[`${id}-${k}`] || '').trim();
   const clear = (...ks) => ks.forEach((k) => delete S.drafts[`${id}-${k}`]);
   const act = b.dataset.act;
-  if (act === 'detalle') { S.open[id] = !S.open[id]; return schedule(); }
+  // ---- navegación y filtros ----
+  if (act === 'saltar') { S.focusNext = 'vt'; return schedule(); }
+  if (act === 'scope') { S.scopeOpen = !S.scopeOpen; S.scopeQ = ''; S.scopeScroll = true; S.focusNext = S.scopeOpen ? 'scope-q' : 'scope-btn';
+    S.scopeIdx = Math.max(0, opcionesScope(conteos()).findIndex((o) => o.id === (S.filter || ''))); return schedule(); }
+  if (act === 'scope-pick') return elegirScope(b.dataset.id);
+  if (act === 'scope-clear') return elegirScope('');
+  if (act === 'seg') { if (['tab', 'fuera'].includes(b.dataset.k)) S[b.dataset.k] = b.dataset.v; return schedule(); }
+  if (act === 'limpiar') { S.q = ''; S.tab = 'todo'; S.focusNext = 'vt'; return schedule(); }
+  if (act === 'ver-bandeja') { setFiltro(b.dataset.pid); S.tab = 'todo'; S.q = ''; location.hash = '#inicio'; return; }
   if (act === 'panel') { S.panel[id] = S.panel[id] === b.dataset.p ? null : b.dataset.p; S.sel[id] = {}; return schedule(); }
   if (act === 'sel') { S.sel[id] = { ...(S.sel[id] || {}), [b.dataset.k]: b.dataset.v }; return schedule(); }
   if (act === 'tab') { S.projTab = b.dataset.t; return schedule(); }
-  if (act === 'reanalizar-inc') {
-    try { await S.db.collection('requests').add({ type: 'reanalyze_incident', incidentId: id, projectId: inc.projectId, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' }); toast('Pedido: la próxima corrida vuelve a analizar esta tarjeta'); }
-    catch { toast('No se pudo pedir el re-análisis'); }
-    return schedule();
-  }
   if (act === 'agregar-proceso') { S.forms[b.dataset.form].procesos.push({ id: '', label: '', op: '', role: 'other', repo: '', rama: 'main', docs: '', carpeta: '' }); return schedule(); }
   if (act === 'quitar-proceso') { S.forms[b.dataset.form].procesos.splice(Number(b.dataset.i), 1); return schedule(); }
   if (act === 'descartar-cambios') { delete S.forms['cfg-' + b.dataset.pid]; return schedule(); }
+  if (ocupado) return;
+  ocupado = true;
+  try { await accion(act, b, { id, inc, draft, clear }); } finally { ocupado = false; }
+  schedule();
+});
+
+// Acciones que escriben en el tablero.
+async function accion(act, b, { id, inc, draft, clear }) {
+  if (act === 'reanalizar-inc') {
+    try { await S.db.collection('requests').add({ type: 'reanalyze_incident', incidentId: id, projectId: inc.projectId, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' }); toast('Pedido: la próxima corrida vuelve a analizar esta tarjeta'); }
+    catch { toast('No se pudo pedir el re-análisis'); }
+    return;
+  }
   if (act === 'comentar') {
-    const txt = draft('coment'); if (!txt) return;
-    b.disabled = true;
-    try { await S.db.collection('activity').add({ incidentId: id, projectId: inc.projectId, type: 'comment', text: txt, by: S.me || null, at: nowIso() }); clear('coment'); S.panel[id] = null; S.open[id] = true; toast('Comentario agregado'); }
+    const txt = draft('coment'); if (!txt) return toast('Escribí el comentario');
+    try { await S.db.collection('activity').add({ incidentId: id, projectId: inc.projectId, type: 'comment', text: txt, by: S.me || null, at: nowIso() }); clear('coment'); toast('Comentario agregado'); }
     catch { toast('No se pudo comentar'); }
-    return schedule();
+    return;
   }
   if (act === 'asignar') {
     const uid = b.dataset.uid; const nombre = (S.peopleHits[id] || []).find((p) => p.id === uid);
     if (nombre) S.names[uid] = nombre;
-    if (await writeWork(inc, { state: 'delegated', assignee: uid, delegatedBy: S.me || null, delegatedAt: nowIso() }, { type: 'delegate', text: `delegó la revisión` })) { S.panel[id] = null; toast('Delegado'); }
-    return schedule();
+    if (await writeWork(inc, { state: 'delegated', assignee: uid, delegatedBy: S.me || null, delegatedAt: nowIso() }, { type: 'delegate', text: 'delegó la revisión' })) { S.panel[id] = null; clear('buscar'); toast('Delegado'); }
+    return;
   }
   if (act === 'posponer' || act === 'posponer-fecha') {
-    let hasta = act === 'posponer' ? addDays(Number(b.dataset.d)) : (draft('fecha') ? new Date(draft('fecha') + 'T09:00:00').toISOString() : null);
+    const hasta = act === 'posponer' ? addDays(Number(b.dataset.d)) : (draft('fecha') ? new Date(draft('fecha') + 'T09:00:00').toISOString() : null);
     if (!hasta) return toast('Elegí una fecha');
-    if (await writeWork(inc, { state: 'snoozed', snoozeUntil: hasta }, { type: 'snooze', text: `pospuso hasta ${fecha(hasta)}` })) { S.panel[id] = null; clear('fecha'); toast('Pospuesto'); }
-    return schedule();
+    if (await writeWork(inc, { state: 'snoozed', snoozeUntil: hasta }, { type: 'snooze', text: `pospuso hasta ${fecha(hasta)}` })) { S.panel[id] = null; clear('fecha'); toast(`Pospuesto hasta ${fecha(hasta)}`, id); }
+    return;
   }
   if (act === 'descartar') {
     const motivo = (S.sel[id] || {}).motivo; if (!motivo) return;
     const nota = draft('nota');
-    if (await writeWork(inc, { state: 'dismissed', dismissReason: motivo, response: { notes: nota || null } }, { type: 'dismiss', text: `descartó: ${(DISMISS.find((x) => x[0] === motivo) || [0, motivo])[1]}${nota ? ' — ' + nota : ''}` })) { S.panel[id] = null; clear('nota'); toast('Descartado'); }
-    return schedule();
+    if (await writeWork(inc, { state: 'dismissed', dismissReason: motivo, response: { notes: nota || null } }, { type: 'dismiss', text: `descartó: ${etiqueta(DISMISS, motivo)}${nota ? ' — ' + nota : ''}` })) { S.panel[id] = null; clear('nota'); toast('Descartado. Queda en Fuera de bandeja.', id); }
+    return;
   }
   if (act === 'responder') {
     const dec = (S.sel[id] || {}).decision; if (!dec) return;
     const notas = draft('notas');
     if (dec === 'recheck' && !draft('recheck')) return toast('Elegí la fecha del re-control');
     const response = { decision: dec, notes: notas || null, ticket: draft('ticket') || null, recheckAt: dec === 'recheck' ? new Date(draft('recheck') + 'T09:00:00').toISOString() : null };
-    if (await writeWork(inc, { state: 'responded', response }, { type: 'respond', text: `respondió: ${(RESP.find((x) => x[0] === dec) || [0, dec])[1]}${notas ? ' — ' + notas : ''}` })) { S.panel[id] = null; clear('notas', 'ticket', 'recheck'); toast('Respuesta enviada. La rutina actualiza la memoria en la próxima corrida.'); }
-    return schedule();
+    if (await writeWork(inc, { state: 'responded', response }, { type: 'respond', text: `respondió: ${etiqueta(RESP, dec)}${notas ? ' — ' + notas : ''}` })) { S.panel[id] = null; clear('notas', 'ticket', 'recheck'); toast('Respuesta enviada. La rutina actualiza la memoria en la próxima corrida.', id); }
+    return;
+  }
+  if (act === 'reabrir') {
+    if (await writeWork(inc, { state: 'open' }, { type: 'reopen', text: 'devolvió el tema a la bandeja' }, ['snoozeUntil', 'dismissReason', 'response'])) { S.panel[id] = null; toast('De vuelta en la bandeja'); }
+    return;
+  }
+  if (act === 'deshacer') {
+    $('#toast').hidden = true;
+    if (!inc || !(id in S.undo)) return;
+    const data = S.undo[id] ? { ...S.undo[id] } : { state: 'open' }; delete data.id;
+    try {
+      await S.db.doc(`incidentWork/${id}`).set({ ...data, updatedAt: nowIso(), updatedBy: S.me || null });
+      await S.db.collection('activity').add({ incidentId: id, projectId: inc.projectId, type: 'reopen', text: 'deshizo su última acción', by: S.me || null, at: nowIso() });
+      delete S.undo[id]; toast('Acción deshecha');
+    } catch { toast('No se pudo deshacer'); }
+    return;
   }
   // ---- acciones de Admin ----
   try {
@@ -877,24 +1356,33 @@ document.addEventListener('click', async (e) => {
       S.forms['cfg-' + pid] = formDesde({ ...p, ...r.data });
     } else if (act === 'registrar-detectada') {
       const folder = b.dataset.folder; const nombre = b.dataset.name || folder.split('/').pop();
-      let id = slug(folder.split('/').slice(-2).join('-')); if (S.projects[id]) id = `${id}-${Date.now().toString(36).slice(-4)}`;
-      await S.db.doc(`projects/${id}`).set({ name: nombre, status: 'pending_analysis', orchestrator: { folderPath: folder }, includeAllProcesses: true, processes: [], docs: { paths: [] }, triageCriteria: '', createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
-      await S.db.collection('requests').add({ type: 'onboard_project', projectId: id, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
+      let id2 = slug(folder.split('/').slice(-2).join('-')); if (S.projects[id2]) id2 = `${id2}-${Date.now().toString(36).slice(-4)}`;
+      await S.db.doc(`projects/${id2}`).set({ name: nombre, status: 'pending_analysis', orchestrator: { folderPath: folder }, includeAllProcesses: true, processes: [], docs: { paths: [] }, triageCriteria: '', createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
+      await S.db.collection('requests').add({ type: 'onboard_project', projectId: id2, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
       toast(`${nombre} registrado: la rutina lo analiza en la próxima corrida`);
     } else if (act === 'registrar') {
       const r = proyectoDesdeForm(S.forms.nuevo || formDesde(null));
       if (r.error) return toast(r.error);
-      let id = slug(r.data.name); if (S.projects[id]) id = `${id}-${Date.now().toString(36).slice(-4)}`;
-      await S.db.doc(`projects/${id}`).set({ ...r.data, status: 'pending_analysis', createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
-      await S.db.collection('requests').add({ type: 'onboard_project', projectId: id, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
+      let id2 = slug(r.data.name); if (S.projects[id2]) id2 = `${id2}-${Date.now().toString(36).slice(-4)}`;
+      await S.db.doc(`projects/${id2}`).set({ ...r.data, status: 'pending_analysis', createdBy: S.me || null, createdAt: nowIso(), updatedAt: nowIso() });
+      await S.db.collection('requests').add({ type: 'onboard_project', projectId: id2, requestedBy: S.me || null, requestedAt: nowIso(), status: 'pending' });
       delete S.forms.nuevo;
       toast('Proyecto registrado: la rutina lo analiza en la próxima corrida');
-      location.hash = '#proyecto-' + id;
+      location.hash = '#proyecto-' + id2;
     }
   } catch (err) { toast(err && err.code === 'invalid_argument' ? 'No tenés permiso para esta acción' : 'No se pudo guardar. Probá de nuevo.'); }
-  schedule();
+}
+
+window.addEventListener('hashchange', () => {
+  const h = ruta(); const esInc = h.startsWith('incidente-'); const eraInc = prevHash.startsWith('incidente-') ? prevHash.slice(10) : null;
+  if (esInc) {
+    // El detalle se abre sobre la vista actual: no se pierde el lugar en la lista.
+    S.focusNext = 'dw';
+    if (!eraInc) { const d = $('#drawer'); d.classList.add('opening'); setTimeout(() => d.classList.remove('opening'), 260); }
+  } else if (eraInc && h === base) S.focusNext = 't-' + eraInc; // al cerrar, el foco vuelve a la tarjeta
+  else { window.scrollTo(0, 0); S.focusNext = 'vt'; }
+  S.scopeOpen = false; prevHash = h; render();
 });
-window.addEventListener('hashchange', () => { window.scrollTo(0, 0); schedule(); });
 
 // ---------- arranque ----------
 async function start() {
@@ -917,7 +1405,7 @@ async function start() {
   const coll = (name, key, fn) => db.collection(name).onSnapshot((s) => { clearTimeout(timer); S[key] = {}; for (const d of s.docs) S[key][d.id] = { id: d.id, ...d.data() }; S.loaded[key] = true; if (fn) fn(); schedule(); }, onErr);
   coll('projects', 'projects');
   coll('rules', 'rules');
-  coll('incidentWork', 'work', () => resolveNames(Object.values(S.work).map((w) => w.assignee)));
+  coll('incidentWork', 'work', () => resolveNames(Object.values(S.work).flatMap((w) => [w.assignee, w.delegatedBy, w.updatedBy])));
   db.collection('incidents').where('status', '==', 'open').onSnapshot((s) => { clearTimeout(timer); S.incidents = {}; for (const d of s.docs) S.incidents[d.id] = { id: d.id, ...d.data() }; S.loaded.incidents = true; schedule(); }, onErr);
   db.collection('runs').orderBy('startedAt', 'desc').limit(50).onSnapshot((s) => { S.runs = s.docs.map((d) => ({ id: d.id, ...d.data() })); S.loaded.runs = true; schedule(); }, onErr);
   db.doc('config/settings').onSnapshot((d) => { S.settings = d.exists ? d.data() : null; schedule(); }, () => {});

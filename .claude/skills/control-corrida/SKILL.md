@@ -103,7 +103,7 @@ Por cada hallazgo de `hallazgos.json` decidí la clasificación y escribila en `
 **Decisiones:**
 - `escalate`: requiere intervención humana. Pasa por el análisis previo del paso 8.
 - `notify`: se muestra como aviso de baja prioridad.
-- `monitor` / `known`: no se reportan; quedan en "No reportados" del tablero con su porqué.
+- `monitor` / `known`: no se reportan; quedan en "Fuera de bandeja" del tablero con su porqué.
 
 **Reglas:**
 - Si la memoria de producción dice que algo es esperado (por ejemplo, "abandonados los lunes por mantenimiento de SAP"), `known`, y citá la entrada.
