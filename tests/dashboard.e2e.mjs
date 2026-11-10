@@ -199,7 +199,74 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   paso('estados vacíos: sin datos y sin base');
 }
 
-// 5) Teléfono (oscuro): sin scroll horizontal.
+// 5) Ayuda: "?" contextual, vistas de ejemplo sin escrituras, tooltip con link y lectura para Lector.
+{
+  const { page, ctx } = await abrir();
+  // El "?" de la barra lleva a la sección de la pantalla actual.
+  assert.equal(await page.getAttribute('#ayuda-top', 'href'), '#ayuda-bandeja');
+  await page.evaluate(() => { location.hash = '#corridas'; });
+  await page.waitForTimeout(100);
+  assert.equal(await page.getAttribute('#ayuda-top', 'href'), '#ayuda-corridas');
+  await page.click('.view-h .help');
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => location.hash), '#ayuda-corridas');
+  const top = await page.evaluate(() => document.getElementById('ayuda-corridas').getBoundingClientRect().top);
+  assert.ok(top >= 0 && top < 300, `la sección queda a la vista (top ${top})`);
+  paso('ayuda: el "?" de cada pantalla abre su sección');
+
+  // Las vistas de ejemplo son las de la app, inertes y sin escribir en la base.
+  const antes = (await page.evaluate(() => window.__WRITES__)).length;
+  assert.ok(await page.locator('.ay-vista .card').count() >= 5, 'tarjetas de ejemplo');
+  assert.ok(await page.locator('.ay-vista .rowi').count() >= 3, 'listas de ejemplo');
+  assert.ok(await visible(page, '#ayuda-posponer >> text=1 semana'), 'panel Posponer de ejemplo');
+  assert.equal(await page.locator('.ay-vista:not([inert])').count(), 0, 'vistas inertes');
+  assert.equal(await page.locator('.ay-vista >> text=No se pudo dibujar').count(), 0, 'todas las vistas se dibujan');
+  await page.locator('.ay-vista [data-act="panel"]').first().click({ force: true }).catch(() => {});
+  await page.waitForTimeout(100);
+  assert.equal((await page.evaluate(() => window.__WRITES__)).length, antes, 'la ayuda no escribe');
+  assert.ok(await visible(page, '#ayuda-glosario >> text=Recurrencia'), 'glosario');
+  paso('ayuda: introducción, glosario y vistas reales con datos de ejemplo, sin escrituras');
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'ayuda.png'), fullPage: true });
+
+  // Tooltip de Posponer en una tarjeta real, con link a la ayuda.
+  await page.evaluate(() => { location.hash = '#inicio'; });
+  await page.waitForTimeout(150);
+  await page.locator('main .card [data-act="panel"][data-p="posponer"]').first().hover();
+  await page.waitForSelector('#tip:not([hidden])', { timeout: 2000 });
+  assert.match(await page.textContent('#tip'), /Oculta la tarjeta hasta una fecha/);
+  if (CAPT) await page.screenshot({ path: join(CAPT, 'tooltip-posponer.png') });
+  await page.click('#tip a');
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(() => location.hash), '#ayuda-posponer');
+  assert.ok(await page.isHidden('#tip'));
+  paso('tooltip: Posponer explica y lleva a la ayuda');
+
+  // Link "Más sobre…" dentro del panel.
+  await page.evaluate(() => { location.hash = '#inicio'; });
+  await page.waitForTimeout(150);
+  const c = page.locator('main .card').first();
+  await c.locator('[data-act="panel"][data-p="descartar"]').click();
+  assert.equal(await c.locator('a.ay-mas').getAttribute('href'), '#ayuda-descartar');
+  paso('panel de acción con link a su ayuda');
+  await ctx.close();
+
+  const l = await abrir({ role: 'lector' });
+  await l.page.evaluate(() => { location.hash = '#ayuda'; });
+  await l.page.waitForTimeout(200);
+  assert.ok(await visible(l.page, 'text=Qué es la Torre de Control'));
+  assert.ok(await l.page.locator('nav.more a[href="#ayuda"]').count() === 1, 'Ayuda en Ver más');
+  await l.ctx.close();
+  const m = await abrir({ viewport: { width: 390, height: 844 }, oscuro: true });
+  await m.page.evaluate(() => { location.hash = '#ayuda'; });
+  await m.page.waitForTimeout(200);
+  const ancho = await m.page.evaluate(() => document.documentElement.scrollWidth);
+  assert.ok(ancho <= 390, `ayuda sin scroll horizontal (ancho ${ancho})`);
+  if (CAPT) await m.page.screenshot({ path: join(CAPT, 'ayuda-telefono-oscuro.png'), fullPage: true });
+  await m.ctx.close();
+  paso('ayuda: visible para Lector y sin scroll horizontal en teléfono oscuro');
+}
+
+// 6) Teléfono (oscuro): sin scroll horizontal.
 {
   const { page, ctx } = await abrir({ viewport: { width: 390, height: 844 }, oscuro: true });
   const ancho = await page.evaluate(() => document.documentElement.scrollWidth);

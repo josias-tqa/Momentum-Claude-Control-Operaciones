@@ -141,7 +141,7 @@ nav.more a:hover,nav.more a[aria-current="page"]{border-color:var(--line);color:
 .rowi:last-child{border-bottom:0}
 .rowi .t{min-width:0;overflow-wrap:anywhere}
 .nums{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
 .tabs button{border:1px solid transparent;background:none;border-radius:7px;padding:5px 10px;color:var(--muted)}
 .tabs button[aria-selected="true"]{border-color:var(--line);background:var(--surface);color:var(--fg)}
 .md{min-width:0;overflow-wrap:anywhere}
@@ -158,6 +158,43 @@ th{font-weight:500;color:var(--muted);font-size:12px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);border-radius:8px;padding:8px 14px;font-size:13px;z-index:20}
 @media (max-width:520px){.pulse .txt{display:none}.kv{grid-template-columns:1fr}.kv dt{margin-top:4px}}
 @media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+
+/* Ayuda: botón "?", tooltips y página de ayuda (contenido en dashboard/ayuda/*.mdx) */
+.help{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;line-height:1;text-decoration:none;flex:none}
+.help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
+.row1 .help{width:24px;height:24px;font-size:13px}
+.view-h-t{display:flex;align-items:center;gap:10px}
+.sec-h .help{align-self:center;width:18px;height:18px;font-size:11px}
+.ay-mas{font-size:12.5px;color:var(--accent);text-decoration:none}
+.ay-mas:hover{text-decoration:underline}
+.tip{position:fixed;z-index:30;max-width:min(300px,calc(100vw - 24px));background:var(--fg);color:var(--bg);border-radius:8px;padding:8px 11px;font-size:12.5px;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.tip b{display:block;margin-bottom:2px}
+.tip a{color:inherit;font-weight:600;display:inline-block;margin-top:5px}
+[id^="ayuda-"]{scroll-margin-top:130px}
+.ayuda{display:grid;gap:22px;min-width:0}
+.ay-toc{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 22px}
+.ay-toc ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px}
+.ay-toc a{color:var(--fg);text-decoration:none;font-size:13px}
+.ay-toc a:hover{color:var(--accent)}
+.ay-sec{display:grid;gap:10px;min-width:0}
+/* Solo el texto de la ayuda: las vistas de ejemplo conservan los estilos de la app. */
+.ay-sec>h2{font-size:19px;margin:6px 0 0;padding-top:16px;border-top:1px solid var(--line)}
+.ay-sec>h3{font-size:16px;margin:4px 0 0}
+.ay-sec>h4{font-size:14px;margin:0}
+:where(.ay-sec,.ay-accion)>:is(p,ul,ol){margin:0}
+:where(.ay-sec,.ay-accion)>:is(ul,ol){padding-left:20px;display:grid;gap:4px}
+:where(.ay-sec,.ay-accion)>:is(p,ul,ol) a,.ay-term-d a{color:var(--accent)}
+.ay-breve{color:var(--muted)}
+.ay-sec>table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.ay-vista{margin:0;border:1px dashed var(--line);border-radius:var(--r);background:var(--bg);padding:12px;display:grid;gap:8px;min-width:0;overflow:hidden}
+.ay-vista-c{display:grid;gap:14px;min-width:0}
+.ay-vista figcaption{font-size:12px;color:var(--muted)}
+.ay-accion{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px;min-width:0}
+.ay-accion-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ay-glos{display:grid;gap:12px}
+.ay-term{display:grid;gap:2px;border-left:3px solid var(--line);padding-left:10px}
+.ay-term-n{font-size:14px}
+.ay-term-d{color:var(--fg)}
 </style>
 
 <div class="wrap">
@@ -167,14 +204,104 @@ th{font-weight:500;color:var(--muted);font-size:12px}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M5 22l2.5-10h9L19 22M8.5 8h7l1 4h-9z"/><path d="M4 6a11 11 0 0 1 4-3M20 6a11 11 0 0 0-4-3"/></svg>
         Torre de Control
       </a>
-      <span class="role" id="role">…</span>
-      <div class="pulse" id="pulse"><span class="dot unknown"></span><span class="txt">Conectando…</span></div>
+      <span class="role" id="role" data-tip="roles">…</span>
+      <a class="help" id="ayuda-top" href="#ayuda" aria-label="Ayuda de esta pantalla">?</a>
+      <div class="pulse" id="pulse" data-tip="pulso"><span class="dot unknown"></span><span class="txt">Conectando…</span></div>
     </div>
     <div class="chips" id="chips" role="group" aria-label="Filtrar por proyecto"></div>
   </header>
   <main id="view" aria-live="polite"></main>
 </div>
 <div class="toast hidden" id="toast" role="status"></div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<!-- AYUDA:INICIO sha256=496fa9b6ad26ce6aa255f6d36e7748b303d5dd531b5614fe250f2c6f081a736c · generado por scripts/build-ayuda.mjs desde dashboard/ayuda/*.mdx: no editar a mano -->
+<template id="ayuda-tpl"><nav class="ay-toc box" aria-label="Contenido de la ayuda"><div class="ay-toc-g"><a href="#ayuda-introduccion"><b>Qué es la Torre de Control</b></a><ul><li><a href="#ayuda-como-funciona">Cómo funciona</a></li><li><a href="#ayuda-solo-lectura">Lo que la Torre de Control nunca hace</a></li><li><a href="#ayuda-roles">Roles</a></li></ul></div><div class="ay-toc-g"><a href="#ayuda-glosario"><b>Glosario</b></a></div><div class="ay-toc-g"><a href="#ayuda-pantallas"><b>Pantallas y acciones</b></a><ul><li><a href="#ayuda-barra">Barra superior</a></li><li><a href="#ayuda-bandeja">Bandeja</a></li><li><a href="#ayuda-tarjeta">La tarjeta</a></li><li><a href="#ayuda-acciones">Acciones sobre una tarjeta</a></li><li><a href="#ayuda-corridas">Corridas</a></li><li><a href="#ayuda-no-reportados">No reportados</a></li><li><a href="#ayuda-proyectos">Proyectos</a></li><li><a href="#ayuda-pagina-proyecto">Página de un proyecto</a></li><li><a href="#ayuda-reglas">Reglas</a></li><li><a href="#ayuda-registrar">Registrar proyecto</a></li><li><a href="#ayuda-ajustes">Ajustes</a></li></ul></div></nav>
+<section class="ay-sec n1" id="ayuda-introduccion" data-nivel="1"><h2>Qué es la Torre de Control</h2><p>La Torre de Control vigila los robots de UiPath que Grupo Momentum tiene en producción. Cada hora una <strong>rutina</strong> de Claude revisa Orchestrator, detecta lo que anda mal, decide qué tan grave es y lo deja en este tablero, explicado y ordenado.</p><p>El tablero es donde el equipo trabaja: ve lo que requiere atención, lo responde, lo delega o lo descarta. Con cada respuesta la rutina aprende: la próxima vez sabe qué es normal en cada proyecto y qué no.</p></section>
+<section class="ay-sec n2" id="ayuda-como-funciona" data-nivel="2"><h3>Cómo funciona</h3><ol>
+<li><strong>Controla.</strong> La rutina lee los jobs, los logs, las colas y los triggers de cada proyecto activo, y evalúa sus <a href="#ayuda-regla">reglas</a>.</li>
+<li><strong>Agrupa.</strong> Cada problema distinto es un <a href="#ayuda-tema">tema</a> y tiene una sola tarjeta. Si se repite, la tarjeta suma ocurrencias en lugar de duplicarse.</li>
+<li><strong>Clasifica.</strong> El <a href="#ayuda-triage">triage</a> asigna categoría, <a href="#ayuda-severidad">severidad</a> y una <a href="#ayuda-decision">decisión</a>: escalar, avisar, observar o dar por conocido. Siempre dice por qué.</li>
+<li><strong>Analiza.</strong> Antes de escalar, cruza el error con el código del paquete desplegado y su documentación. El resultado es el <a href="#ayuda-analisis-previo">análisis previo</a>.</li>
+<li><strong>Publica.</strong> Lo que necesita a una persona aparece en la <a href="#ayuda-bandeja">Bandeja</a>. El resto queda en <a href="#ayuda-no-reportados">No reportados</a>.</li>
+<li><strong>Aprende.</strong> Las respuestas del equipo se guardan en la <a href="#ayuda-memoria-de-produccion">memoria de producción</a> y pueden convertirse en reglas propuestas.</li>
+</ol></section>
+<section class="ay-sec n2" id="ayuda-solo-lectura" data-nivel="2"><h3>Lo que la Torre de Control nunca hace</h3><ul>
+<li><strong>No cambia nada en Orchestrator.</strong> No inicia, detiene ni reintenta jobs, y no toca colas, assets ni procesos.</li>
+<li><strong>No cambia código.</strong> Si un problema requiere un fix, lo sugiere con la evidencia. Lo hace una persona.</li>
+<li><strong>No muestra datos personales.</strong> Todo lo que viene de Orchestrator pasa por una redacción de PII antes de llegar al tablero. Los valores de assets y el contenido de los queue items nunca se leen.</li>
+</ul></section>
+<section class="ay-sec n2" id="ayuda-roles" data-nivel="2"><h3>Roles</h3><p class="ay-breve">Tu rol define qué podés hacer: Lector mira, Operador trabaja las tarjetas y Admin además configura proyectos, reglas y ajustes.</p><p>Tu rol se ve arriba, al lado del nombre del tablero. Se asigna desde el menú <strong>Compartir</strong> del tablero.</p><table><thead><tr><th>Rol</th><th>Acceso en Compartir</th><th>Puede</th></tr></thead><tbody><tr><td>Lector</td><td>Viewer</td><td>Ver todo, incluida esta ayuda.</td></tr><tr><td>Operador</td><td>Contributor</td><td>Delegar, posponer, descartar, responder y comentar tarjetas, y pedir un nuevo análisis.</td></tr><tr><td>Admin</td><td>Editor</td><td>Además: registrar y configurar proyectos, activar o pausar el control, aprobar reglas y editar los ajustes.</td></tr></tbody></table></section>
+<section class="ay-sec n1" id="ayuda-glosario" data-nivel="1"><h2>Glosario</h2><p>Los términos que aparecen en el tablero, en orden alfabético.</p><div class="ay-glos"><div class="ay-term" id="ayuda-alta"><b class="ay-term-n">Alta</b><div class="ay-term-d">El primer análisis de un proyecto recién registrado. La rutina descubre sus procesos, colas, triggers y librerías, calcula el baseline y genera la memoria de proceso y las reglas propuestas. Después un Admin lo revisa y lo activa.</div></div><div class="ay-term" id="ayuda-analisis-previo"><b class="ay-term-n">Análisis previo</b><div class="ay-term-d">Lo que la rutina investiga antes de escalar una tarjeta: hipótesis con su probabilidad, acciones sugeridas, el código y la documentación relacionados, y qué cambió en el último deploy. Se lee en el detalle de la tarjeta.</div></div><div class="ay-term" id="ayuda-baseline"><b class="ay-term-n">Baseline</b><div class="ay-term-d">El comportamiento normal de un proyecto en los últimos 30 días: cuántos jobs corre, cuánto tardan y cuántos errores tiene. Sirve para distinguir un problema nuevo de lo habitual.</div></div><div class="ay-term" id="ayuda-categoria"><b class="ay-term-n">Categoría</b><div class="ay-term-d">El tipo de problema, con su ícono: login o credenciales, selector o UI, aplicación caída, infraestructura, configuración, programación, negocio, sistema, falla silenciosa, regresión, deploy o monitoreo.</div></div><div class="ay-term" id="ayuda-corrida"><b class="ay-term-n">Corrida</b><div class="ay-term-d">Una ejecución de la rutina. Registra qué ventana de tiempo revisó en cada proyecto, cada punto de control con su valor observado y los hallazgos con su triage.</div></div><div class="ay-term" id="ayuda-criterios"><b class="ay-term-n">Criterios de triage</b><div class="ay-term-d">Instrucciones en lenguaje natural que guían la clasificación. Hay criterios globales, en Ajustes, y criterios propios de cada proyecto, en su Configuración.</div></div><div class="ay-term" id="ayuda-decision"><b class="ay-term-n">Decisión</b><div class="ay-term-d">Qué hace el triage con un hallazgo. Escalado: necesita a una persona y va a Requiere acción. Aviso: conviene verlo, pero no bloquea. En observación: se sigue la tendencia sin mostrarlo. Conocido: la memoria o una regla dicen que es esperado.</div></div><div class="ay-term" id="ayuda-estado-proyecto"><b class="ay-term-n">Estado del proyecto</b><div class="ay-term-d">Esperando análisis, Analizando, En revisión, Activo, Pausado o Con error. Solo los proyectos activos se controlan en cada corrida.</div></div><div class="ay-term" id="ayuda-evidencia"><b class="ay-term-n">Evidencia (redactada)</b><div class="ay-term-d">Los logs, queue items, jobs y valores de reglas que respaldan una tarjeta, después de quitarles los datos personales. Las referencias de los casos se muestran como un código corto, nunca el dato original.</div></div><div class="ay-term" id="ayuda-incidente"><b class="ay-term-n">Incidente o tarjeta</b><div class="ay-term-d">Un problema detectado, con toda su historia: cuándo se vio por primera y por última vez, cuántas veces ocurrió, su triage, su análisis y la actividad del equipo.</div></div><div class="ay-term" id="ayuda-inventario"><b class="ay-term-n">Inventario</b><div class="ay-term-d">Lo que tiene la carpeta de Orchestrator de un proyecto: procesos con su versión, colas, triggers y assets. De los assets se guarda solo el nombre y el tipo, nunca el valor.</div></div><div class="ay-term" id="ayuda-libreria"><b class="ay-term-n">Librería</b><div class="ay-term-d">La etiqueta con el nombre de una librería indica que el error ocurrió dentro de una actividad de esa librería. El detalle dice qué otros proyectos la usan y si tienen tarjetas abiertas.</div></div><div class="ay-term" id="ayuda-memoria-de-proceso"><b class="ay-term-n">Memoria de proceso</b><div class="ay-term-d">Una descripción del proceso, similar a un PDD resumido, que la rutina genera en el alta a partir del código y la documentación. Sirve de contexto para el triage y el análisis.</div></div><div class="ay-term" id="ayuda-memoria-de-produccion"><b class="ay-term-n">Memoria de producción</b><div class="ay-term-d">El historial permanente de un proyecto: respuestas del equipo, deploys, re-controles y reglas nuevas, más un resumen que se actualiza solo. Es lo que hace que la rutina aprenda.</div></div><div class="ay-term" id="ayuda-nueva-version"><b class="ay-term-n">Nueva versión</b><div class="ay-term-d">Se desplegó una versión nueva del proceso después de que se abrió la tarjeta. La rutina la vuelve a analizar y explica qué cambió.</div></div><div class="ay-term" id="ayuda-proyecto"><b class="ay-term-n">Proyecto</b><div class="ay-term-d">Una carpeta de Orchestrator con sus procesos, por ejemplo Dispatcher, Performer y Reporter. Es la unidad que se registra, se analiza y se controla.</div></div><div class="ay-term" id="ayuda-pulso"><b class="ay-term-n">Pulso de la rutina</b><div class="ay-term-d">Arriba a la derecha: cuándo fue el último control. Verde si salió bien, ámbar si tuvo errores de colecta, y rojo si la rutina dejó de correr.</div></div><div class="ay-term" id="ayuda-punto-de-control"><b class="ay-term-n">Punto de control</b><div class="ay-term-d">Cada cosa que se revisa en una corrida, por ejemplo jobs fallidos, items abandonados o una regla. Su resultado es alerta, ok u omitido.</div></div><div class="ay-term" id="ayuda-re-control"><b class="ay-term-n">Re-control</b><div class="ay-term-d">Respuesta Volver a controlar con una fecha. La tarjeta se oculta hasta ese día y entonces la rutina verifica si el problema sigue. Queda en la memoria de producción como Re-control agendado y Re-control OK.</div></div><div class="ay-term" id="ayuda-reaparecio"><b class="ay-term-n">Reapareció</b><div class="ay-term-d">Un tema que se había cerrado volvió dentro de los 30 días. Se reabre la misma tarjeta en lugar de crear una nueva, para no perder su historia.</div></div><div class="ay-term" id="ayuda-recurrencia"><b class="ay-term-n">Recurrencia</b><div class="ay-term-d">Cuando un tema se repite, suma ocurrencias en la misma tarjeta. La etiqueta ×7 · última hace 12 min indica cuántas veces pasó y cuándo fue la última.</div></div><div class="ay-term" id="ayuda-regla"><b class="ay-term-n">Regla</b><div class="ay-term-d">Un punto de control escrito en lenguaje natural, por ejemplo: si hay más de 10 errores de login seguidos, escalar. La rutina la traduce a un control y muestra cómo la entendió.</div></div><div class="ay-term" id="ayuda-retencion"><b class="ay-term-n">Retención</b><div class="ay-term-d">Las corridas y los incidentes cerrados se borran después de cierta cantidad de días, que se configura en Ajustes. Antes de borrarlos se guarda un resumen mensual.</div></div><div class="ay-term" id="ayuda-rutina"><b class="ay-term-n">Rutina</b><div class="ay-term-d">El proceso de Claude que corre solo, en general cada hora. Es el único que crea corridas e incidentes, y nunca modifica nada en Orchestrator.</div></div><div class="ay-term" id="ayuda-severidad"><b class="ay-term-n">Severidad (P1 a P4)</b><div class="ay-term-d">P1: un proceso crítico se detuvo o se incumplió el SLA hoy. P2: proceso degradado con riesgo de SLA. P3: errores aislados. P4: informativo.</div></div><div class="ay-term" id="ayuda-solicitud"><b class="ay-term-n">Solicitud</b><div class="ay-term-d">Un pedido del equipo a la rutina, por ejemplo analizar un proyecto nuevo o volver a analizar una tarjeta. Se atiende en la próxima corrida.</div></div><div class="ay-term" id="ayuda-tema"><b class="ay-term-n">Tema</b><div class="ay-term-d">Lo que identifica a un problema, sin importar cuántas veces ocurra: el mismo error en el mismo lugar. Un tema tiene una sola tarjeta.</div></div><div class="ay-term" id="ayuda-triage"><b class="ay-term-n">Triage</b><div class="ay-term-d">La clasificación de cada hallazgo: categoría, severidad y decisión, con su porqué, su nivel de confianza y las reglas o memorias en las que se basó.</div></div></div></section>
+<section class="ay-sec n1" id="ayuda-pantallas" data-nivel="1"><h2>Pantallas y acciones</h2><p>Cada pantalla tiene un botón <strong>?</strong> que trae a su sección de esta ayuda. Al pasar el mouse por un botón o una etiqueta aparece una explicación breve, con un link a más detalle. Las vistas de esta página son las de la app, dibujadas con datos de ejemplo.</p></section>
+<section class="ay-sec n2" id="ayuda-barra" data-nivel="2"><h3>Barra superior</h3><p>Siempre visible. De izquierda a derecha: el nombre del tablero, que vuelve a la Bandeja; tu <a href="#ayuda-roles">rol</a>; el botón <strong>?</strong>, que abre la ayuda de la pantalla en la que estás, y el <a href="#ayuda-pulso">pulso de la rutina</a>.</p><p>Debajo hay un chip por proyecto. El punto de color resume su salud: verde, todo bien; ámbar, hay avisos; rojo, hay problemas P1 o P2; gris, pausado o sin datos. El número es la cantidad de tarjetas abiertas en la Bandeja.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:barra:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure><div class="ay-accion" id="ayuda-filtro"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Chip de proyecto</span></div><p><b>Filtra todo el tablero por ese proyecto. Todos quita el filtro.</b></p><p>El filtro se aplica a la Bandeja, Corridas, No reportados y Reglas, y se recuerda la próxima vez que abras el tablero en este navegador.</p></div></section>
+<section class="ay-sec n2" id="ayuda-bandeja" data-nivel="2"><h3>Bandeja</h3><p class="ay-breve">La pantalla principal: lo que necesita a una persona, ordenado por severidad.</p><p>Es la pantalla de trabajo. Muestra solo las tarjetas abiertas cuya decisión es escalar o avisar, y que nadie respondió, descartó o pospuso. Están ordenadas por severidad, primero las escaladas y después las más recientes. Si no hay nada pendiente, dice <strong>Todo en orden</strong>.</p><p>Si la última corrida tuvo errores de colecta, arriba aparece un aviso rojo con un link a esa corrida.</p><p>Al pie, <strong>Ver más</strong> lleva a las demás pantallas.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:bandeja:--></div><figcaption>Ejemplo con datos ficticios · vista de Admin</figcaption></figure></section>
+<section class="ay-sec n3" id="ayuda-para-revisar" data-nivel="3"><h4>Para revisar</h4><p class="ay-breve">Solo Admin: reglas propuestas para aprobar y proyectos que terminaron su análisis.</p><p>Solo la ven los Admin. Junta las tareas de configuración pendientes: reglas propuestas, proyectos <strong>En revisión</strong> que esperan ser activados y proyectos <strong>Con error</strong>. Cada ítem lleva a donde se resuelve.</p></section>
+<section class="ay-sec n3" id="ayuda-para-vos" data-nivel="3"><h4>Para vos</h4><p class="ay-breve">Tarjetas que alguien te delegó.</p><p>Las tarjetas que alguien te <a href="#ayuda-delegar">delegó</a>. Aparecen primero y salen de esta lista cuando las respondés, descartás o posponés.</p></section>
+<section class="ay-sec n3" id="ayuda-requiere-accion" data-nivel="3"><h4>Requiere acción</h4><p class="ay-breve">Tarjetas escaladas: el triage decidió que necesitan a una persona.</p><p>Las tarjetas con decisión <strong>Escalado</strong>. En general son P1 o P2, o algo que la rutina nunca había visto. Cada una trae su análisis previo en el detalle.</p></section>
+<section class="ay-sec n3" id="ayuda-avisos" data-nivel="3"><h4>Avisos</h4><p class="ay-breve">Cosas para saber que no bloquean, en formato compacto.</p><p>Las tarjetas con decisión <strong>Aviso</strong>, en general P3 o P4 nuevos. Se muestran compactas, solo con Descartar, Posponer y Responder. El porqué aparece al abrir el detalle.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:aviso--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n2" id="ayuda-tarjeta" data-nivel="2"><h3>La tarjeta</h3><p class="ay-breve">Un problema por tema, con su severidad, su porqué y las acciones para trabajarlo.</p><p>Cada tarjeta es un <a href="#ayuda-tema">tema</a>. Si el problema vuelve a ocurrir no se crea otra: la misma suma ocurrencias.</p><ul>
+<li><strong>Ícono y color:</strong> la <a href="#ayuda-categoria">categoría</a> y la <a href="#ayuda-severidad">severidad</a>. El borde izquierdo tiene el color de la severidad.</li>
+<li><strong>Etiquetas:</strong> el proyecto, cuando no hay filtro, y el proceso si el proyecto tiene varios; la <a href="#ayuda-recurrencia">recurrencia</a>; <a href="#ayuda-reaparecio">Reapareció</a>; la <a href="#ayuda-libreria">librería</a> donde ocurrió el error; <a href="#ayuda-nueva-version">Nueva versión</a>; <strong>Aviso</strong>, y a quién está delegada.</li>
+<li><strong>Texto gris:</strong> el porqué del triage, en dos líneas.</li>
+<li><strong>Acciones:</strong> abajo. Un Lector no las ve.</li>
+</ul><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n3" id="ayuda-detalle" data-nivel="3"><h4>Ver detalle</h4><p class="ay-breve">Abre el porqué del triage, el análisis previo, la evidencia y la actividad de la tarjeta.</p><p><strong>Ver detalle</strong> despliega todo lo que sabe la rutina sobre el tema:</p><ul>
+<li><strong>Librería:</strong> si el error ocurrió en una librería, su versión, la actividad y qué otros proyectos la usan.</li>
+<li><strong>Triage:</strong> la decisión, su confianza, el porqué, las reglas y memorias en las que se basó, desde cuándo se ve y en cuántas corridas.</li>
+<li><strong>Análisis previo:</strong> resumen, hipótesis ordenadas por probabilidad, acciones sugeridas, archivos de código y secciones de documentación relacionados, y qué cambió en el último deploy. Si dice Pendiente, lo completa la próxima corrida.</li>
+<li><strong>Evidencia (redactada):</strong> los últimos logs, queue items y jobs, sin datos personales.</li>
+<li><strong>Actividad:</strong> quién hizo qué con la tarjeta y los comentarios del equipo.</li>
+</ul><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:detalle--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n2" id="ayuda-acciones" data-nivel="2"><h3>Acciones sobre una tarjeta</h3><p>Las usan los Operadores y los Admin. Cada acción queda en la actividad de la tarjeta. Las respuestas y los descartes además le enseñan a la rutina, que los procesa en la próxima corrida.</p><div class="ay-accion" id="ayuda-delegar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Delegar</span></div><p><b>Asigna la revisión a una persona: la tarjeta le aparece en Para vos.</b></p><p>Buscá a la persona por nombre y elegila. La tarjeta muestra a quién está delegada y sigue en la Bandeja de todos, pero a esa persona le aparece primero, en <strong>Para vos</strong>.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:delegar--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></div><div class="ay-accion" id="ayuda-posponer"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Posponer</span></div><p><b>Oculta la tarjeta hasta una fecha. Vuelve antes si el problema empeora.</b></p><p>Elegí 1 día, 3 días, 1 semana o una fecha. Mientras tanto la tarjeta pasa a <a href="#ayuda-no-reportados">No reportados</a> como <strong>Pospuesto hasta…</strong>.</p><ul>
+<li>Si la severidad sube antes de la fecha, la tarjeta vuelve a la Bandeja sola.</li>
+<li>Al vencer, vuelve a mostrarse si el problema sigue.</li>
+<li>Posponer no le enseña nada a la rutina. Si el problema es esperado, conviene <strong>Descartar</strong> o <strong>Responder</strong>.</li>
+</ul><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:posponer--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></div><div class="ay-accion" id="ayuda-descartar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Descartar</span></div><p><b>Saca la tarjeta de la Bandeja con un motivo. La rutina lo aprende y puede proponer una regla.</b></p><p>Elegí un motivo y, si querés, agregá una nota que explique por qué:</p><ul>
+<li><strong>Es esperado:</strong> pasa siempre y no es un problema, por ejemplo una ventana de mantenimiento.</li>
+<li><strong>Falso positivo:</strong> la detección se equivocó.</li>
+<li><strong>Dato de negocio:</strong> es una excepción de negocio esperable, no una falla del robot.</li>
+<li><strong>Sistema externo:</strong> el problema está en un sistema que no depende del equipo.</li>
+</ul><p>La rutina anota el motivo en la <a href="#ayuda-memoria-de-produccion">memoria de producción</a> y puede proponer una <a href="#ayuda-regla">regla</a> para no volver a avisar. Si el tema se repite, suma ocurrencias en la misma tarjeta, pero no vuelve a la Bandeja como nuevo.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:descartar--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></div><div class="ay-accion" id="ayuda-responder"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Responder</span></div><p><b>Registra qué se encontró o qué se va a hacer. Queda en la memoria de producción.</b></p><p>Elegí una decisión y agregá notas:</p><ul>
+<li><strong>Requiere fix:</strong> hay que corregir el robot. Podés cargar el ticket o la referencia del fix.</li>
+<li><strong>Comportamiento esperado</strong>, <strong>Problema de datos</strong>, <strong>Sistema externo</strong> o <strong>Falso positivo / ajustar regla:</strong> la causa es otra; la rutina lo aprende.</li>
+<li><strong>Volver a controlar:</strong> elegí una fecha. La tarjeta se oculta hasta ese día y la rutina hace un <a href="#ayuda-re-control">re-control</a>.</li>
+<li><strong>Derivar a desarrollo:</strong> lo toma el equipo de desarrollo.</li>
+</ul><p>La tarjeta sale de la Bandeja y la respuesta queda en la memoria de producción del proyecto.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:responder--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></div><div class="ay-accion" id="ayuda-comentar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Comentar</span></div><p><b>Deja una nota para el equipo en la actividad de la tarjeta. No cambia su estado.</b></p><p>El comentario aparece en la sección <strong>Actividad</strong> del detalle. No saca la tarjeta de la Bandeja ni le enseña nada a la rutina. Con Ctrl o Cmd + Enter se envía sin usar el mouse.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:tarjeta:comentar--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></div><div class="ay-accion" id="ayuda-reanalizar-inc"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Volver a analizar</span></div><p><b>Pide a la próxima corrida un análisis previo nuevo de esta tarjeta.</b></p><p>Está al final del detalle. Sirve cuando el análisis quedó viejo, por ejemplo después de un cambio en el sistema o en la documentación. El nuevo análisis reemplaza al anterior en la próxima corrida.</p></div></section>
+<section class="ay-sec n2" id="ayuda-corridas" data-nivel="2"><h3>Corridas</h3><p class="ay-breve">Cada ejecución de la rutina, con lo que revisó y lo que encontró.</p><p>La lista de las últimas 50 corridas. El punto indica cómo terminó: verde, completa; ámbar, parcial; rojo, con errores. A la derecha, cuántos temas nuevos, recurrentes y escalados encontró.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:corridas:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n3" id="ayuda-corrida-detalle" data-nivel="3"><h4>Detalle de una corrida</h4><p class="ay-breve">Qué revisó la rutina en cada proyecto y qué decidió con cada hallazgo.</p><p>Por cada proyecto muestra la ventana de tiempo revisada, un resumen de señales, la tabla de <a href="#ayuda-punto-de-control">puntos de control</a> con su valor observado y los <strong>Hallazgos y triage</strong>: cada hallazgo con su severidad, su decisión, si es nuevo, recurrente o reabierto, y su porqué. Un clic en un hallazgo abre su tarjeta.</p><p>Si hubo errores al leer Orchestrator, aparecen al final.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:corrida:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n2" id="ayuda-no-reportados" data-nivel="2"><h3>No reportados</h3><p class="ay-breve">Lo que no está en la Bandeja: en observación, conocido, pospuesto, descartado o respondido.</p><p>Todo lo abierto que no aparece en la Bandeja, con el motivo:</p><ul>
+<li><strong>En observación</strong> o <strong>Conocido:</strong> el triage decidió no mostrarlo.</li>
+<li><strong>Pospuesto hasta…</strong>, <strong>Descartado</strong> o <strong>Respondido:</strong> el equipo ya lo trabajó.</li>
+</ul><p>Sirve para controlar el criterio de la rutina. Si algo de acá debería estar en la Bandeja, abrilo y respondé <strong>Falso positivo / ajustar regla</strong>, o corregí los <a href="#ayuda-criterios">criterios</a>.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:no-reportados:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n2" id="ayuda-proyectos" data-nivel="2"><h3>Proyectos</h3><p class="ay-breve">Todos los proyectos controlados, con su salud y su estado.</p><p>La lista de proyectos con su carpeta de Orchestrator, su salud y su <a href="#ayuda-estado-proyecto">estado</a>. Un clic abre la página del proyecto.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:proyectos:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n2" id="ayuda-pagina-proyecto" data-nivel="2"><h3>Página de un proyecto</h3><p class="ay-breve">Procesos, memoria, reglas, inventario y configuración de un proyecto.</p><p>Arriba está la carpeta, la cantidad de procesos y el estado. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen las acciones de Admin y cinco pestañas.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:proyecto:memoria--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure><div class="ay-accion" id="ayuda-activar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Activar el control</span><span class="role-b">Solo Admin</span></div><p><b>Empieza a controlar el proyecto en cada corrida. También reanuda un control pausado.</b></p><p>Aparece cuando el proyecto terminó su <a href="#ayuda-alta">alta</a> y está <strong>En revisión</strong>: antes de activarlo, revisá la memoria de proceso, las reglas propuestas y el inventario. Si el proyecto está <strong>Pausado</strong>, el botón dice <strong>Reanudar control</strong>.</p></div><div class="ay-accion" id="ayuda-pausar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Pausar control</span><span class="role-b">Solo Admin</span></div><p><b>Deja de controlar el proyecto hasta que se reanude. No borra nada.</b></p><p>Útil durante un mantenimiento largo o mientras se rehace un proceso. Las tarjetas abiertas quedan como están y el chip del proyecto se ve gris.</p></div><div class="ay-accion" id="ayuda-reanalizar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Pedir re-análisis</span><span class="role-b">Solo Admin</span></div><p><b>Pide a la próxima corrida que regenere la memoria de proceso, el inventario y las reglas propuestas.</b></p><p>Conviene después de un cambio grande en el proceso o en su documentación. El proyecto sigue activo mientras tanto.</p></div></section>
+<section class="ay-sec n3" id="ayuda-proyecto-memoria" data-nivel="3"><h4>Pestaña Memoria de proceso</h4><p class="ay-breve">Qué hace el proceso, según el alta: el contexto que usa la rutina.</p><p>La <a href="#ayuda-memoria-de-proceso">memoria de proceso</a>: qué hace el proceso, sus pasos, sistemas, colas y excepciones conocidas. La genera el alta a partir del código y la documentación.</p></section>
+<section class="ay-sec n3" id="ayuda-proyecto-produccion" data-nivel="3"><h4>Pestaña Memoria de producción</h4><p class="ay-breve">Lo que pasó en producción: respuestas del equipo, deploys y re-controles.</p><p>La <a href="#ayuda-memoria-de-produccion">memoria de producción</a>: un resumen arriba y debajo el historial, del más nuevo al más viejo, con quién respondió y el ticket si lo hay.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:proyecto:produccion--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n3" id="ayuda-proyecto-reglas" data-nivel="3"><h4>Pestaña Reglas</h4><p class="ay-breve">Las reglas de este proyecto y su estado.</p><p>Las reglas del proyecto, con las mismas acciones que la pantalla <a href="#ayuda-reglas">Reglas</a>.</p></section>
+<section class="ay-sec n3" id="ayuda-proyecto-inventario" data-nivel="3"><h4>Pestaña Inventario</h4><p class="ay-breve">Procesos, colas, triggers y assets de la carpeta (de los assets, solo el nombre).</p><p>El <a href="#ayuda-inventario">inventario</a> de la carpeta: procesos con su versión y si son parte del proyecto, colas con sus reintentos, triggers y assets. De los assets se muestra solo el nombre y el tipo.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:proyecto:inventario--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure></section>
+<section class="ay-sec n3" id="ayuda-proyecto-config" data-nivel="3"><h4>Pestaña Configuración</h4><p class="ay-breve">Nombre, carpeta, procesos, documentación y criterios del proyecto. Solo Admin puede editarla.</p><p>Un Lector o un Operador ven los criterios de triage y la documentación del proyecto. Un Admin puede editar:</p><ul>
+<li>el nombre y la carpeta de Orchestrator;</li>
+<li>en <strong>Opciones avanzadas</strong>: controlar solo algunos procesos, el repo de Bitbucket de respaldo de cada proceso, la documentación adicional y los criterios de triage del proyecto.</li>
+</ul><p><strong>Editar configuración</strong>, debajo de la lista de procesos, abre esta pestaña.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:proyecto:config--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure><div class="ay-accion" id="ayuda-guardar-proyecto"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Guardar y re-analizar</span><span class="role-b">Solo Admin</span></div><p><b>Guarda la configuración. Guardar y re-analizar además pide a la próxima corrida que regenere memoria e inventario.</b></p><p>Si cambiaste repos o procesos, conviene re-analizar. <strong>Solo guardar</strong> guarda sin pedir el análisis. Si el proyecto estaba activo, sigue activo.</p></div><div class="ay-accion" id="ayuda-descartar-cambios"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Descartar cambios</span><span class="role-b">Solo Admin</span></div><p><b>Vuelve el formulario a la configuración guardada.</b></p><p>Deshace lo que editaste y no guardaste.</p></div></section>
+<section class="ay-sec n2" id="ayuda-reglas" data-nivel="2"><h3>Reglas</h3><p class="ay-breve">Los puntos de control escritos en lenguaje natural, de todos los proyectos.</p><p>Las <a href="#ayuda-regla">reglas</a> de todos los proyectos, primero las propuestas. Cada una muestra su estado y de dónde salió: escrita a mano, del alta o aprendida de un incidente.</p><ul>
+<li><strong>Por compilar:</strong> la rutina la traduce a un control en la próxima corrida.</li>
+<li><strong>Propuesta:</strong> la rutina la sugirió; un Admin la aprueba o la rechaza.</li>
+<li><strong>Activa</strong>, <strong>Desactivada</strong> o <strong>Rechazada.</strong></li>
+</ul><p>Si la rutina no entendió una regla, lo dice al lado. Reescribila con más detalle.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:reglas:--></div><figcaption>Ejemplo con datos ficticios · vista de Admin</figcaption></figure><div class="ay-accion" id="ayuda-nueva-regla"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Crear regla</span><span class="role-b">Solo Admin</span></div><p><b>Agrega una regla escrita en lenguaje natural. Se compila en la próxima corrida.</b></p><p>Elegí el proyecto, o Todos los proyectos, y escribí la regla como se la dirías a una persona: qué mirar, el umbral y qué hacer. Por ejemplo: si se ven más de 10 errores de login seguidos, escalar.</p></div><div class="ay-accion" id="ayuda-regla-active"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Aprobar o Activar</span><span class="role-b">Solo Admin</span></div><p><b>La regla pasa a controlarse en cada corrida.</b></p><p><strong>Aprobar</strong> acepta una regla propuesta. <strong>Activar</strong> vuelve a encender una regla desactivada.</p></div><div class="ay-accion" id="ayuda-regla-rejected"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Rechazar</span><span class="role-b">Solo Admin</span></div><p><b>Descarta una regla propuesta. No se controla.</b></p><p>La regla queda como Rechazada, para que la rutina no la vuelva a proponer igual.</p></div><div class="ay-accion" id="ayuda-regla-disabled"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Desactivar</span><span class="role-b">Solo Admin</span></div><p><b>Deja de controlar una regla activa, sin borrarla.</b></p><p>Se puede volver a activar en cualquier momento.</p></div></section>
+<section class="ay-sec n2" id="ayuda-registrar" data-nivel="2"><h3>Registrar proyecto</h3><p class="ay-breve">Solo Admin: suma una carpeta de Orchestrator al control.</p><p>Un <a href="#ayuda-proyecto">proyecto</a> es una carpeta de Orchestrator. La rutina detecta sola sus procesos, sus librerías y su documentación a partir de los paquetes publicados, en la versión que está en producción.</p><ol>
+<li>Registrá la carpeta desde la lista de detectadas o con el formulario.</li>
+<li>La próxima corrida hace el <a href="#ayuda-alta">alta</a>.</li>
+<li>Revisá el proyecto y tocá <strong>Activar el control de este proyecto</strong>.</li>
+</ol><p>Los procesos que se agreguen después a la carpeta se suman solos.</p><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:registrar:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure><div class="ay-accion" id="ayuda-registrar-detectada"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Registrar</span><span class="role-b">Solo Admin</span></div><p><b>Registra una carpeta que la rutina detectó en Orchestrator y pide su análisis.</b></p><p>La lista <strong>Carpetas detectadas sin registrar</strong> muestra las carpetas que ve la rutina y que todavía no son proyectos, con sus procesos y su actividad de los últimos 30 días.</p></div><div class="ay-accion" id="ayuda-registrar-analizar"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Registrar y analizar</span><span class="role-b">Solo Admin</span></div><p><b>Crea el proyecto con el nombre y la carpeta indicados y pide su análisis.</b></p><p>Alcanza con el nombre y la carpeta. Las <strong>Opciones avanzadas</strong> son las mismas que en la <a href="#ayuda-proyecto-config">Configuración</a> y normalmente no hacen falta.</p></div></section>
+<section class="ay-sec n2" id="ayuda-ajustes" data-nivel="2"><h3>Ajustes</h3><p class="ay-breve">Solo Admin: criterios globales del triage, severidad y retención.</p><ul>
+<li><strong>Criterios de triage globales:</strong> se aplican a todos los proyectos, junto con los de cada uno.</li>
+<li><strong>Matriz de severidad:</strong> qué es P1, P2, P3 y P4.</li>
+<li><strong>Minutos máximos en Pending:</strong> desde cuándo un job que espera se considera un problema.</li>
+<li><strong>Retención:</strong> cuántos días se guardan las corridas y los incidentes cerrados.</li>
+</ul><figure class="ay-vista" inert><div class="ay-vista-c"><!--vista:ajustes:--></div><figcaption>Ejemplo con datos ficticios</figcaption></figure><div class="ay-accion" id="ayuda-guardar-ajustes"><div class="ay-accion-h"><span class="btn" aria-hidden="true">Guardar ajustes</span><span class="role-b">Solo Admin</span></div><p><b>Guarda los ajustes. Se usan desde la próxima corrida.</b></p><p>Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas.</p></div></section></template>
+<script type="application/json" id="ayuda-tips">{"roles":{"titulo":"Roles","breve":"Tu rol define qué podés hacer: Lector mira, Operador trabaja las tarjetas y Admin además configura proyectos, reglas y ajustes."},"alta":{"titulo":"Alta","breve":"El primer análisis de un proyecto recién registrado. La rutina descubre sus procesos, colas, triggers y librerías, calcula el baseline y genera la memoria de proceso y las reglas propuestas. Después un Admin lo revisa y lo activa."},"analisis-previo":{"titulo":"Análisis previo","breve":"Lo que la rutina investiga antes de escalar una tarjeta: hipótesis con su probabilidad, acciones sugeridas, el código y la documentación relacionados, y qué cambió en el último deploy. Se lee en el detalle de la tarjeta."},"baseline":{"titulo":"Baseline","breve":"El comportamiento normal de un proyecto en los últimos 30 días: cuántos jobs corre, cuánto tardan y cuántos errores tiene. Sirve para distinguir un problema nuevo de lo habitual."},"categoria":{"titulo":"Categoría","breve":"El tipo de problema, con su ícono: login o credenciales, selector o UI, aplicación caída, infraestructura, configuración, programación, negocio, sistema, falla silenciosa, regresión, deploy o monitoreo."},"corrida":{"titulo":"Corrida","breve":"Una ejecución de la rutina. Registra qué ventana de tiempo revisó en cada proyecto, cada punto de control con su valor observado y los hallazgos con su triage."},"criterios":{"titulo":"Criterios de triage","breve":"Instrucciones en lenguaje natural que guían la clasificación. Hay criterios globales, en Ajustes, y criterios propios de cada proyecto, en su Configuración."},"decision":{"titulo":"Decisión","breve":"Qué hace el triage con un hallazgo. Escalado: necesita a una persona y va a Requiere acción. Aviso: conviene verlo, pero no bloquea. En observación: se sigue la tendencia sin mostrarlo. Conocido: la memoria o una regla dicen que es esperado."},"estado-proyecto":{"titulo":"Estado del proyecto","breve":"Esperando análisis, Analizando, En revisión, Activo, Pausado o Con error. Solo los proyectos activos se controlan en cada corrida."},"evidencia":{"titulo":"Evidencia (redactada)","breve":"Los logs, queue items, jobs y valores de reglas que respaldan una tarjeta, después de quitarles los datos personales. Las referencias de los casos se muestran como un código corto, nunca el dato original."},"incidente":{"titulo":"Incidente o tarjeta","breve":"Un problema detectado, con toda su historia: cuándo se vio por primera y por última vez, cuántas veces ocurrió, su triage, su análisis y la actividad del equipo."},"inventario":{"titulo":"Inventario","breve":"Lo que tiene la carpeta de Orchestrator de un proyecto: procesos con su versión, colas, triggers y assets. De los assets se guarda solo el nombre y el tipo, nunca el valor."},"libreria":{"titulo":"Librería","breve":"La etiqueta con el nombre de una librería indica que el error ocurrió dentro de una actividad de esa librería. El detalle dice qué otros proyectos la usan y si tienen tarjetas abiertas."},"memoria-de-proceso":{"titulo":"Memoria de proceso","breve":"Una descripción del proceso, similar a un PDD resumido, que la rutina genera en el alta a partir del código y la documentación. Sirve de contexto para el triage y el análisis."},"memoria-de-produccion":{"titulo":"Memoria de producción","breve":"El historial permanente de un proyecto: respuestas del equipo, deploys, re-controles y reglas nuevas, más un resumen que se actualiza solo. Es lo que hace que la rutina aprenda."},"nueva-version":{"titulo":"Nueva versión","breve":"Se desplegó una versión nueva del proceso después de que se abrió la tarjeta. La rutina la vuelve a analizar y explica qué cambió."},"proyecto":{"titulo":"Proyecto","breve":"Una carpeta de Orchestrator con sus procesos, por ejemplo Dispatcher, Performer y Reporter. Es la unidad que se registra, se analiza y se controla."},"pulso":{"titulo":"Pulso de la rutina","breve":"Arriba a la derecha: cuándo fue el último control. Verde si salió bien, ámbar si tuvo errores de colecta, y rojo si la rutina dejó de correr."},"punto-de-control":{"titulo":"Punto de control","breve":"Cada cosa que se revisa en una corrida, por ejemplo jobs fallidos, items abandonados o una regla. Su resultado es alerta, ok u omitido."},"re-control":{"titulo":"Re-control","breve":"Respuesta Volver a controlar con una fecha. La tarjeta se oculta hasta ese día y entonces la rutina verifica si el problema sigue. Queda en la memoria de producción como Re-control agendado y Re-control OK."},"reaparecio":{"titulo":"Reapareció","breve":"Un tema que se había cerrado volvió dentro de los 30 días. Se reabre la misma tarjeta en lugar de crear una nueva, para no perder su historia."},"recurrencia":{"titulo":"Recurrencia","breve":"Cuando un tema se repite, suma ocurrencias en la misma tarjeta. La etiqueta ×7 · última hace 12 min indica cuántas veces pasó y cuándo fue la última."},"regla":{"titulo":"Regla","breve":"Un punto de control escrito en lenguaje natural, por ejemplo: si hay más de 10 errores de login seguidos, escalar. La rutina la traduce a un control y muestra cómo la entendió."},"retencion":{"titulo":"Retención","breve":"Las corridas y los incidentes cerrados se borran después de cierta cantidad de días, que se configura en Ajustes. Antes de borrarlos se guarda un resumen mensual."},"rutina":{"titulo":"Rutina","breve":"El proceso de Claude que corre solo, en general cada hora. Es el único que crea corridas e incidentes, y nunca modifica nada en Orchestrator."},"severidad":{"titulo":"Severidad (P1 a P4)","breve":"P1: un proceso crítico se detuvo o se incumplió el SLA hoy. P2: proceso degradado con riesgo de SLA. P3: errores aislados. P4: informativo."},"solicitud":{"titulo":"Solicitud","breve":"Un pedido del equipo a la rutina, por ejemplo analizar un proyecto nuevo o volver a analizar una tarjeta. Se atiende en la próxima corrida."},"tema":{"titulo":"Tema","breve":"Lo que identifica a un problema, sin importar cuántas veces ocurra: el mismo error en el mismo lugar. Un tema tiene una sola tarjeta."},"triage":{"titulo":"Triage","breve":"La clasificación de cada hallazgo: categoría, severidad y decisión, con su porqué, su nivel de confianza y las reglas o memorias en las que se basó."},"filtro":{"titulo":"Chip de proyecto","breve":"Filtra todo el tablero por ese proyecto. Todos quita el filtro."},"bandeja":{"titulo":"Bandeja","breve":"La pantalla principal: lo que necesita a una persona, ordenado por severidad."},"para-revisar":{"titulo":"Para revisar","breve":"Solo Admin: reglas propuestas para aprobar y proyectos que terminaron su análisis."},"para-vos":{"titulo":"Para vos","breve":"Tarjetas que alguien te delegó."},"requiere-accion":{"titulo":"Requiere acción","breve":"Tarjetas escaladas: el triage decidió que necesitan a una persona."},"avisos":{"titulo":"Avisos","breve":"Cosas para saber que no bloquean, en formato compacto."},"tarjeta":{"titulo":"La tarjeta","breve":"Un problema por tema, con su severidad, su porqué y las acciones para trabajarlo."},"detalle":{"titulo":"Ver detalle","breve":"Abre el porqué del triage, el análisis previo, la evidencia y la actividad de la tarjeta."},"delegar":{"titulo":"Delegar","breve":"Asigna la revisión a una persona: la tarjeta le aparece en Para vos."},"posponer":{"titulo":"Posponer","breve":"Oculta la tarjeta hasta una fecha. Vuelve antes si el problema empeora."},"descartar":{"titulo":"Descartar","breve":"Saca la tarjeta de la Bandeja con un motivo. La rutina lo aprende y puede proponer una regla."},"responder":{"titulo":"Responder","breve":"Registra qué se encontró o qué se va a hacer. Queda en la memoria de producción."},"comentar":{"titulo":"Comentar","breve":"Deja una nota para el equipo en la actividad de la tarjeta. No cambia su estado."},"reanalizar-inc":{"titulo":"Volver a analizar","breve":"Pide a la próxima corrida un análisis previo nuevo de esta tarjeta."},"corridas":{"titulo":"Corridas","breve":"Cada ejecución de la rutina, con lo que revisó y lo que encontró."},"corrida-detalle":{"titulo":"Detalle de una corrida","breve":"Qué revisó la rutina en cada proyecto y qué decidió con cada hallazgo."},"no-reportados":{"titulo":"No reportados","breve":"Lo que no está en la Bandeja: en observación, conocido, pospuesto, descartado o respondido."},"proyectos":{"titulo":"Proyectos","breve":"Todos los proyectos controlados, con su salud y su estado."},"activar":{"titulo":"Activar el control","breve":"Empieza a controlar el proyecto en cada corrida. También reanuda un control pausado."},"pausar":{"titulo":"Pausar control","breve":"Deja de controlar el proyecto hasta que se reanude. No borra nada."},"reanalizar":{"titulo":"Pedir re-análisis","breve":"Pide a la próxima corrida que regenere la memoria de proceso, el inventario y las reglas propuestas."},"pagina-proyecto":{"titulo":"Página de un proyecto","breve":"Procesos, memoria, reglas, inventario y configuración de un proyecto."},"proyecto-memoria":{"titulo":"Pestaña Memoria de proceso","breve":"Qué hace el proceso, según el alta: el contexto que usa la rutina."},"proyecto-produccion":{"titulo":"Pestaña Memoria de producción","breve":"Lo que pasó en producción: respuestas del equipo, deploys y re-controles."},"proyecto-reglas":{"titulo":"Pestaña Reglas","breve":"Las reglas de este proyecto y su estado."},"proyecto-inventario":{"titulo":"Pestaña Inventario","breve":"Procesos, colas, triggers y assets de la carpeta (de los assets, solo el nombre)."},"guardar-proyecto":{"titulo":"Guardar y re-analizar","breve":"Guarda la configuración. Guardar y re-analizar además pide a la próxima corrida que regenere memoria e inventario."},"descartar-cambios":{"titulo":"Descartar cambios","breve":"Vuelve el formulario a la configuración guardada."},"proyecto-config":{"titulo":"Pestaña Configuración","breve":"Nombre, carpeta, procesos, documentación y criterios del proyecto. Solo Admin puede editarla."},"nueva-regla":{"titulo":"Crear regla","breve":"Agrega una regla escrita en lenguaje natural. Se compila en la próxima corrida."},"regla-active":{"titulo":"Aprobar o Activar","breve":"La regla pasa a controlarse en cada corrida."},"regla-rejected":{"titulo":"Rechazar","breve":"Descarta una regla propuesta. No se controla."},"regla-disabled":{"titulo":"Desactivar","breve":"Deja de controlar una regla activa, sin borrarla."},"reglas":{"titulo":"Reglas","breve":"Los puntos de control escritos en lenguaje natural, de todos los proyectos."},"registrar-detectada":{"titulo":"Registrar","breve":"Registra una carpeta que la rutina detectó en Orchestrator y pide su análisis."},"registrar-analizar":{"titulo":"Registrar y analizar","breve":"Crea el proyecto con el nombre y la carpeta indicados y pide su análisis."},"registrar":{"titulo":"Registrar proyecto","breve":"Solo Admin: suma una carpeta de Orchestrator al control."},"guardar-ajustes":{"titulo":"Guardar ajustes","breve":"Guarda los ajustes. Se usan desde la próxima corrida."},"ajustes":{"titulo":"Ajustes","breve":"Solo Admin: criterios globales del triage, severidad y retención."}}</script>
+<!-- AYUDA:FIN -->
 
 <script>
 (() => {
@@ -216,6 +343,22 @@ const HIST = { incident_resolved:'Resuelto', fix_required:'Requiere fix', expect
 const PSTATUS = { pending_analysis:'Esperando análisis', analyzing:'Analizando', review:'En revisión', active:'Activo', paused:'Pausado', error:'Con error' };
 const RSTATUS = { pending_compile:'Por compilar', proposed:'Propuesta', active:'Activa', disabled:'Desactivada', rejected:'Rechazada' };
 const SEV_ORD = { P1:1, P2:2, P3:3, P4:4 };
+
+// ---------- ayuda (contenido: dashboard/ayuda/*.mdx → npm run build:ayuda) ----------
+// Sección de la ayuda que abre el "?" de la barra en cada ruta (clave exacta o prefijo terminado en "-").
+// tests/ayuda.test.mjs verifica que cada ruta de render() esté acá y que cada destino exista.
+const AYUDA_RUTA = {"inicio":"bandeja","corridas":"corridas","corrida-":"corrida-detalle","incidente-":"tarjeta","no-reportados":"no-reportados","proyectos":"proyectos","proyecto-":"pagina-proyecto","reglas":"reglas","ajustes":"ajustes","registrar":"registrar","ayuda":"introduccion","ayuda-":"introduccion"};
+// Tooltip de cada botón: data-tip, o su data-act (con estos alias). Los de SIN_TIP son controles internos.
+const TIP_ALIAS = {"asignar":"delegar","posponer-fecha":"posponer","registrar":"registrar-analizar"};
+const SIN_TIP = ["sel","buscar","agregar-proceso","quitar-proceso"];
+const AYUDA_TIPS = (() => { try { return JSON.parse(document.getElementById('ayuda-tips').textContent); } catch { return {}; } })();
+const ayudaBtn = (id, txt) => `<a class="help" href="#ayuda-${id}" aria-label="Ayuda: ${esc(txt)}">?</a>`;
+const ayudaLink = (id, txt) => `<a class="ay-mas" href="#ayuda-${id}">${esc(txt)} →</a>`;
+function ayudaDe(h) {
+  if (AYUDA_RUTA[h]) return AYUDA_RUTA[h];
+  const k = Object.keys(AYUDA_RUTA).find((x) => x.endsWith('-') && h.startsWith(x));
+  return k ? AYUDA_RUTA[k] : 'bandeja';
+}
 
 // ---------- utilidades ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -404,6 +547,13 @@ function render() {
   renderTop();
   const h = (location.hash || '#inicio').slice(1);
   const v = $('#view');
+  if (h === 'ayuda' || h.startsWith('ayuda-')) {
+    // La ayuda no depende de los datos: se dibuja una vez (por rol) y se conserva el scroll entre renders.
+    if (v.dataset.v !== 'ayuda-' + S.role) { v.innerHTML = viewAyuda(); v.dataset.v = 'ayuda-' + S.role; }
+    if (S.irAyuda) { S.irAyuda = false; const el = document.getElementById(h); if (el && h !== 'ayuda') el.scrollIntoView(); else window.scrollTo(0, 0); }
+    return ocultarTip(true);
+  }
+  v.dataset.v = '';
   if (h === 'inicio' || h === '') v.innerHTML = viewInicio();
   else if (h === 'corridas') v.innerHTML = viewCorridas();
   else if (h.startsWith('corrida-')) v.innerHTML = viewCorrida(h.slice(8));
@@ -416,10 +566,11 @@ function render() {
   else if (h.startsWith('incidente-')) v.innerHTML = viewIncidente(h.slice(10));
   else v.innerHTML = viewInicio();
   if (actId) { const el = document.getElementById(actId); if (el) { el.focus(); try { if (selStart != null) el.setSelectionRange(selStart, selStart); } catch {} } }
+  ocultarTip(true);
 }
 
-function renderTop() {
-  $('#role').textContent = { admin:'Admin', operador:'Operador', lector:'Lector' }[S.role];
+function topHtml() {
+  const role = { admin:'Admin', operador:'Operador', lector:'Lector' }[S.role];
   // Pulso de la rutina: último run y alarma si está detenida.
   const ult = S.runs[0];
   const intervalo = (S.settings && S.settings.intervalMinutes) || 60;
@@ -430,16 +581,24 @@ function renderTop() {
     cls = detenida ? 'critical' : ult.status === 'ok' ? 'ok' : 'warn';
     txt = detenida ? `Rutina detenida · último control ${rel(ult.finishedAt || ult.startedAt)}` : `Último control ${rel(ult.finishedAt || ult.startedAt)}`;
   } else if (S.error) { cls = 'critical'; txt = S.error; }
-  $('#pulse').innerHTML = `<span class="dot ${cls}"></span><span class="txt">${esc(txt)}</span>`;
+  const pulse = `<span class="dot ${cls}"></span><span class="txt">${esc(txt)}</span>`;
   // Chips por proyecto con salud.
   const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name)));
   const abiertos = (pid) => Object.values(S.incidents).filter((i) => i.projectId === pid && reportable(i) && visibleByWork(i)).length;
-  const chip = (id, label, dot, n) => `<button class="chip" data-filter="${esc(id)}" aria-pressed="${(S.filter || '') === id}">${dot}${esc(label)}${n ? ` <span class="n">${n}</span>` : ''}</button>`;
+  const chip = (id, label, dot, n) => `<button class="chip" data-filter="${esc(id)}" data-tip="filtro" aria-pressed="${(S.filter || '') === id}">${dot}${esc(label)}${n ? ` <span class="n">${n}</span>` : ''}</button>`;
   const total = Object.values(S.incidents).filter((i) => reportable(i) && visibleByWork(i)).length;
-  $('#chips').innerHTML = chip('', 'Todos', '', total) + ps.map((p) => {
+  const chips = chip('', 'Todos', '', total) + ps.map((p) => {
     const lvl = p.status !== 'active' ? 'off' : ((p.health && p.health.level) || 'unknown');
     return chip(p.id, p.name || p.id, `<span class="dot ${lvl}" title="${esc(p.status !== 'active' ? PSTATUS[p.status] || p.status : lvl)}"></span>`, abiertos(p.id));
   }).join('');
+  return { role, pulse, chips };
+}
+function renderTop() {
+  const t = topHtml();
+  $('#role').textContent = t.role;
+  $('#pulse').innerHTML = t.pulse;
+  $('#chips').innerHTML = t.chips;
+  $('#ayuda-top').href = '#ayuda-' + ayudaDe((location.hash || '#inicio').slice(1));
 }
 
 function cardHtml(i, compacta = false) {
@@ -452,19 +611,19 @@ function cardHtml(i, compacta = false) {
   const can = S.canWrite;
   let html = `<article class="card ${esc(i.severity)}${compacta ? ' compact' : ''}" data-inc="${esc(i.id)}">
     <div class="c-head">
-      <div class="ico" title="${esc(CAT[i.category] || i.category)}">${ico(i.category)}</div>
+      <div class="ico" data-tip="categoria" aria-label="${esc(CAT[i.category] || i.category)}">${ico(i.category)}</div>
       <div class="c-main">
         <div class="c-title">${esc(i.title)}</div>
         <div class="c-meta">
-          <span class="pill ${esc(i.severity)}">${esc(i.severity)}</span>
-          <span>${esc(CAT[i.category] || i.category)}</span>
+          <span class="pill ${esc(i.severity)}" data-tip="severidad">${esc(i.severity)}</span>
+          <span data-tip="categoria">${esc(CAT[i.category] || i.category)}</span>
           ${S.filter ? '' : `<span class="tag">${esc(projName(i.projectId))}</span>`}
           ${procLabel(i) ? `<span class="tag">${esc(procLabel(i))}</span>` : ''}
-          ${rec.length > 1 || i.occurrences > 1 ? `<span class="tag rec" title="Ocurrencias acumuladas en esta tarjeta">×${esc(i.occurrences)} · última ${esc(rel(i.lastSeenAt))}</span>` : `<span>${esc(rel(i.lastSeenAt))}</span>`}
-          ${i.reopenCount ? '<span class="tag reo">Reapareció</span>' : ''}
-          ${i.library ? `<span class="tag" title="El error ocurrió en una librería">${esc(i.library.name)}${i.library.activity ? ' · ' + esc(i.library.activity) : ''}</span>` : ''}
-          ${i.deploy && i.deploy.version ? `<span class="tag reo" title="Hubo un deploy después de abrirse la tarjeta">Nueva versión ${esc(i.deploy.version)}</span>` : ''}
-          ${i.decision === 'notify' ? '<span class="tag">Aviso</span>' : ''}
+          ${rec.length > 1 || i.occurrences > 1 ? `<span class="tag rec" data-tip="recurrencia">×${esc(i.occurrences)} · última ${esc(rel(i.lastSeenAt))}</span>` : `<span>${esc(rel(i.lastSeenAt))}</span>`}
+          ${i.reopenCount ? '<span class="tag reo" data-tip="reaparecio">Reapareció</span>' : ''}
+          ${i.library ? `<span class="tag" data-tip="libreria">${esc(i.library.name)}${i.library.activity ? ' · ' + esc(i.library.activity) : ''}</span>` : ''}
+          ${i.deploy && i.deploy.version ? `<span class="tag reo" data-tip="nueva-version">Nueva versión ${esc(i.deploy.version)}</span>` : ''}
+          ${i.decision === 'notify' ? '<span class="tag" data-tip="decision">Aviso</span>' : ''}
           ${w.state === 'delegated' && w.assignee ? `<span>→ ${who(w.assignee)}</span>` : ''}
         </div>
       </div>
@@ -477,27 +636,27 @@ function cardHtml(i, compacta = false) {
     <span class="sp"></span><button class="btn link" data-act="detalle" aria-expanded="${Boolean(open)}">${open ? 'Ocultar detalle' : 'Ver detalle'}</button>
   </div>`;
   if (panel === 'comentar') {
-    html += `<div class="panel"><textarea id="${esc(i.id)}-coment" placeholder="Comentario para el equipo">${d('coment')}</textarea><div><button class="btn primary" data-act="comentar">Agregar comentario</button></div></div>`;
+    html += `<div class="panel"><textarea id="${esc(i.id)}-coment" placeholder="Comentario para el equipo">${d('coment')}</textarea><div class="actions"><button class="btn primary" data-act="comentar">Agregar comentario</button>${ayudaLink('comentar', 'Más sobre Comentar')}</div></div>`;
   } else if (panel === 'delegar') {
     const hits = S.peopleHits[i.id] || [];
     html += `<div class="panel"><input type="text" id="${esc(i.id)}-buscar" placeholder="Buscar persona por nombre…" value="${d('buscar')}" data-act="buscar" autocomplete="off">
-      <div class="people">${hits.map((p) => `<button class="person" data-act="asignar" data-uid="${esc(p.id)}"><img class="av" alt="" src="${esc(p.avatarUrl)}"><span>${esc(p.name)}</span></button>`).join('') || '<span class="muted">Escribí para buscar en tu organización.</span>'}</div></div>`;
+      <div class="people">${hits.map((p) => `<button class="person" data-act="asignar" data-uid="${esc(p.id)}"><img class="av" alt="" src="${esc(p.avatarUrl)}"><span>${esc(p.name)}</span></button>`).join('') || '<span class="muted">Escribí para buscar en tu organización.</span>'}</div>${ayudaLink('delegar', 'Más sobre Delegar')}</div>`;
   } else if (panel === 'posponer') {
     html += `<div class="panel"><div class="opts">
       <button class="opt" data-act="posponer" data-d="1">1 día</button><button class="opt" data-act="posponer" data-d="3">3 días</button><button class="opt" data-act="posponer" data-d="7">1 semana</button>
       <input type="date" id="${esc(i.id)}-fecha" value="${d('fecha')}" style="width:auto" aria-label="Hasta"><button class="btn" data-act="posponer-fecha">Hasta esa fecha</button></div>
-      <span class="muted">La tarjeta se oculta hasta esa fecha. Vuelve antes si el problema empeora, y la rutina la vuelve a controlar al vencer.</span></div>`;
+      <span class="muted">La tarjeta se oculta hasta esa fecha. Vuelve antes si el problema empeora, y la rutina la vuelve a controlar al vencer. ${ayudaLink('posponer', 'Más sobre Posponer')}</span></div>`;
   } else if (panel === 'descartar') {
     html += `<div class="panel"><div class="opts">${DISMISS.map(([k, l]) => `<button class="opt" data-act="sel" data-k="motivo" data-v="${k}" aria-pressed="${sel.motivo === k}">${l}</button>`).join('')}</div>
       <input type="text" id="${esc(i.id)}-nota" placeholder="Nota opcional (por qué)" value="${d('nota')}">
       <div><button class="btn primary" data-act="descartar" ${sel.motivo ? '' : 'disabled'}>Descartar</button></div>
-      <span class="muted">Con lo que indiques, la rutina actualiza la memoria del proyecto y puede proponer una regla.</span></div>`;
+      <span class="muted">Con lo que indiques, la rutina actualiza la memoria del proyecto y puede proponer una regla. ${ayudaLink('descartar', 'Más sobre Descartar')}</span></div>`;
   } else if (panel === 'responder') {
     html += `<div class="panel"><div class="opts">${RESP.map(([k, l]) => `<button class="opt" data-act="sel" data-k="decision" data-v="${k}" aria-pressed="${sel.decision === k}">${l}</button>`).join('')}</div>
       <textarea id="${esc(i.id)}-notas" placeholder="Qué se encontró, qué se hizo o qué hay que hacer">${d('notas')}</textarea>
       ${sel.decision === 'fix_required' ? `<input type="text" id="${esc(i.id)}-ticket" placeholder="Ticket o referencia del fix (opcional)" value="${d('ticket')}">` : ''}
       ${sel.decision === 'recheck' ? `<label class="muted">Volver a controlar el <input type="date" id="${esc(i.id)}-recheck" value="${d('recheck')}" style="width:auto"></label>` : ''}
-      <div><button class="btn primary" data-act="responder" ${sel.decision ? '' : 'disabled'}>Enviar respuesta</button></div></div>`;
+      <div class="actions"><button class="btn primary" data-act="responder" ${sel.decision ? '' : 'disabled'}>Enviar respuesta</button>${ayudaLink('responder', 'Más sobre Responder')}</div></div>`;
   }
   if (open) html += detailHtml(i);
   return html + '</article>';
@@ -551,7 +710,7 @@ function detailHtml(i) {
 
 const subs = {};
 function loadActivity(id) {
-  if (subs['act-' + id] || !S.db) return;
+  if (S.demo || subs['act-' + id] || !S.db) return;
   S.activity[id] = [];
   subs['act-' + id] = S.db.collection('activity').where('incidentId', '==', id).onSnapshot((s) => {
     S.activity[id] = s.docs.map((d) => d.data()).sort((a, b) => String(a.at).localeCompare(String(b.at)));
@@ -577,11 +736,11 @@ function viewInicio() {
     if (prop) items.push(`<a href="#reglas"><b class="n">${prop}</b> regla(s) propuesta(s) para aprobar</a>`);
     for (const p of rev) items.push(`<a href="#proyecto-${esc(p.id)}">Revisar alta de <b>${esc(p.name)}</b></a>`);
     for (const p of err) items.push(`<a href="#proyecto-${esc(p.id)}">${ico('alert', 'ico-s al-ico')} <b>${esc(p.name)}</b>: ${esc(PSTATUS.error)}</a>`);
-    if (items.length) html += `<section><div class="sec-h"><h2>Para revisar</h2></div><div class="mini">${items.join('')}</div></section>`;
+    if (items.length) html += `<section><div class="sec-h"><h2>Para revisar</h2>${ayudaBtn('para-revisar', 'Para revisar')}</div><div class="mini">${items.join('')}</div></section>`;
   }
-  if (mios.length) html += `<section><div class="sec-h"><h2>Para vos</h2><span class="cnt">${mios.length}</span></div><div class="list">${mios.map((i) => cardHtml(i)).join('')}</div></section>`;
-  if (accion.length) html += `<section><div class="sec-h"><h2>Requiere acción</h2><span class="cnt">${accion.length}</span></div><div class="list">${accion.map((i) => cardHtml(i)).join('')}</div></section>`;
-  if (avisos.length) html += `<section><div class="sec-h"><h2>Avisos</h2><span class="cnt">${avisos.length}</span></div><div class="list">${avisos.map((i) => cardHtml(i, true)).join('')}</div></section>`;
+  if (mios.length) html += `<section><div class="sec-h"><h2>Para vos</h2><span class="cnt">${mios.length}</span>${ayudaBtn('para-vos', 'Para vos')}</div><div class="list">${mios.map((i) => cardHtml(i)).join('')}</div></section>`;
+  if (accion.length) html += `<section><div class="sec-h"><h2>Requiere acción</h2><span class="cnt">${accion.length}</span>${ayudaBtn('requiere-accion', 'Requiere acción')}</div><div class="list">${accion.map((i) => cardHtml(i)).join('')}</div></section>`;
+  if (avisos.length) html += `<section><div class="sec-h"><h2>Avisos</h2><span class="cnt">${avisos.length}</span>${ayudaBtn('avisos', 'Avisos')}</div><div class="list">${avisos.map((i) => cardHtml(i, true)).join('')}</div></section>`;
   if (!todos.length) {
     const p = S.filter && S.projects[S.filter];
     html += `<div class="empty">${ico('check')}<b>Todo en orden</b><span class="muted">${p ? `Nada pendiente en ${esc(p.name)}.` : 'No hay incidentes que requieran acción.'}${ult ? ` Último control ${esc(rel(ult.finishedAt || ult.startedAt))}.` : ''}</span>
@@ -593,9 +752,10 @@ function viewInicio() {
 function navMore(cur) {
   const l = [['inicio', 'Bandeja'], ['corridas', 'Corridas'], ['no-reportados', 'No reportados'], ['proyectos', 'Proyectos'], ['reglas', 'Reglas']];
   if (S.isAdmin) l.push(['registrar', 'Registrar proyecto'], ['ajustes', 'Ajustes']);
+  l.push(['ayuda', 'Ayuda']);
   return `<nav class="more" aria-label="Ver más">${l.map(([h, t]) => `<a href="#${h}" ${cur === h ? 'aria-current="page"' : ''}>${t}</a>`).join('')}</nav>`;
 }
-const head = (title, sub, back = '#inicio') => `<div class="view-h"><a class="back" href="${back}">← Volver</a><h1>${esc(title)}</h1>${sub ? `<span class="muted">${sub}</span>` : ''}</div>`;
+const head = (title, sub, back = '#inicio', ayuda) => `<div class="view-h"><a class="back" href="${back}">← Volver</a><div class="view-h-t"><h1>${esc(title)}</h1>${ayuda ? ayudaBtn(ayuda, title) : ''}</div>${sub ? `<span class="muted">${sub}</span>` : ''}</div>`;
 
 function viewCorridas() {
   const runs = S.runs.filter((r) => !S.filter || (r.projects || []).some((p) => p.projectId === S.filter));
@@ -608,7 +768,7 @@ function viewCorridas() {
       <span class="t">${esc(fecha(r.startedAt))} <span class="muted">· ${ps.length} proyecto(s)${r.trigger !== 'scheduled' ? ' · ' + esc(r.trigger) : ''}</span></span>
       <span class="nums">${nuevos} nuevos · ${rec} recurrentes · ${esc_} escalados</span></a>`;
   }).join('');
-  return head('Corridas', 'Cada ejecución de la rutina, con lo que revisó y encontró.') + `<div class="box"><div class="rows">${rows || '<span class="muted">Todavía no hay corridas.</span>'}</div></div>` + navMore('corridas');
+  return head('Corridas', 'Cada ejecución de la rutina, con lo que revisó y encontró.', '#inicio', 'corridas') + `<div class="box"><div class="rows">${rows || '<span class="muted">Todavía no hay corridas.</span>'}</div></div>` + navMore('corridas');
 }
 
 function viewCorrida(id) {
@@ -616,7 +776,7 @@ function viewCorrida(id) {
   if (!r) return head('Corrida', 'No está entre las últimas 50 corridas.', '#corridas');
   const ps = (r.projects || []).filter((p) => !S.filter || p.projectId === S.filter);
   const icoRes = (res) => res === 'alerta' ? ico('alert', 'ico-s al-ico') : res === 'ok' ? ico('check', 'ico-s ok-ico') : ico('minus', 'ico-s om-ico');
-  return head(`Corrida del ${fecha(r.startedAt)}`, `${esc(r.status === 'ok' ? 'Completa' : r.status === 'partial' ? 'Parcial' : 'Con errores')} · duró ${r.finishedAt ? Math.max(1, Math.round((Date.parse(r.finishedAt) - Date.parse(r.startedAt)) / 60000)) + ' min' : '—'}${r.sessionUrl ? ` · <a href="${esc(r.sessionUrl)}" target="_blank" rel="noopener">sesión</a>` : ''}`, '#corridas')
+  return head(`Corrida del ${fecha(r.startedAt)}`, `${esc(r.status === 'ok' ? 'Completa' : r.status === 'partial' ? 'Parcial' : 'Con errores')} · duró ${r.finishedAt ? Math.max(1, Math.round((Date.parse(r.finishedAt) - Date.parse(r.startedAt)) / 60000)) + ' min' : '—'}${r.sessionUrl ? ` · <a href="${esc(r.sessionUrl)}" target="_blank" rel="noopener">sesión</a>` : ''}`, '#corridas', 'corrida-detalle')
     + ps.map((p) => `<section class="box">
       <div class="sec-h" style="margin:0"><h2>${esc(projName(p.projectId))}</h2><span class="cnt">${esc(fecha(p.window && p.window.desde))} → ${esc(fecha(p.window && p.window.hasta))}</span></div>
       ${p.signals ? `<div class="nums">${esc(p.signals.jobs)} jobs · ${esc(p.signals.logsErrorFatal)} logs error/fatal · ${esc(p.signals.queueItemsFallidos)} items fallidos · ${esc(p.signals.queueItemsAbandonados)} abandonados</div>` : ''}
@@ -633,7 +793,7 @@ function viewIncidente(id) {
   const i = S.incidents[id];
   if (!i) return head('Incidente', 'Este incidente ya no está abierto o se depuró por retención.', '#corridas');
   S.open[id] = true;
-  return head(i.title, `${esc(projName(i.projectId))} · ${esc(DEC[i.decision])}`, '#inicio') + `<div class="list">${cardHtml(i)}</div>` + navMore('');
+  return head(i.title, `${esc(projName(i.projectId))} · ${esc(DEC[i.decision])}`, '#inicio', 'tarjeta') + `<div class="list">${cardHtml(i)}</div>` + navMore('');
 }
 
 function viewNoReportados() {
@@ -645,20 +805,20 @@ function viewNoReportados() {
     if (w && w.state === 'responded') return `Respondido: ${(RESP.find((d) => d[0] === (w.response || {}).decision) || [0, ''])[1]}`;
     return DEC[i.decision];
   };
-  return head('No reportados', 'Lo que el triage decidió no mostrar en la bandeja, y lo que el equipo ya respondió, pospuso o descartó.')
+  return head('No reportados', 'Lo que el triage decidió no mostrar en la bandeja, y lo que el equipo ya respondió, pospuso o descartó.', '#inicio', 'no-reportados')
     + `<div class="box"><div class="rows">${xs.map((i) => `<a class="rowi" href="#incidente-${esc(i.id)}"><span class="ico" style="width:24px;height:24px">${ico(i.category)}</span>
       <span class="t">${esc(i.title)}<br><span class="muted">${esc(motivo(i))} — ${esc(i.triage && i.triage.rationale)}</span></span><span class="nums">×${esc(i.occurrences)}</span></a>`).join('') || '<span class="muted">Nada por aquí.</span>'}</div></div>` + navMore('no-reportados');
 }
 
 function viewProyectos() {
   const ps = Object.values(S.projects).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-  return head('Proyectos', 'Estado, memoria y reglas de cada proyecto controlado.') + `<div class="box"><div class="rows">${ps.map((p) => `<a class="rowi" href="#proyecto-${esc(p.id)}">
+  return head('Proyectos', 'Estado, memoria y reglas de cada proyecto controlado.', '#inicio', 'proyectos') + `<div class="box"><div class="rows">${ps.map((p) => `<a class="rowi" href="#proyecto-${esc(p.id)}">
     <span class="dot ${p.status !== 'active' ? 'off' : (p.health && p.health.level) || 'unknown'}"></span><span class="t">${esc(p.name)}<br><span class="muted mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span></span>
     <span class="nums">${esc(PSTATUS[p.status] || p.status)}</span></a>`).join('') || '<span class="muted">Sin proyectos todavía.</span>'}</div></div>` + navMore('proyectos');
 }
 
 function subProject(id) {
-  if (subs['proj-' + id] || !S.db) return;
+  if (S.demo || subs['proj-' + id] || !S.db) return;
   subs['proj-' + id] = true;
   S.db.doc(`memory/${id}`).onSnapshot((d) => { S.memory[id] = d.exists ? d.data() : null; schedule(); }, () => {});
   S.db.collection('history').where('projectId', '==', id).orderBy('at', 'desc').limit(100).onSnapshot((s) => {
@@ -690,7 +850,7 @@ function viewProyecto(id) {
   const invP = (p.inventory && p.inventory.processes) || [];
   const extra = (x) => { const v = invP.find((y) => y.name === x.orchestratorProcess); if (!v) return '';
     return `<span class="muted"> · paquete </span><span class="mono">${esc(v.package || v.name)} ${esc(v.version || '')}</span>${(v.libraries || []).length ? `<span class="muted"> · librerías: </span><span class="mono">${v.libraries.map((l) => esc(l.name + ' ' + l.version)).join(', ')}</span>` : ''}`; };
-  return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${procs.length} proceso(s) · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos')
+  return head(p.name, `<span class="mono">${esc(p.orchestrator && p.orchestrator.folderPath)}</span> · ${procs.length} proceso(s) · ${esc(PSTATUS[p.status] || p.status)}`, '#proyectos', 'pagina-proyecto')
     + `<div class="box plist">${procs.map((x) => `<div class="pitem"><span class="role-b">${esc((ROLES.find((r) => r[0] === x.role) || ROLES[3])[1])}</span>
       <span><b>${esc(x.label)}</b> <span class="muted">· Orchestrator: </span><span class="mono">${esc(x.orchestratorProcess || 'por detectar')}</span>${extra(x)}${x.repo ? `<span class="muted"> · repo: </span><span class="mono">${esc(repoTxt(x.repo))}</span>` : ''}${x.folderPath ? `<span class="muted"> · carpeta: </span><span class="mono">${esc(x.folderPath)}</span>` : ''}</span></div>`).join('') || '<span class="muted">Los procesos de la carpeta se detectan solos en la próxima corrida.</span>'}
       ${S.isAdmin ? `<div><button class="btn link" data-act="tab" data-t="config" style="padding-left:0">Editar configuración</button></div>` : ''}</div>`
@@ -698,7 +858,7 @@ function viewProyecto(id) {
     + (S.isAdmin && p.status === 'review' ? `<div><button class="btn primary" data-act="activar" data-pid="${esc(p.id)}">Activar el control de este proyecto</button></div>` : '')
     + (S.isAdmin && p.status === 'active' ? `<div class="actions"><button class="btn" data-act="pausar" data-pid="${esc(p.id)}">Pausar control</button><button class="btn" data-act="reanalizar" data-pid="${esc(p.id)}">Pedir re-análisis</button></div>` : '')
     + (S.isAdmin && p.status === 'paused' ? `<div><button class="btn" data-act="activar" data-pid="${esc(p.id)}">Reanudar control</button></div>` : '')
-    + `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-act="tab" data-t="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div><div class="box">${body}</div>` + navMore('');
+    + `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-act="tab" data-t="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}${ayudaBtn('proyecto-' + tab, 'pestaña ' + (tabs.find((x) => x[0] === tab) || tabs[0])[1])}</div><div class="box">${body}</div>` + navMore('');
 }
 const invTable = (t, cols, rows) => `<h4 class="muted" style="margin:6px 0 0;font-size:12px;text-transform:uppercase;letter-spacing:.07em">${esc(t)}</h4><div class="tblw"><table><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c ?? '—')}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="muted">—</td></tr>`}</tbody></table></div>`;
 
@@ -730,14 +890,14 @@ function viewReglas() {
     <label>Proyecto<select id="nr-proj">${['*', ...ps.map((p) => p.id)].map((id) => `<option value="${esc(id)}" ${(S.drafts['nr-proj'] || S.filter || '*') === id ? 'selected' : ''}>${esc(id === '*' ? 'Todos los proyectos' : projName(id))}</option>`).join('')}</select></label>
     <label>Regla en lenguaje natural<input type="text" id="nr-text" placeholder="Ej.: si se ven más de 10 errores de login seguidos, escalar" value="${esc(S.drafts['nr-text'] || '')}"></label>
     <div><button class="btn primary" data-act="nueva-regla">Crear regla</button> <span class="muted">La rutina la traduce a un control en la próxima corrida y muestra cómo la entendió.</span></div></div>` : '';
-  return head('Reglas de control', 'Puntos de control definidos en lenguaje natural. Las propuestas nacen de respuestas a incidentes y las aprueba un Admin.') + form + `<div class="box">${rulesTable(reglas, false)}</div>` + navMore('reglas');
+  return head('Reglas de control', 'Puntos de control definidos en lenguaje natural. Las propuestas nacen de respuestas a incidentes y las aprueba un Admin.', '#inicio', 'reglas') + form + `<div class="box">${rulesTable(reglas, false)}</div>` + navMore('reglas');
 }
 
 function viewAjustes() {
   if (!S.isAdmin) return head('Ajustes', 'Solo los Admin pueden ver los ajustes.');
   const s = S.settings || {};
   const d = (k, v) => esc(S.drafts['aj-' + k] ?? v ?? '');
-  return head('Ajustes', 'Criterios globales que usa el triage en todos los proyectos.') + `<div class="box form">
+  return head('Ajustes', 'Criterios globales que usa el triage en todos los proyectos.', '#inicio', 'ajustes') + `<div class="box form">
     <label>Criterios de triage globales<textarea id="aj-crit" style="min-height:160px">${d('crit', s.triageCriteria)}</textarea></label>
     <label>Matriz de severidad<textarea id="aj-sev">${d('sev', s.severityMatrix)}</textarea></label>
     <label>Minutos máximos en Pending<input type="number" id="aj-pend" value="${d('pend', s.pendingMaxMinutes)}"></label>
@@ -755,9 +915,149 @@ function viewRegistrar() {
   const lista = det.length ? `<section class="box"><div class="sec-h" style="margin:0"><h2>Carpetas detectadas sin registrar</h2><span class="cnt">${det.length}</span></div>
     <div class="rows">${det.map((f) => `<div class="rowi" style="grid-template-columns:1fr auto"><span class="t"><b>${esc(f.name || f.folderPath)}</b><br><span class="muted mono">${esc(f.folderPath)}</span><span class="muted"> · ${esc((f.procesos || []).length)} proceso(s) · ${esc(f.jobs30d ?? 0)} jobs en 30 días</span></span>
       <span><button class="btn primary" data-act="registrar-detectada" data-folder="${esc(f.folderPath)}" data-name="${esc(f.name || '')}">Registrar</button></span></div>`).join('')}</div></section>` : '';
-  return head('Registrar proyecto', 'Un proyecto es una carpeta de Orchestrator. La rutina detecta sus procesos, librerías y documentación, y genera la memoria; después lo revisás y activás.')
-    + lista + `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar">Registrar y analizar</button>' })}</div>` + navMore('registrar');
+  return head('Registrar proyecto', 'Un proyecto es una carpeta de Orchestrator. La rutina detecta sus procesos, librerías y documentación, y genera la memoria; después lo revisás y activás.', '#inicio', 'registrar')
+    + lista + `<div class="box">${formProyectoHtml('nuevo', S.forms.nuevo, { boton: '<button class="btn primary" data-act="registrar" data-tip="registrar-analizar">Registrar y analizar</button>' })}</div>` + navMore('registrar');
 }
+
+// ---------- ayuda: vistas de ejemplo y tooltips ----------
+// Datos 100 % ficticios para dibujar las vistas reales de la app dentro de la ayuda (sin escribir en la base).
+const AV = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><circle cx="11" cy="11" r="11" fill="#7a8580"/></svg>');
+function ayudaDemo() {
+  const t = (min) => new Date(Date.now() - min * 60000).toISOString();
+  const yo = 'u_demo_vos', otra = 'u_demo_otra';
+  const inc = (id, x) => ({ id, status: 'open', firstSeenAt: t(300), lastSeenAt: t(12), occurrences: 1, recurrences: [{ runId: 'demo-r2' }], ...x });
+  const incidents = {
+    'demo-login': inc('demo-login', { projectId: 'facturacion', processId: 'performer', process: 'FAC_Performer', title: 'El Performer no puede iniciar sesión en el sistema contable', category: 'login', severity: 'P1', decision: 'escalate', occurrences: 7, recurrences: [{ runId: 'demo-r1' }, { runId: 'demo-r2' }],
+      library: { name: 'LIB_Contable', version: '2.2.0', activity: 'IniciarSesion' }, deploy: { version: '1.4.0' },
+      triage: { rationale: 'Todos los jobs de la última hora fallan en el login: el lote completo queda sin procesar.', confidence: 'alta', matchedRules: ['facturacion-login'], memoryRefs: ['history/demo-h2'] },
+      analysis: { status: 'done', summary: 'Desde hace 70 minutos el Performer falla al iniciar sesión en todos los jobs.',
+        hypotheses: [{ text: 'La credencial del robot venció o fue bloqueada', likelihood: 'alta', evidence: '12 errores de credenciales seguidos, desde la misma máquina.' }, { text: 'Cambió la pantalla de login', likelihood: 'baja', evidence: 'No hay errores de selector.' }],
+        suggestedActions: ['Verificar si el usuario del robot está bloqueado o con la contraseña vencida', 'Actualizar el asset de credenciales si corresponde'],
+        codeRefs: [{ file: 'Framework/InitAllApplications.xaml', line: 42, pkg: 'FAC_Performer 1.4.0', note: 'Login con el asset de credenciales' }],
+        docRefs: [{ file: 'SDD.docx', section: 'Manejo de excepciones', note: 'Login fallido: reintentar una vez y escalar' }],
+        source: { kind: 'package', package: 'FAC_Performer', version: '1.4.0' } },
+      evidence: { ultima: { logs: [{ fecha: t(13), nivel: 'Error', mensaje: 'Login failed: invalid credentials (usuario ***)' }, { fecha: t(12), nivel: 'Error', mensaje: 'Login failed: invalid credentials (usuario ***)' }], jobs: [{ key: 'a1b2c3d4e5', estado: 'Faulted', fin: t(12), maquina: 'ROBOT-01' }] } } }),
+    'demo-delegada': inc('demo-delegada', { projectId: 'facturacion', title: 'Selector del botón Guardar no encontrado en la pantalla de facturas', category: 'selector', severity: 'P2', decision: 'escalate', occurrences: 3, recurrences: [{}, {}], triage: { rationale: 'Error nuevo de UI en el paso de registro; afecta a 3 de 40 items.', confidence: 'media' }, analysis: { status: 'pending' } }),
+    'demo-abandonados': inc('demo-abandonados', { projectId: 'facturacion', title: 'Items abandonados en la cola de facturas', category: 'business', severity: 'P2', decision: 'escalate', reopenCount: 1, triage: { rationale: 'Reapareció un tema cerrado hace 10 días: 5 items quedaron abandonados.', confidence: 'media' } }),
+    'demo-aviso': inc('demo-aviso', { projectId: 'conciliacion', title: 'Un job tardó el doble que su promedio', category: 'scheduling', severity: 'P3', decision: 'notify', triage: { rationale: 'Duración 42 min contra 20 min de baseline; terminó bien.', confidence: 'alta' } }),
+    'demo-monitor': inc('demo-monitor', { projectId: 'conciliacion', title: 'Reintentos ocasionales al leer el extracto', category: 'application', severity: 'P4', decision: 'monitor', occurrences: 2, recurrences: [{}, {}], triage: { rationale: 'Dos reintentos que se resolvieron solos; se observa la tendencia.', confidence: 'alta' } }),
+    'demo-pospuesta': inc('demo-pospuesta', { projectId: 'conciliacion', title: 'Trigger deshabilitado en el proceso de reportes', category: 'configuration', severity: 'P3', decision: 'notify', triage: { rationale: 'El trigger diario está deshabilitado desde ayer.', confidence: 'alta' } }),
+  };
+  const proc = (name, version, libs) => ({ name, package: name, version, libraries: libs.map((l) => ({ name: l, version: '2.2.0' })) });
+  return {
+    db: {}, demo: true, me: yo, role: 'admin', isAdmin: true, canWrite: true, filter: null, stale: false, error: null,
+    loaded: { projects: true, incidents: true, work: true, runs: true },
+    names: { [yo]: { name: 'Vos', avatarUrl: AV }, [otra]: { name: 'Persona de ejemplo', avatarUrl: AV } },
+    projects: {
+      facturacion: { id: 'facturacion', name: 'Facturación', status: 'active', health: { level: 'critical' }, orchestrator: { folderPath: 'Produccion/Finanzas/Facturacion' },
+        processes: [{ id: 'dispatcher', label: 'Dispatcher', role: 'dispatcher', orchestratorProcess: 'FAC_Dispatcher' }, { id: 'performer', label: 'Performer', role: 'performer', orchestratorProcess: 'FAC_Performer' }],
+        triageCriteria: 'Los abandonados de los lunes antes de las 9 son esperados.', docs: { paths: [] },
+        inventory: { processes: [proc('FAC_Dispatcher', '1.4.0', []), proc('FAC_Performer', '1.4.0', ['LIB_Contable'])], queues: [{ name: 'FAC_Facturas', maxRetries: 1 }],
+          triggers: [{ name: 'FAC_Cada_hora', type: 'Time', enabled: true, process: 'FAC_Dispatcher' }, { name: 'FAC_Cola', type: 'Queue', enabled: true, process: 'FAC_Performer' }], assets: [{ name: 'FAC_Credenciales', type: 'Credential' }, { name: 'FAC_Config', type: 'Text' }] } },
+      conciliacion: { id: 'conciliacion', name: 'Conciliación', status: 'active', health: { level: 'warn' }, orchestrator: { folderPath: 'Produccion/Tesoreria' }, processes: [], inventory: { processes: [proc('TES_Conciliacion', '3.0.1', ['LIB_Contable'])] } },
+      nomina: { id: 'nomina', name: 'Nómina', status: 'review', orchestrator: { folderPath: 'Produccion/RRHH' }, processes: [] },
+    },
+    incidents,
+    work: { 'demo-delegada': { state: 'delegated', assignee: yo, updatedAt: t(30) }, 'demo-pospuesta': { state: 'snoozed', snoozeUntil: new Date(Date.now() + 2 * 86400000).toISOString(), updatedAt: t(60) } },
+    activity: Object.fromEntries(Object.keys(incidents).map((id) => [id, id === 'demo-login' ? [{ at: t(40), by: otra, text: 'comentó: lo estoy mirando con soporte' }] : []])),
+    rules: {
+      'facturacion-login': { id: 'facturacion-login', projectId: 'facturacion', text: 'Si se ven más de 10 errores de login seguidos, escalar', status: 'active', origin: 'manual', compileNote: 'Cuenta los errores de login seguidos; escala si son más de 10.' },
+      'facturacion-lunes': { id: 'facturacion-lunes', projectId: 'facturacion', text: 'Los items abandonados de los lunes antes de las 9 son normales', status: 'proposed', origin: 'learned' },
+      'todos-pending': { id: 'todos-pending', projectId: '*', text: 'Avisar si un job queda en Pending más de 30 minutos', status: 'pending_compile', origin: 'manual' },
+    },
+    runs: [
+      { id: 'demo-r2', startedAt: t(14), finishedAt: t(12), status: 'ok', trigger: 'scheduled', projects: [
+        { projectId: 'facturacion', window: { desde: t(74), hasta: t(14) }, signals: { jobs: 6, logsErrorFatal: 12, queueItemsFallidos: 0, queueItemsAbandonados: 5 },
+          checks: [{ nombre: 'Jobs fallidos', resultado: 'alerta', observado: '6 de 6' }, { nombre: 'Items abandonados', resultado: 'alerta', observado: 5 }, { nombre: 'Regla: errores de login seguidos', resultado: 'alerta', observado: 12 }, { nombre: 'Jobs en Pending', resultado: 'ok', observado: 0 }],
+          findings: [{ incidentId: 'demo-login', severity: 'P1', title: incidents['demo-login'].title, decision: 'escalate', recurrence: true, rationale: incidents['demo-login'].triage.rationale }, { incidentId: 'demo-abandonados', severity: 'P2', title: incidents['demo-abandonados'].title, decision: 'escalate', reopened: true, rationale: incidents['demo-abandonados'].triage.rationale }],
+          incidentsNew: [], incidentsUpdated: ['demo-login', 'demo-abandonados'] },
+        { projectId: 'conciliacion', window: { desde: t(74), hasta: t(14) }, checks: [{ nombre: 'Duración contra baseline', resultado: 'alerta', observado: '42 min' }, { nombre: 'Trigger diario', resultado: 'omitido', observado: null }], findings: [], incidentsNew: ['demo-aviso'], incidentsUpdated: [] }] },
+      { id: 'demo-r1', startedAt: t(74), finishedAt: t(72), status: 'partial', trigger: 'scheduled', projects: [{ projectId: 'facturacion', checks: [], findings: [], incidentsNew: ['demo-login'], incidentsUpdated: [] }] },
+    ],
+    memory: { facturacion: { process: '## Qué hace\nRegistra en el sistema contable las facturas de proveedores que llegan por la cola **FAC_Facturas**.\n\n## Disparadores\n- Dispatcher: cada hora.\n- Performer: trigger de cola.\n\n## Excepciones de negocio esperadas\n| BE001 | Factura duplicada |\n| BE002 | Proveedor inexistente |',
+      productionSummary: '- Los lunes antes de las 9 hay items abandonados por el mantenimiento del sistema contable.' } },
+    history: { facturacion: [
+      { type: 'expected_behavior', at: t(4000), summary: 'Items abandonados del lunes: mantenimiento programado. Es normal.', by: otra },
+      { type: 'deploy_detected', at: t(6000), summary: 'FAC_Performer 1.3.2 → 1.4.0' },
+      { type: 'onboarding', at: t(9000), summary: 'Alta del proyecto: 2 procesos, 1 cola, 2 assets.', by: 'rutina' }] },
+    settings: { intervalMinutes: 60, triageCriteria: 'Escalar todo lo que deje un lote sin procesar.', severityMatrix: 'P1: proceso crítico detenido o SLA incumplido hoy.\nP2: degradado con riesgo de SLA.\nP3: errores aislados.\nP4: informativo.', pendingMaxMinutes: 30, retention: { runsDays: 60, closedIncidentsDays: 180 } },
+    discovery: { folders: [{ folderPath: 'Produccion/Tesoreria/Pagos', name: 'Pagos', procesos: ['PAG_Dispatcher', 'PAG_Performer'], jobs30d: 412 }] },
+    libraries: {}, open: {}, panel: {}, drafts: {}, sel: {}, forms: {}, adv: {}, peopleHits: {}, projTab: 'memoria',
+  };
+}
+// Dibuja fn() con el estado de ejemplo y restaura el estado real (todo es sincrónico).
+function conDemo(fn, ajuste) {
+  const demo = ayudaDemo(); if (ajuste) ajuste(demo);
+  const antes = {}; for (const k of Object.keys(demo)) antes[k] = S[k];
+  Object.assign(S, demo);
+  try { return fn(); } finally { for (const k of Object.keys(demo)) S[k] = antes[k]; }
+}
+const sinNav = (h) => h.replace(/<nav class="more"[\s\S]*?<\/nav>/g, '');
+function vistaDemo(n, v) {
+  try {
+    if (n === 'barra') return conDemo(() => { const t = topHtml(); return `<div class="row1"><span class="brand">Torre de Control</span><span class="role">${esc(t.role)}</span><span class="help">?</span><div class="pulse">${t.pulse}</div></div><div class="chips">${t.chips}</div>`; });
+    if (n === 'tarjeta') {
+      const id = v === 'aviso' ? 'demo-aviso' : 'demo-login';
+      return conDemo(() => cardHtml(S.incidents[id], v === 'aviso'), (d) => {
+        if (v === 'detalle') d.open[id] = true;
+        if (['delegar', 'posponer', 'descartar', 'responder', 'comentar'].includes(v)) d.panel[id] = v;
+        if (v === 'delegar') d.peopleHits[id] = [{ id: 'u_demo_otra', name: 'Persona de ejemplo', avatarUrl: AV }];
+        if (v === 'descartar') d.sel[id] = { motivo: 'expected' };
+        if (v === 'responder') d.sel[id] = { decision: 'fix_required' };
+      });
+    }
+    const vistas = { bandeja: viewInicio, corridas: viewCorridas, corrida: () => viewCorrida('demo-r2'), 'no-reportados': viewNoReportados, proyectos: viewProyectos,
+      proyecto: () => viewProyecto('facturacion'), reglas: viewReglas, ajustes: viewAjustes, registrar: viewRegistrar };
+    if (!vistas[n]) return `<span class="muted">Vista ${esc(n)} no disponible.</span>`;
+    return sinNav(conDemo(vistas[n], (d) => { if (n === 'proyecto' && v) d.projTab = v; }));
+  } catch (e) { return `<span class="muted">No se pudo dibujar el ejemplo (${esc(e.message)}).</span>`; }
+}
+function viewAyuda() {
+  const tpl = document.getElementById('ayuda-tpl');
+  const cuerpo = tpl ? tpl.innerHTML.replace(/<!--vista:([\w-]+):([\w-]*)-->/g, (_, n, v) => vistaDemo(n, v)) : '<div class="banner info">La ayuda no está incluida en esta publicación del tablero.</div>';
+  return head('Ayuda', 'Qué es la Torre de Control, glosario y cómo se usa cada pantalla.') + `<div class="ayuda">${cuerpo}</div>` + navMore('ayuda');
+}
+
+// Tooltip: explicación breve al pasar el mouse (o al enfocar con teclado), con link a la ayuda.
+const TIP = { el: null, target: null, t: null };
+function tipDe(el) {
+  const d = el.dataset;
+  if (d.tip) return d.tip;
+  if (!d.act || SIN_TIP.includes(d.act)) return null;
+  if (d.act === 'panel') return d.p;
+  if (d.act === 'regla') return 'regla-' + d.s;
+  if (d.act === 'tab') return 'proyecto-' + d.t;
+  return TIP_ALIAS[d.act] || d.act;
+}
+function mostrarTip(el) {
+  const id = tipDe(el); const x = id && AYUDA_TIPS[id];
+  if (!x) return;
+  const tip = $('#tip');
+  tip.innerHTML = `<b>${esc(x.titulo)}</b>${esc(x.breve)}<br><a href="#ayuda-${esc(id)}">Más detalle en la ayuda →</a>`;
+  tip.hidden = false; TIP.target = el; el.setAttribute('aria-describedby', 'tip');
+  const r = el.getBoundingClientRect(); const w = tip.offsetWidth; const h = tip.offsetHeight;
+  let top = r.bottom + 6; if (top + h > innerHeight - 8) top = Math.max(8, r.top - h - 6);
+  tip.style.top = `${top}px`; tip.style.left = `${Math.max(8, Math.min(r.left, innerWidth - w - 8))}px`;
+}
+function ocultarTip(soloSiHuerfano) {
+  if (!TIP.target || (soloSiHuerfano && TIP.target.isConnected)) return;
+  clearTimeout(TIP.t); $('#tip').hidden = true; TIP.target.removeAttribute('aria-describedby'); TIP.target = null;
+}
+const candidatoTip = (e) => { const el = e.target.closest && e.target.closest('[data-tip],[data-act]'); return el && !el.closest('[inert]') && el.tagName !== 'INPUT' && tipDe(el) ? el : null; };
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType === 'touch') return;
+  if (e.target.closest && e.target.closest('#tip')) return clearTimeout(TIP.t);
+  const el = candidatoTip(e);
+  clearTimeout(TIP.t);
+  if (!el) { if (TIP.target) TIP.t = setTimeout(() => ocultarTip(), 250); return; }
+  if (el === TIP.target) return;
+  TIP.t = setTimeout(() => { ocultarTip(); mostrarTip(el); }, TIP.target ? 0 : 450);
+});
+document.addEventListener('focusin', (e) => { const el = candidatoTip(e); if (el && el.matches(':focus-visible')) { clearTimeout(TIP.t); ocultarTip(); mostrarTip(el); } });
+document.addEventListener('focusout', (e) => { if (e.target === TIP.target && !(e.relatedTarget && e.relatedTarget.closest('#tip'))) TIP.t = setTimeout(() => ocultarTip(), 150); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ocultarTip(); });
+document.addEventListener('pointerdown', (e) => { if (!(e.target.closest && e.target.closest('#tip'))) { clearTimeout(TIP.t); ocultarTip(); } }, true);
+window.addEventListener('scroll', () => ocultarTip(), { passive: true });
 
 // ---------- eventos ----------
 document.addEventListener('input', (e) => {
@@ -894,10 +1194,11 @@ document.addEventListener('click', async (e) => {
   } catch (err) { toast(err && err.code === 'invalid_argument' ? 'No tenés permiso para esta acción' : 'No se pudo guardar. Probá de nuevo.'); }
   schedule();
 });
-window.addEventListener('hashchange', () => { window.scrollTo(0, 0); schedule(); });
+window.addEventListener('hashchange', () => { window.scrollTo(0, 0); S.irAyuda = true; schedule(); });
 
 // ---------- arranque ----------
 async function start() {
+  S.irAyuda = true;
   render();
   const cl = window.claude;
   const [db, user] = await Promise.all([cl && cl.use ? cl.use('db') : null, cl && cl.use ? cl.use('user') : null]);

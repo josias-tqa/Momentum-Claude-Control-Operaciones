@@ -33,6 +33,7 @@ producción.
 | Scripts deterministas | `scripts/` |
 | Bloqueo de solo lectura | `.claude/hooks/guard-solo-lectura.mjs` |
 | Tablero | `dashboard/index.html` + `dashboard/capabilities.json` |
+| Ayuda del tablero | `dashboard/ayuda/*.mdx`, compilada dentro de `dashboard/index.html` con `npm run build:ayuda` |
 | Modelo de datos | `docs/modelo-de-datos.md`, `schemas/` |
 | Entorno y rutina | `docs/configuracion-cloud.md` |
 | Guía para el equipo de Momentum | `docs/guia-operador.md` |
@@ -41,5 +42,6 @@ producción.
 
 ```bash
 npm test          # scripts: redacción de PII, checks, reglas, dedupe, lotes, hook de solo lectura
-npm run test:ui   # tablero en Chromium con datos sintéticos (roles, acciones, filtros, teléfono)
+npm run test:ui   # tablero en Chromium con datos sintéticos (roles, acciones, filtros, ayuda, teléfono)
+npm install && npm run build:ayuda   # regenera la ayuda después de editar dashboard/ayuda/*.mdx
 ```

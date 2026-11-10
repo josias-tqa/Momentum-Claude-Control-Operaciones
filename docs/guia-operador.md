@@ -1,5 +1,7 @@
 # Guía del tablero para el equipo de Grupo Momentum
 
+> La ayuda completa está dentro del tablero: **Ver más → Ayuda**, o el botón **?** de cada pantalla. Su fuente es `dashboard/ayuda/*.mdx`. Esta guía es un resumen.
+
 ## Roles
 
 Los roles se asignan desde el menú **Compartir** del tablero.

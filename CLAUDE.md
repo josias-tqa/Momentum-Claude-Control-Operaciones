@@ -29,7 +29,11 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
    - Esos casos también respetan los esquemas.
 5. **Las respuestas humanas mandan.** Un incidente descartado, pospuesto o respondido por un humano no se vuelve a mostrar como nuevo.
    - Su recurrencia se acumula en la misma tarjeta.
-6. **Idioma.** Todo el contenido (memorias, análisis, porqués del triage, títulos) se escribe en español.
+6. **Todo cambio en el tablero actualiza su ayuda.** La ayuda vive en `dashboard/ayuda/*.mdx` y se compila dentro de `dashboard/index.html`.
+   - Una pantalla, pestaña, botón o etiqueta nueva o cambiada se explica en su `.mdx`: sección, `Accion` o `Termino`. El `breve` es el tooltip.
+   - Después: `npm run build:ayuda` y `npm test`. `tests/ayuda.test.mjs` falla si falta una sección o un tooltip, o si el bloque generado quedó viejo.
+   - Una ruta nueva también va en `AYUDA_RUTA`; un control interno sin tooltip, en `SIN_TIP`.
+7. **Idioma.** Todo el contenido (memorias, análisis, porqués del triage, títulos) se escribe en español.
    - Los identificadores técnicos y los nombres de campos quedan en inglés.
 
 ## Mapa
@@ -46,6 +50,7 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 | Modelo de datos del tablero | `docs/modelo-de-datos.md` y `schemas/` |
 | Scripts deterministas (colecta, evaluación, consolidación, lotes) | `scripts/` (tests: `npm test`) |
 | Tablero (fuente del artifact) | `dashboard/index.html` |
+| Ayuda del tablero (introducción, glosario, pantallas; MDX) | `dashboard/ayuda/*.mdx` → `npm run build:ayuda` |
 
 ## Estado de trabajo
 

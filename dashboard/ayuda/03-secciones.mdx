@@ -1,0 +1,358 @@
+{/* Ayuda del tablero · Pantallas y acciones. Cada Seccion o Accion con "breve" es el tooltip de su botón en la app.
+    Todo cambio en el tablero se refleja acá (lo verifica tests/ayuda.test.mjs). Después de editar: npm run build:ayuda */}
+
+<Seccion id="pantallas" titulo="Pantallas y acciones">
+
+Cada pantalla tiene un botón **?** que trae a su sección de esta ayuda. Al pasar el mouse por un botón o una etiqueta aparece una explicación breve, con un link a más detalle. Las vistas de esta página son las de la app, dibujadas con datos de ejemplo.
+
+</Seccion>
+
+<Seccion id="barra" nivel="2" titulo="Barra superior">
+
+Siempre visible. De izquierda a derecha: el nombre del tablero, que vuelve a la Bandeja; tu [rol](#ayuda-roles); el botón **?**, que abre la ayuda de la pantalla en la que estás, y el [pulso de la rutina](#ayuda-pulso).
+
+Debajo hay un chip por proyecto. El punto de color resume su salud: verde, todo bien; ámbar, hay avisos; rojo, hay problemas P1 o P2; gris, pausado o sin datos. El número es la cantidad de tarjetas abiertas en la Bandeja.
+
+<Vista nombre="barra" />
+
+<Accion id="filtro" nombre="Chip de proyecto" breve="Filtra todo el tablero por ese proyecto. Todos quita el filtro.">
+
+El filtro se aplica a la Bandeja, Corridas, No reportados y Reglas, y se recuerda la próxima vez que abras el tablero en este navegador.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="bandeja" nivel="2" titulo="Bandeja" breve="La pantalla principal: lo que necesita a una persona, ordenado por severidad.">
+
+Es la pantalla de trabajo. Muestra solo las tarjetas abiertas cuya decisión es escalar o avisar, y que nadie respondió, descartó o pospuso. Están ordenadas por severidad, primero las escaladas y después las más recientes. Si no hay nada pendiente, dice **Todo en orden**.
+
+Si la última corrida tuvo errores de colecta, arriba aparece un aviso rojo con un link a esa corrida.
+
+Al pie, **Ver más** lleva a las demás pantallas.
+
+<Vista nombre="bandeja" nota="vista de Admin" />
+
+</Seccion>
+
+<Seccion id="para-revisar" nivel="3" titulo="Para revisar" breve="Solo Admin: reglas propuestas para aprobar y proyectos que terminaron su análisis.">
+
+Solo la ven los Admin. Junta las tareas de configuración pendientes: reglas propuestas, proyectos **En revisión** que esperan ser activados y proyectos **Con error**. Cada ítem lleva a donde se resuelve.
+
+</Seccion>
+
+<Seccion id="para-vos" nivel="3" titulo="Para vos" breve="Tarjetas que alguien te delegó.">
+
+Las tarjetas que alguien te [delegó](#ayuda-delegar). Aparecen primero y salen de esta lista cuando las respondés, descartás o posponés.
+
+</Seccion>
+
+<Seccion id="requiere-accion" nivel="3" titulo="Requiere acción" breve="Tarjetas escaladas: el triage decidió que necesitan a una persona.">
+
+Las tarjetas con decisión **Escalado**. En general son P1 o P2, o algo que la rutina nunca había visto. Cada una trae su análisis previo en el detalle.
+
+</Seccion>
+
+<Seccion id="avisos" nivel="3" titulo="Avisos" breve="Cosas para saber que no bloquean, en formato compacto.">
+
+Las tarjetas con decisión **Aviso**, en general P3 o P4 nuevos. Se muestran compactas, solo con Descartar, Posponer y Responder. El porqué aparece al abrir el detalle.
+
+<Vista nombre="tarjeta" variante="aviso" />
+
+</Seccion>
+
+<Seccion id="tarjeta" nivel="2" titulo="La tarjeta" breve="Un problema por tema, con su severidad, su porqué y las acciones para trabajarlo.">
+
+Cada tarjeta es un [tema](#ayuda-tema). Si el problema vuelve a ocurrir no se crea otra: la misma suma ocurrencias.
+
+- **Ícono y color:** la [categoría](#ayuda-categoria) y la [severidad](#ayuda-severidad). El borde izquierdo tiene el color de la severidad.
+- **Etiquetas:** el proyecto, cuando no hay filtro, y el proceso si el proyecto tiene varios; la [recurrencia](#ayuda-recurrencia); [Reapareció](#ayuda-reaparecio); la [librería](#ayuda-libreria) donde ocurrió el error; [Nueva versión](#ayuda-nueva-version); **Aviso**, y a quién está delegada.
+- **Texto gris:** el porqué del triage, en dos líneas.
+- **Acciones:** abajo. Un Lector no las ve.
+
+<Vista nombre="tarjeta" />
+
+</Seccion>
+
+<Seccion id="detalle" nivel="3" titulo="Ver detalle" breve="Abre el porqué del triage, el análisis previo, la evidencia y la actividad de la tarjeta.">
+
+**Ver detalle** despliega todo lo que sabe la rutina sobre el tema:
+
+- **Librería:** si el error ocurrió en una librería, su versión, la actividad y qué otros proyectos la usan.
+- **Triage:** la decisión, su confianza, el porqué, las reglas y memorias en las que se basó, desde cuándo se ve y en cuántas corridas.
+- **Análisis previo:** resumen, hipótesis ordenadas por probabilidad, acciones sugeridas, archivos de código y secciones de documentación relacionados, y qué cambió en el último deploy. Si dice Pendiente, lo completa la próxima corrida.
+- **Evidencia (redactada):** los últimos logs, queue items y jobs, sin datos personales.
+- **Actividad:** quién hizo qué con la tarjeta y los comentarios del equipo.
+
+<Vista nombre="tarjeta" variante="detalle" />
+
+</Seccion>
+
+<Seccion id="acciones" nivel="2" titulo="Acciones sobre una tarjeta">
+
+Las usan los Operadores y los Admin. Cada acción queda en la actividad de la tarjeta. Las respuestas y los descartes además le enseñan a la rutina, que los procesa en la próxima corrida.
+
+<Accion id="delegar" nombre="Delegar" breve="Asigna la revisión a una persona: la tarjeta le aparece en Para vos.">
+
+Buscá a la persona por nombre y elegila. La tarjeta muestra a quién está delegada y sigue en la Bandeja de todos, pero a esa persona le aparece primero, en **Para vos**.
+
+<Vista nombre="tarjeta" variante="delegar" />
+
+</Accion>
+
+<Accion id="posponer" nombre="Posponer" breve="Oculta la tarjeta hasta una fecha. Vuelve antes si el problema empeora.">
+
+Elegí 1 día, 3 días, 1 semana o una fecha. Mientras tanto la tarjeta pasa a [No reportados](#ayuda-no-reportados) como **Pospuesto hasta…**.
+
+- Si la severidad sube antes de la fecha, la tarjeta vuelve a la Bandeja sola.
+- Al vencer, vuelve a mostrarse si el problema sigue.
+- Posponer no le enseña nada a la rutina. Si el problema es esperado, conviene **Descartar** o **Responder**.
+
+<Vista nombre="tarjeta" variante="posponer" />
+
+</Accion>
+
+<Accion id="descartar" nombre="Descartar" breve="Saca la tarjeta de la Bandeja con un motivo. La rutina lo aprende y puede proponer una regla.">
+
+Elegí un motivo y, si querés, agregá una nota que explique por qué:
+
+- **Es esperado:** pasa siempre y no es un problema, por ejemplo una ventana de mantenimiento.
+- **Falso positivo:** la detección se equivocó.
+- **Dato de negocio:** es una excepción de negocio esperable, no una falla del robot.
+- **Sistema externo:** el problema está en un sistema que no depende del equipo.
+
+La rutina anota el motivo en la [memoria de producción](#ayuda-memoria-de-produccion) y puede proponer una [regla](#ayuda-regla) para no volver a avisar. Si el tema se repite, suma ocurrencias en la misma tarjeta, pero no vuelve a la Bandeja como nuevo.
+
+<Vista nombre="tarjeta" variante="descartar" />
+
+</Accion>
+
+<Accion id="responder" nombre="Responder" breve="Registra qué se encontró o qué se va a hacer. Queda en la memoria de producción.">
+
+Elegí una decisión y agregá notas:
+
+- **Requiere fix:** hay que corregir el robot. Podés cargar el ticket o la referencia del fix.
+- **Comportamiento esperado**, **Problema de datos**, **Sistema externo** o **Falso positivo / ajustar regla:** la causa es otra; la rutina lo aprende.
+- **Volver a controlar:** elegí una fecha. La tarjeta se oculta hasta ese día y la rutina hace un [re-control](#ayuda-re-control).
+- **Derivar a desarrollo:** lo toma el equipo de desarrollo.
+
+La tarjeta sale de la Bandeja y la respuesta queda en la memoria de producción del proyecto.
+
+<Vista nombre="tarjeta" variante="responder" />
+
+</Accion>
+
+<Accion id="comentar" nombre="Comentar" breve="Deja una nota para el equipo en la actividad de la tarjeta. No cambia su estado.">
+
+El comentario aparece en la sección **Actividad** del detalle. No saca la tarjeta de la Bandeja ni le enseña nada a la rutina. Con Ctrl o Cmd + Enter se envía sin usar el mouse.
+
+<Vista nombre="tarjeta" variante="comentar" />
+
+</Accion>
+
+<Accion id="reanalizar-inc" nombre="Volver a analizar" breve="Pide a la próxima corrida un análisis previo nuevo de esta tarjeta.">
+
+Está al final del detalle. Sirve cuando el análisis quedó viejo, por ejemplo después de un cambio en el sistema o en la documentación. El nuevo análisis reemplaza al anterior en la próxima corrida.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="corridas" nivel="2" titulo="Corridas" breve="Cada ejecución de la rutina, con lo que revisó y lo que encontró.">
+
+La lista de las últimas 50 corridas. El punto indica cómo terminó: verde, completa; ámbar, parcial; rojo, con errores. A la derecha, cuántos temas nuevos, recurrentes y escalados encontró.
+
+<Vista nombre="corridas" />
+
+</Seccion>
+
+<Seccion id="corrida-detalle" nivel="3" titulo="Detalle de una corrida" breve="Qué revisó la rutina en cada proyecto y qué decidió con cada hallazgo.">
+
+Por cada proyecto muestra la ventana de tiempo revisada, un resumen de señales, la tabla de [puntos de control](#ayuda-punto-de-control) con su valor observado y los **Hallazgos y triage**: cada hallazgo con su severidad, su decisión, si es nuevo, recurrente o reabierto, y su porqué. Un clic en un hallazgo abre su tarjeta.
+
+Si hubo errores al leer Orchestrator, aparecen al final.
+
+<Vista nombre="corrida" />
+
+</Seccion>
+
+<Seccion id="no-reportados" nivel="2" titulo="No reportados" breve="Lo que no está en la Bandeja: en observación, conocido, pospuesto, descartado o respondido.">
+
+Todo lo abierto que no aparece en la Bandeja, con el motivo:
+
+- **En observación** o **Conocido:** el triage decidió no mostrarlo.
+- **Pospuesto hasta…**, **Descartado** o **Respondido:** el equipo ya lo trabajó.
+
+Sirve para controlar el criterio de la rutina. Si algo de acá debería estar en la Bandeja, abrilo y respondé **Falso positivo / ajustar regla**, o corregí los [criterios](#ayuda-criterios).
+
+<Vista nombre="no-reportados" />
+
+</Seccion>
+
+<Seccion id="proyectos" nivel="2" titulo="Proyectos" breve="Todos los proyectos controlados, con su salud y su estado.">
+
+La lista de proyectos con su carpeta de Orchestrator, su salud y su [estado](#ayuda-estado-proyecto). Un clic abre la página del proyecto.
+
+<Vista nombre="proyectos" />
+
+</Seccion>
+
+<Seccion id="pagina-proyecto" nivel="2" titulo="Página de un proyecto" breve="Procesos, memoria, reglas, inventario y configuración de un proyecto.">
+
+Arriba está la carpeta, la cantidad de procesos y el estado. Debajo, cada proceso con su rol, su nombre en Orchestrator, el paquete y la versión desplegada, y sus librerías. Después vienen las acciones de Admin y cinco pestañas.
+
+<Vista nombre="proyecto" variante="memoria" />
+
+<Accion id="activar" nombre="Activar el control" solo="Admin" breve="Empieza a controlar el proyecto en cada corrida. También reanuda un control pausado.">
+
+Aparece cuando el proyecto terminó su [alta](#ayuda-alta) y está **En revisión**: antes de activarlo, revisá la memoria de proceso, las reglas propuestas y el inventario. Si el proyecto está **Pausado**, el botón dice **Reanudar control**.
+
+</Accion>
+
+<Accion id="pausar" nombre="Pausar control" solo="Admin" breve="Deja de controlar el proyecto hasta que se reanude. No borra nada.">
+
+Útil durante un mantenimiento largo o mientras se rehace un proceso. Las tarjetas abiertas quedan como están y el chip del proyecto se ve gris.
+
+</Accion>
+
+<Accion id="reanalizar" nombre="Pedir re-análisis" solo="Admin" breve="Pide a la próxima corrida que regenere la memoria de proceso, el inventario y las reglas propuestas.">
+
+Conviene después de un cambio grande en el proceso o en su documentación. El proyecto sigue activo mientras tanto.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="proyecto-memoria" nivel="3" titulo="Pestaña Memoria de proceso" breve="Qué hace el proceso, según el alta: el contexto que usa la rutina.">
+
+La [memoria de proceso](#ayuda-memoria-de-proceso): qué hace el proceso, sus pasos, sistemas, colas y excepciones conocidas. La genera el alta a partir del código y la documentación.
+
+</Seccion>
+
+<Seccion id="proyecto-produccion" nivel="3" titulo="Pestaña Memoria de producción" breve="Lo que pasó en producción: respuestas del equipo, deploys y re-controles.">
+
+La [memoria de producción](#ayuda-memoria-de-produccion): un resumen arriba y debajo el historial, del más nuevo al más viejo, con quién respondió y el ticket si lo hay.
+
+<Vista nombre="proyecto" variante="produccion" />
+
+</Seccion>
+
+<Seccion id="proyecto-reglas" nivel="3" titulo="Pestaña Reglas" breve="Las reglas de este proyecto y su estado.">
+
+Las reglas del proyecto, con las mismas acciones que la pantalla [Reglas](#ayuda-reglas).
+
+</Seccion>
+
+<Seccion id="proyecto-inventario" nivel="3" titulo="Pestaña Inventario" breve="Procesos, colas, triggers y assets de la carpeta (de los assets, solo el nombre).">
+
+El [inventario](#ayuda-inventario) de la carpeta: procesos con su versión y si son parte del proyecto, colas con sus reintentos, triggers y assets. De los assets se muestra solo el nombre y el tipo.
+
+<Vista nombre="proyecto" variante="inventario" />
+
+</Seccion>
+
+<Seccion id="proyecto-config" nivel="3" titulo="Pestaña Configuración" breve="Nombre, carpeta, procesos, documentación y criterios del proyecto. Solo Admin puede editarla.">
+
+Un Lector o un Operador ven los criterios de triage y la documentación del proyecto. Un Admin puede editar:
+
+- el nombre y la carpeta de Orchestrator;
+- en **Opciones avanzadas**: controlar solo algunos procesos, el repo de Bitbucket de respaldo de cada proceso, la documentación adicional y los criterios de triage del proyecto.
+
+**Editar configuración**, debajo de la lista de procesos, abre esta pestaña.
+
+<Vista nombre="proyecto" variante="config" />
+
+<Accion id="guardar-proyecto" nombre="Guardar y re-analizar" solo="Admin" breve="Guarda la configuración. Guardar y re-analizar además pide a la próxima corrida que regenere memoria e inventario.">
+
+Si cambiaste repos o procesos, conviene re-analizar. **Solo guardar** guarda sin pedir el análisis. Si el proyecto estaba activo, sigue activo.
+
+</Accion>
+
+<Accion id="descartar-cambios" nombre="Descartar cambios" solo="Admin" breve="Vuelve el formulario a la configuración guardada.">
+
+Deshace lo que editaste y no guardaste.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="reglas" nivel="2" titulo="Reglas" breve="Los puntos de control escritos en lenguaje natural, de todos los proyectos.">
+
+Las [reglas](#ayuda-regla) de todos los proyectos, primero las propuestas. Cada una muestra su estado y de dónde salió: escrita a mano, del alta o aprendida de un incidente.
+
+- **Por compilar:** la rutina la traduce a un control en la próxima corrida.
+- **Propuesta:** la rutina la sugirió; un Admin la aprueba o la rechaza.
+- **Activa**, **Desactivada** o **Rechazada.**
+
+Si la rutina no entendió una regla, lo dice al lado. Reescribila con más detalle.
+
+<Vista nombre="reglas" nota="vista de Admin" />
+
+<Accion id="nueva-regla" nombre="Crear regla" solo="Admin" breve="Agrega una regla escrita en lenguaje natural. Se compila en la próxima corrida.">
+
+Elegí el proyecto, o Todos los proyectos, y escribí la regla como se la dirías a una persona: qué mirar, el umbral y qué hacer. Por ejemplo: si se ven más de 10 errores de login seguidos, escalar.
+
+</Accion>
+
+<Accion id="regla-active" nombre="Aprobar o Activar" solo="Admin" breve="La regla pasa a controlarse en cada corrida.">
+
+**Aprobar** acepta una regla propuesta. **Activar** vuelve a encender una regla desactivada.
+
+</Accion>
+
+<Accion id="regla-rejected" nombre="Rechazar" solo="Admin" breve="Descarta una regla propuesta. No se controla.">
+
+La regla queda como Rechazada, para que la rutina no la vuelva a proponer igual.
+
+</Accion>
+
+<Accion id="regla-disabled" nombre="Desactivar" solo="Admin" breve="Deja de controlar una regla activa, sin borrarla.">
+
+Se puede volver a activar en cualquier momento.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="registrar" nivel="2" titulo="Registrar proyecto" breve="Solo Admin: suma una carpeta de Orchestrator al control.">
+
+Un [proyecto](#ayuda-proyecto) es una carpeta de Orchestrator. La rutina detecta sola sus procesos, sus librerías y su documentación a partir de los paquetes publicados, en la versión que está en producción.
+
+1. Registrá la carpeta desde la lista de detectadas o con el formulario.
+2. La próxima corrida hace el [alta](#ayuda-alta).
+3. Revisá el proyecto y tocá **Activar el control de este proyecto**.
+
+Los procesos que se agreguen después a la carpeta se suman solos.
+
+<Vista nombre="registrar" />
+
+<Accion id="registrar-detectada" nombre="Registrar" solo="Admin" breve="Registra una carpeta que la rutina detectó en Orchestrator y pide su análisis.">
+
+La lista **Carpetas detectadas sin registrar** muestra las carpetas que ve la rutina y que todavía no son proyectos, con sus procesos y su actividad de los últimos 30 días.
+
+</Accion>
+
+<Accion id="registrar-analizar" nombre="Registrar y analizar" solo="Admin" breve="Crea el proyecto con el nombre y la carpeta indicados y pide su análisis.">
+
+Alcanza con el nombre y la carpeta. Las **Opciones avanzadas** son las mismas que en la [Configuración](#ayuda-proyecto-config) y normalmente no hacen falta.
+
+</Accion>
+
+</Seccion>
+
+<Seccion id="ajustes" nivel="2" titulo="Ajustes" breve="Solo Admin: criterios globales del triage, severidad y retención.">
+
+- **Criterios de triage globales:** se aplican a todos los proyectos, junto con los de cada uno.
+- **Matriz de severidad:** qué es P1, P2, P3 y P4.
+- **Minutos máximos en Pending:** desde cuándo un job que espera se considera un problema.
+- **Retención:** cuántos días se guardan las corridas y los incidentes cerrados.
+
+<Vista nombre="ajustes" />
+
+<Accion id="guardar-ajustes" nombre="Guardar ajustes" solo="Admin" breve="Guarda los ajustes. Se usan desde la próxima corrida.">
+
+Los cambios en los criterios no reclasifican lo que ya está en el tablero: se aplican a los hallazgos de las próximas corridas.
+
+</Accion>
+
+</Seccion>

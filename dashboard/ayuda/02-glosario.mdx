@@ -1,0 +1,67 @@
+{/* Ayuda del tablero · Glosario. Cada Termino es también el tooltip de su etiqueta en la app. Después de editar: npm run build:ayuda */}
+
+<Seccion id="glosario" titulo="Glosario">
+
+Los términos que aparecen en el tablero, en orden alfabético.
+
+<div className="ay-glos">
+
+<Termino id="alta" nombre="Alta">El primer análisis de un proyecto recién registrado. La rutina descubre sus procesos, colas, triggers y librerías, calcula el baseline y genera la memoria de proceso y las reglas propuestas. Después un Admin lo revisa y lo activa.</Termino>
+
+<Termino id="analisis-previo" nombre="Análisis previo">Lo que la rutina investiga antes de escalar una tarjeta: hipótesis con su probabilidad, acciones sugeridas, el código y la documentación relacionados, y qué cambió en el último deploy. Se lee en el detalle de la tarjeta.</Termino>
+
+<Termino id="baseline" nombre="Baseline">El comportamiento normal de un proyecto en los últimos 30 días: cuántos jobs corre, cuánto tardan y cuántos errores tiene. Sirve para distinguir un problema nuevo de lo habitual.</Termino>
+
+<Termino id="categoria" nombre="Categoría">El tipo de problema, con su ícono: login o credenciales, selector o UI, aplicación caída, infraestructura, configuración, programación, negocio, sistema, falla silenciosa, regresión, deploy o monitoreo.</Termino>
+
+<Termino id="corrida" nombre="Corrida">Una ejecución de la rutina. Registra qué ventana de tiempo revisó en cada proyecto, cada punto de control con su valor observado y los hallazgos con su triage.</Termino>
+
+<Termino id="criterios" nombre="Criterios de triage">Instrucciones en lenguaje natural que guían la clasificación. Hay criterios globales, en Ajustes, y criterios propios de cada proyecto, en su Configuración.</Termino>
+
+<Termino id="decision" nombre="Decisión">Qué hace el triage con un hallazgo. Escalado: necesita a una persona y va a Requiere acción. Aviso: conviene verlo, pero no bloquea. En observación: se sigue la tendencia sin mostrarlo. Conocido: la memoria o una regla dicen que es esperado.</Termino>
+
+<Termino id="estado-proyecto" nombre="Estado del proyecto">Esperando análisis, Analizando, En revisión, Activo, Pausado o Con error. Solo los proyectos activos se controlan en cada corrida.</Termino>
+
+<Termino id="evidencia" nombre="Evidencia (redactada)">Los logs, queue items, jobs y valores de reglas que respaldan una tarjeta, después de quitarles los datos personales. Las referencias de los casos se muestran como un código corto, nunca el dato original.</Termino>
+
+<Termino id="incidente" nombre="Incidente o tarjeta">Un problema detectado, con toda su historia: cuándo se vio por primera y por última vez, cuántas veces ocurrió, su triage, su análisis y la actividad del equipo.</Termino>
+
+<Termino id="inventario" nombre="Inventario">Lo que tiene la carpeta de Orchestrator de un proyecto: procesos con su versión, colas, triggers y assets. De los assets se guarda solo el nombre y el tipo, nunca el valor.</Termino>
+
+<Termino id="libreria" nombre="Librería">La etiqueta con el nombre de una librería indica que el error ocurrió dentro de una actividad de esa librería. El detalle dice qué otros proyectos la usan y si tienen tarjetas abiertas.</Termino>
+
+<Termino id="memoria-de-proceso" nombre="Memoria de proceso">Una descripción del proceso, similar a un PDD resumido, que la rutina genera en el alta a partir del código y la documentación. Sirve de contexto para el triage y el análisis.</Termino>
+
+<Termino id="memoria-de-produccion" nombre="Memoria de producción">El historial permanente de un proyecto: respuestas del equipo, deploys, re-controles y reglas nuevas, más un resumen que se actualiza solo. Es lo que hace que la rutina aprenda.</Termino>
+
+<Termino id="nueva-version" nombre="Nueva versión">Se desplegó una versión nueva del proceso después de que se abrió la tarjeta. La rutina la vuelve a analizar y explica qué cambió.</Termino>
+
+<Termino id="proyecto" nombre="Proyecto">Una carpeta de Orchestrator con sus procesos, por ejemplo Dispatcher, Performer y Reporter. Es la unidad que se registra, se analiza y se controla.</Termino>
+
+<Termino id="pulso" nombre="Pulso de la rutina">Arriba a la derecha: cuándo fue el último control. Verde si salió bien, ámbar si tuvo errores de colecta, y rojo si la rutina dejó de correr.</Termino>
+
+<Termino id="punto-de-control" nombre="Punto de control">Cada cosa que se revisa en una corrida, por ejemplo jobs fallidos, items abandonados o una regla. Su resultado es alerta, ok u omitido.</Termino>
+
+<Termino id="re-control" nombre="Re-control">Respuesta Volver a controlar con una fecha. La tarjeta se oculta hasta ese día y entonces la rutina verifica si el problema sigue. Queda en la memoria de producción como Re-control agendado y Re-control OK.</Termino>
+
+<Termino id="reaparecio" nombre="Reapareció">Un tema que se había cerrado volvió dentro de los 30 días. Se reabre la misma tarjeta en lugar de crear una nueva, para no perder su historia.</Termino>
+
+<Termino id="recurrencia" nombre="Recurrencia">Cuando un tema se repite, suma ocurrencias en la misma tarjeta. La etiqueta ×7 · última hace 12 min indica cuántas veces pasó y cuándo fue la última.</Termino>
+
+<Termino id="regla" nombre="Regla">Un punto de control escrito en lenguaje natural, por ejemplo: si hay más de 10 errores de login seguidos, escalar. La rutina la traduce a un control y muestra cómo la entendió.</Termino>
+
+<Termino id="retencion" nombre="Retención">Las corridas y los incidentes cerrados se borran después de cierta cantidad de días, que se configura en Ajustes. Antes de borrarlos se guarda un resumen mensual.</Termino>
+
+<Termino id="rutina" nombre="Rutina">El proceso de Claude que corre solo, en general cada hora. Es el único que crea corridas e incidentes, y nunca modifica nada en Orchestrator.</Termino>
+
+<Termino id="severidad" nombre="Severidad (P1 a P4)">P1: un proceso crítico se detuvo o se incumplió el SLA hoy. P2: proceso degradado con riesgo de SLA. P3: errores aislados. P4: informativo.</Termino>
+
+<Termino id="solicitud" nombre="Solicitud">Un pedido del equipo a la rutina, por ejemplo analizar un proyecto nuevo o volver a analizar una tarjeta. Se atiende en la próxima corrida.</Termino>
+
+<Termino id="tema" nombre="Tema">Lo que identifica a un problema, sin importar cuántas veces ocurra: el mismo error en el mismo lugar. Un tema tiene una sola tarjeta.</Termino>
+
+<Termino id="triage" nombre="Triage">La clasificación de cada hallazgo: categoría, severidad y decisión, con su porqué, su nivel de confianza y las reglas o memorias en las que se basó.</Termino>
+
+</div>
+
+</Seccion>
