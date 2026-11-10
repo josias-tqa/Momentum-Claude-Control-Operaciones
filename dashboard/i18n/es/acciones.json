@@ -86,5 +86,7 @@
   "acciones.doc.pkgVuelve": "El documento vuelve a usarse desde la próxima corrida",
   "acciones.doc.pkgOff": "Documento desactivado: la rutina no lo usa desde la próxima corrida",
   "acciones.auto.onN.one": "Aprobación automática activada: {n} regla propuesta quedó activa",
-  "acciones.auto.onN.other": "Aprobación automática activada: {n} reglas propuestas quedaron activas"
+  "acciones.auto.onN.other": "Aprobación automática activada: {n} reglas propuestas quedaron activas",
+  "acciones.proyecto.noExiste": "El proyecto ya no existe",
+  "acciones.proyecto.eliminado": "Proyecto {nombre} eliminado"
 }

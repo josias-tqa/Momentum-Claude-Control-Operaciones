@@ -86,5 +86,7 @@
   "acciones.doc.pkgVuelve": "The document is used again from the next run",
   "acciones.doc.pkgOff": "Document disabled: the routine does not use it from the next run",
   "acciones.auto.onN.one": "Automatic approval enabled: {n} proposed rule is now active",
-  "acciones.auto.onN.other": "Automatic approval enabled: {n} proposed rules are now active"
+  "acciones.auto.onN.other": "Automatic approval enabled: {n} proposed rules are now active",
+  "acciones.proyecto.noExiste": "The project no longer exists",
+  "acciones.proyecto.eliminado": "Project {nombre} deleted"
 }

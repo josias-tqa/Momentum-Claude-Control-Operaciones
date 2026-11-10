@@ -489,6 +489,21 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   assert.equal(await page.locator('[data-act="registrar-detectada"]').count(), 0, 'no quedan propuestas');
   assert.ok(await visible(page, 'text=Escaneo pedido: la próxima corrida propone acá'), 'sin propuestas, la pantalla dice qué falta');
   paso('proyectos propuestos: ignorar, restaurar y registrar todos con confirmación');
+
+  // Eliminar un proyecto desde la lista: pide confirmación, Cancelar no borra nada.
+  const pdel = nuevos[0].path.split('/')[1];
+  await page.click('#nav a[href="#proyectos"]');
+  await page.click(`[data-act="proyecto-eliminar"][data-pid="${pdel}"]`);
+  assert.ok(await visible(page, 'text=Se borran su configuración'));
+  assert.equal(await page.evaluate(() => document.activeElement.id), `pdel-ok-${pdel}`);
+  await page.click(`[data-act="proyecto-eliminar-no"][data-pid="${pdel}"]`);
+  assert.ok(!(await writes()).some((x) => x.op === 'delete' && x.path === `projects/${pdel}`), 'cancelar no borra');
+  await page.click(`[data-act="proyecto-eliminar"][data-pid="${pdel}"]`);
+  await page.click(`[data-act="proyecto-eliminar-ok"][data-pid="${pdel}"]`);
+  await page.waitForTimeout(300);
+  assert.ok((await writes()).some((x) => x.op === 'delete' && x.path === `projects/${pdel}`));
+  assert.equal(await page.locator(`a.rowi[href="#proyecto-${pdel}"]`).count(), 0, 'el proyecto sale de la lista');
+  paso('proyectos: eliminar un proyecto con confirmación');
   await ctx.close();
 }
 

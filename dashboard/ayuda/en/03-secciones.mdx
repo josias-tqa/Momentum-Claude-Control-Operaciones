@@ -227,6 +227,12 @@ If there are no projects yet, an Admin sees the [first steps](#ayuda-primeros-pa
 
 <Vista nombre="proyectos" />
 
+<Accion id="proyecto-eliminar" nombre="Delete" solo="Admin" breve="Removes the project from the dashboard: its settings, memory, rules and documentation. Asks for confirmation.">
+
+It is on each row of the list. It cannot be undone and it changes nothing in Orchestrator. The project's topics and runs are not deleted: they stay until [retention](#ayuda-retencion) cleans them up. If the folder is still inside the folder to scan, the next scan [proposes](#ayuda-propuestos) it again; to stop that, ignore it.
+
+</Accion>
+
 </Seccion>
 
 <Seccion id="pagina-proyecto" nivel="2" titulo="A project's page" breve="Processes, memory, discrepancies, documentation, rules, inventory and settings of a project.">
