@@ -679,7 +679,6 @@ const AYUDA_RUTA = {"inicio":"bandeja","corridas":"corridas","corrida-":"corrida
 // Tooltip de cada botón: data-tip, o su data-act (con estos alias). Los de SIN_TIP son controles internos.
 const TIP_ALIAS = {"asignar":"delegar","posponer-fecha":"posponer","registrar":"registrar-analizar","scope-clear":"scope","panel-regla":"ajustar-regla","disc-posponer-fecha":"disc-posponer"};
 const SIN_TIP = ["sel","buscar","agregar-proceso","quitar-proceso","seg","scope-pick","saltar","limpiar","re-cancelar","re-quitar-exc","re-eliminar-ok","disc-sel","doc-cancelar","doc-quitar-ok","doc-quitar-no","registrar-todos-ok","registrar-todos-no"];
-const AYUDA_TIPS = (() => { try { return JSON.parse(document.getElementById('ayuda-tips').textContent); } catch { return {}; } })();
 const ayudaBtn = (id, txt) => `<a class="help" href="#ayuda-${id}" aria-label="${esc(tx('ayudaui.ayudaDe', { t: txt }))}">?</a>`;
 const ayudaLink = (id, txt) => `<a class="ay-mas" href="#ayuda-${id}">${esc(txt)} →</a>`;
 function ayudaDe(h) {
@@ -699,6 +698,7 @@ const DOCS = () => [['pdd', 'PDD', tx('doc.pdd')], ['sdd', 'SDD', tx('doc.sdd')]
 const DOC_MAX = 230 * 1024; // bytes de Markdown por documento (la base admite 256 KiB por documento)
 // Datos personales que se enmascaran al subir un documento: los mismos patrones de config/patrones-pii.json
 // (tests/scripts.test.mjs verifica que no se desvíen).
+// i18n-ok: patrones de datos personales (regex), no texto de interfaz
 const PII_DOC = [{"nombre":"documento_etiquetado","regex":"\\b(c\\.?\\s?c\\.?|t\\.?\\s?i\\.?|c[eé]dula|d\\.?n\\.?i\\.?|documento|identificaci[oó]n|n[uú]mero de id|nro\\.? doc\\.?|pasaporte)(\\s*(?:no\\.?|n[°º]|#)?\\s*[:=]?\\s*)[A-Z]{0,2}\\d[\\d.\\-]{4,14}","flags":"gi","reemplazo":"$1$2[DOCUMENTO]"},{"nombre":"nit","regex":"\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-\\d\\b","reemplazo":"[ID-FISCAL]"},{"nombre":"email","regex":"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}","reemplazo":"[EMAIL]"},{"nombre":"cuit_cuil","regex":"\\b\\d{2}-?\\d{8}-?\\d\\b","reemplazo":"[ID-FISCAL]"},{"nombre":"ruta_usuario","regex":"([Cc]:\\\\[Uu]sers\\\\)[^\\\\\\s]+","reemplazo":"$1[USUARIO]"}];
 const corto = (t, n = 90) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 const pl = (n, uno, muchos) => `${n} ${n === 1 ? uno : muchos}`; // en desuso: migrar a txp() (tests/i18n.test.mjs lo marca)
@@ -1341,17 +1341,6 @@ function panelReglaHtml(i) {
     <span class="muted">${tx('tema.re.pieNueva')} ${ayudaLink('ajustar-regla', tx('tema.re.masReglas'))}</span></div></div>`;
 }
 // Cierra el editor después de un cambio: deja el rastro en el tema y, si se pidió, lo descarta.
-async function cerrarEdicionRegla(inc, ctx, rid, actividad, nota) {
-  const k = reKey(ctx, rid); const st = S.re[k] || {}; let descartado = false;
-  if (inc) {
-    try { await S.db.collection('activity').add({ incidentId: inc.id, projectId: inc.projectId, type: 'rule', text: actividad, by: S.me || null, at: nowIso() }); } catch {}
-    if (st.descartar) descartado = await writeWork(inc, { state: 'dismissed', dismissReason: 'false_positive', response: { notes: nota } }, { type: 'dismiss', text: `descartó: Falso positivo — ${nota}` }); // i18n-ok: sentencia de actividad guardada en la base
-    S.panel[inc.id] = null;
-  } else delete S.reOpen[rid];
-  delete S.re[k];
-  for (const d of Object.keys(S.drafts)) if (d.startsWith(`re-${ctx}-${rid}-`)) delete S.drafts[d];
-  return descartado ? inc.id : undefined; // para ofrecer "Deshacer" en el aviso
-}
 function panelHtml(i) {
   const panel = S.panel[i.id]; if (!panel || !S.canWrite) return '';
   const id = esc(i.id); const d = (k) => esc(S.drafts[`${i.id}-${k}`] || ''); const sel = S.sel[i.id] || {};
@@ -1462,7 +1451,7 @@ function detalleHtml(i) {
     ${i.library ? libreriaHtml(i) : ''}
     ${lines.length ? `<section><h3 class="lbl">${tx('tema.det.evidencia')}</h3><div class="ev" tabindex="0" role="group" aria-label="${tx('tema.det.evidenciaAria')}">${lines.join('')}</div></section>` : ''}
     <section><h3 class="lbl">${tx('tema.det.actividad')}</h3><div class="box">
-      ${acts.length ? `<ul class="tl">${acts.map((x) => `<li><time>${esc(fecha(x.at))}</time><span>${who(x.by)} ${esc(x.text || '')}</span></li>`).join('')}</ul>` : `<p class="muted">${tx('tema.det.sinAct')}</p>`}
+      ${acts.length ? `<ul class="tl">${acts.map((x) => `<li><time>${esc(fecha(x.at))}</time><span>${who(x.by)} ${esc(actividadTxt(x))}</span></li>`).join('')}</ul>` : `<p class="muted">${tx('tema.det.sinAct')}</p>`}
       ${S.canWrite ? `<div class="composer"><textarea id="${id}-coment" aria-label="${tx('tema.det.comentAria')}" placeholder="${tx('tema.det.comentAria')}">${esc(S.drafts[`${i.id}-coment`] || '')}</textarea>
         <div class="actions" style="gap:10px"><button class="btn" data-act="comentar">${ico('send')}${tx('tema.det.comentar')}</button><span class="muted">${tx('tema.det.ctrl')}</span></div></div>` : ''}
     </div></section>`;
@@ -2043,13 +2032,13 @@ function vistaDemo(n, v) {
   } catch (e) { return `<span class="muted">${esc(tx('ayudaui.vistaError', { msg: e.message }))}</span>`; }
 }
 // La ayuda no depende de los datos: se dibuja una vez por rol y se conserva (y con ella el scroll).
-// Cuerpo y tooltips de la ayuda por idioma: ayuda-tpl-<LANG> / ayuda-tips-<LANG>, con respaldo en los ids sin sufijo.
-const ayudaTpl = () => document.getElementById('ayuda-tpl-' + LANG) || document.getElementById('ayuda-tpl');
+// Cuerpo y tooltips de la ayuda por idioma: ayuda-tpl-<LANG> / ayuda-tips-<LANG> (bloque generado por build:ayuda).
+const ayudaTpl = () => document.getElementById('ayuda-tpl-' + LANG);
 const AYUDA_TIPS_POR_IDIOMA = {};
 function ayudaTips() {
   if (!(LANG in AYUDA_TIPS_POR_IDIOMA)) {
-    const el = document.getElementById('ayuda-tips-' + LANG) || document.getElementById('ayuda-tips');
-    try { AYUDA_TIPS_POR_IDIOMA[LANG] = JSON.parse(el.textContent); } catch { AYUDA_TIPS_POR_IDIOMA[LANG] = {}; }
+    const el = document.getElementById('ayuda-tips-' + LANG);
+    try { AYUDA_TIPS_POR_IDIOMA[LANG] = JSON.parse(el.textContent.replace(/<\\\//g, '</')); } catch { AYUDA_TIPS_POR_IDIOMA[LANG] = {}; }
   }
   return AYUDA_TIPS_POR_IDIOMA[LANG];
 }
@@ -2249,7 +2238,7 @@ function actividadTxt(a) {
   }
 }
 const actEntrada = (type, params) => ({ type, params, text: actividadTxt({ type, params }) });
-// Cierra el editor de reglas: deja el rastro en el tema y, si se pidió, lo descarta (misma lógica que cerrarEdicionRegla, con actividad estructurada).
+// Cierra el editor de reglas: deja el rastro en el tema y, si se pidió, lo descarta (con actividad estructurada).
 async function cerrarEdicion(inc, ctx, rid, params, notaKey, notaP) {
   const k = reKey(ctx, rid); const st = S.re[k] || {}; let descartado = false;
   if (inc) {

@@ -54,8 +54,9 @@ test('toda clave usada existe y no hay claves sin usar', () => {
 // de interfaz (un identificador, una sigla, un dato de ejemplo), se marca la línea con "// i18n-ok: motivo".
 test('no quedan textos visibles escritos a mano', () => {
   const malos = [];
-  const revisar = (nombre, src, desde = 1) => sinComentarios(src).forEach((l, i) => {
-    if (!l.trim() || l.includes('i18n-ok')) return;
+  const revisar = (nombre, src, desde = 1) => sinComentarios(src).forEach((l, i, todas) => {
+    const orig = src.split('\n');
+    if (!l.trim() || l.includes('i18n-ok') || /i18n-ok/.test(orig[i - 1] || '')) return; // también vale el comentario "// i18n-ok: motivo" en la línea anterior
     const quitado = l.replace(/\$\{[^}]*\}/g, '').replace(/<(?:script|style)[\s\S]*?$/, '');
     const motivos = [];
     if (/[áéíóúñüÁÉÍÓÚÑ¿¡]/.test(quitado.replace(/\/[^/\n]*[áéíóúñ][^/\n]*\/[gimsuy]*/g, ''))) motivos.push('acentos o ¿¡ (texto en español)');
