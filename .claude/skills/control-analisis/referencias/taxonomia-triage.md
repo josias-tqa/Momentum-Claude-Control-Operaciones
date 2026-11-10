@@ -37,8 +37,8 @@ Adaptada al monitoreo de producción.
 |---|---|---|
 | `escalate` | Requiere que un humano actúe o decida: P1/P2, algo nuevo sin explicación en la memoria, una regla con `action: escalate` | Tarjeta en la bandeja + análisis previo |
 | `notify` | Conviene que lo vean, pero no bloquea (P3/P4 nuevos) | Tarjeta de baja prioridad |
-| `monitor` | Hay que vigilar la tendencia sin molestar (deploys, valores apenas sobre el umbral) | "No reportados" |
-| `known` | La memoria de producción o una regla `known` dice que es esperado | "No reportados", con la cita |
+| `monitor` | Hay que vigilar la tendencia sin molestar (deploys, valores apenas sobre el umbral) | "Fuera de bandeja" |
+| `known` | La memoria de producción o una regla `known` dice que es esperado | "Fuera de bandeja", con la cita |
 
 ## Orden de evidencia (runbook §1)
 
