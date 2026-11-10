@@ -163,8 +163,12 @@ export function atribuirLibreria(texto, libsDelProceso, catalogo) {
     const acts = ((catalogo[l.name] && catalogo[l.name][l.version] && catalogo[l.name][l.version].activities) || [])
       .filter((a) => a.length >= 6 && !GENERICAS.has(a.toLowerCase()))
       .sort((a, b) => b.length - a.length);
-    const act = acts.find(palabra);
-    if (act) return { name: l.name, version: l.version, activity: act };
+    // La actividad más citada en la evidencia; a igualdad, la que aparece primero (la más interna del stack).
+    const cuenta = (w) => (t.match(new RegExp(`(^|[^A-Za-z0-9_])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=$|[^A-Za-z0-9_])`, 'g')) || []).length;
+    const act = acts.filter(palabra)
+      .map((a) => ({ a, n: cuenta(a), i: t.search(new RegExp(`(^|[^A-Za-z0-9_])${a}`)) }))
+      .sort((x, y) => y.n - x.n || x.i - y.i)[0];
+    if (act) return { name: l.name, version: l.version, activity: act.a };
   }
   const porNombre = libsDelProceso.find((l) => palabra(l.name));
   return porNombre ? { name: porNombre.name, version: porNombre.version, activity: null } : null;
