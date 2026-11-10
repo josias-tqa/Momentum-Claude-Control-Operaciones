@@ -9,6 +9,7 @@ TQA desarrolla y prueba la Torre de Control con su cuenta. Después Momentum pas
 3. **Credenciales propias de Momentum:** una External App de UiPath de solo lectura y un token de Bitbucket de solo lectura. **No se reutilizan las de prueba.**
 4. **Entorno cloud** `momentum-operaciones` en la cuenta de Momentum, según `docs/configuracion-cloud.md`. Después, `/verificar-entorno`.
 5. **Publicar el tablero:** desde una sesión de esa cuenta, publicar `dashboard/index.html` con las capacidades de `dashboard/capabilities.json`. Se obtiene una URL nueva, con la base vacía.
+   - La ayuda ya viene compilada dentro del archivo. Antes de publicar, `npm run check:ayuda` confirma que está al día.
 6. **Configurar** `OPS_ARTIFACT_URL` en el entorno con esa URL y correr `/control-mantenimiento seed`.
 7. **Migrar** (opcional): en el tablero de TQA, `/control-mantenimiento export`. En el de Momentum, `/control-mantenimiento import`.
    - Se migran proyectos, memorias, reglas e historial.
