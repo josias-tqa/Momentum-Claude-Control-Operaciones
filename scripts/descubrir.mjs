@@ -83,7 +83,8 @@ const workspaces = new Set((arg('--workspaces') || process.env.BITBUCKET_WORKSPA
 for (const r of registrados) for (const x of r.processes) if (x.repo && x.repo.workspace) workspaces.add(x.repo.workspace);
 const repoPorPaquete = {};
 const bitbucket = { workspaces: [...workspaces], repos: 0, conPaquete: 0, errores: [] };
-if (!bandera('--sin-bitbucket')) {
+// Bitbucket es opcional: el código y la documentación salen de los paquetes de Orchestrator.
+if (!bandera('--sin-bitbucket') && process.env.BITBUCKET_TOKEN) {
   for (const ws of workspaces) {
     const l = listarRepos(ws);
     if (l.http !== 200) { bitbucket.errores.push(`${ws}: no se pudieron listar los repos (HTTP ${l.http}). El token puede no tener alcance de workspace.`); continue; }
@@ -158,4 +159,10 @@ const resultado = {
 };
 mkdirSync(dirname(salida), { recursive: true });
 writeFileSync(salida, JSON.stringify(resultado, null, 2));
+// Documento para el tablero: carpetas con procesos activos que todavía no son un proyecto.
+if (arg('--plan-tablero')) {
+  const folders = candidatos.filter((c) => !c.registradoComo && c.folderPath !== '(sin carpeta)')
+    .map((c) => ({ folderPath: c.folderPath, name: c.name, procesos: c.processes.map((p) => p.orchestratorProcess).slice(0, 50), jobs30d: c.jobs }));
+  writeFileSync(arg('--plan-tablero'), JSON.stringify({ writes: [{ op: 'set', collection: 'config', doc_id: 'discovery', data: { at: resultado.generadoEn, folders } }] }, null, 2));
+}
 console.log(JSON.stringify({ ...resultado.orchestrator, ...resultado.resumen, repos: bitbucket.repos, reposConPaquete: bitbucket.conPaquete, errores: errores.length + bitbucket.errores.length }));

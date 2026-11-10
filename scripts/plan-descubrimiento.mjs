@@ -25,7 +25,7 @@ export function planDescubrimiento(candidatos, { incluirInactivos = false, solo 
     writes.push({
       op: 'set', collection: 'projects', doc_id: id,
       data: {
-        name: c.name, status: 'pending_analysis', orchestrator: { folderPath: c.folderPath }, processes, docs: { paths: [] }, triageCriteria: '',
+        name: c.name, status: 'pending_analysis', includeAllProcesses: true, orchestrator: { folderPath: c.folderPath }, processes, docs: { paths: [] }, triageCriteria: '',
         createdBy: 'descubrimiento', createdAt: ahora, updatedAt: ahora,
         discovery: {
           at: ahora, jobs: c.jobs, sinRepo: c.sinRepo,

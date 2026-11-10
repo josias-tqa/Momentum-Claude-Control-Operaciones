@@ -18,7 +18,8 @@ w.data.analysis = {
   status: 'done',
   summary: txt(a.summary, 3000),
   hypotheses: (a.hypotheses || []).slice(0, 6).map((h) => ({ text: txt(h.text, 800), likelihood: ['alta', 'media', 'baja'].includes(h.likelihood) ? h.likelihood : 'media', evidence: txt(h.evidence, 1200) })),
-  codeRefs: (a.codeRefs || []).slice(0, 15).map((c) => ({ file: String(c.file || '').slice(0, 300), line: c.line ?? null, sha: String(c.sha || '').slice(0, 40), note: txt(c.note, 400) })),
+  // pkg: "Paquete versión" del que sale el archivo (proceso o librería). sha solo si vino del repo.
+  codeRefs: (a.codeRefs || []).slice(0, 15).map((c) => ({ file: String(c.file || '').slice(0, 300), line: c.line ?? null, pkg: c.pkg ? String(c.pkg).slice(0, 200) : null, sha: c.sha ? String(c.sha).slice(0, 40) : null, note: txt(c.note, 400) })),
   docRefs: (a.docRefs || []).slice(0, 15).map((d) => ({ file: String(d.file || '').slice(0, 300), section: txt(d.section, 200), note: txt(d.note, 400) })),
   scope: txt(a.scope, 600),
   regression: typeof a.regression === 'boolean' ? a.regression : null,
@@ -26,6 +27,8 @@ w.data.analysis = {
   suggestedActions: (a.suggestedActions || []).slice(0, 8).map((s) => txt(s, 500)),
   responseOptions: (a.responseOptions || []).slice(0, 5).map((s) => txt(s, 200)),
   repo: a.repo ? { ref: String(a.repo.ref || ''), sha: String(a.repo.sha || ''), matchesDeployedVersion: Boolean(a.repo.matchesDeployedVersion), process: a.repo.process ? String(a.repo.process).slice(0, 60) : null } : null,
+  source: a.source ? { kind: a.source.kind === 'repo' ? 'repo' : 'package', package: String(a.source.package || '').slice(0, 200), version: String(a.source.version || '').slice(0, 40), library: a.source.library ? String(a.source.library).slice(0, 200) : null } : null,
+  changes: a.changes ? txt(a.changes, 1500) : null,
   analyzedAt: new Date().toISOString(),
 };
 plan.analizar = (plan.analizar || []).filter((x) => x !== id);

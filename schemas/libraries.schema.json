@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "libraries",
+  "type": "object",
+  "required": [
+    "name",
+    "versions"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "versions": {
+      "type": "object"
+    },
+    "feedLatest": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "updatedAt": {
+      "type": "string",
+      "maxLength": 40
+    }
+  }
+}

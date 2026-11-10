@@ -15,6 +15,7 @@
 import { readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
+import { inferirRol, slugProceso } from './lib/proyecto.mjs';
 
 const ORDEN_SEV = { P1: 1, P2: 2, P3: 3, P4: 4 };
 const masGrave = (a, b) => (ORDEN_SEV[a] <= ORDEN_SEV[b] ? a : b);
@@ -45,7 +46,7 @@ function decisionPorDefecto(h) {
 // Una tarjeta se "reporta" (aparece en la bandeja) si la decisión es escalate/notify.
 export const esReportable = (decision) => decision === 'escalate' || decision === 'notify';
 
-export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos, incidentes, trabajo, porProyecto, triage = {} }) {
+export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos, incidentes, trabajo, porProyecto, triage = {}, librerias = [], reanalizar = [] }) {
   const writes = [];
   const analizar = [];
   const runProyectos = [];
@@ -54,9 +55,9 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
   const cerradosRecientes = incidentes.filter((i) => i.status === 'closed' && i.closedAt && (Date.parse(ahora) - Date.parse(i.closedAt)) / 86400000 <= DIAS_REAPERTURA);
   const tocados = new Map(); // id -> doc actualizado (para no escribir dos veces el mismo doc)
 
-  const buscarPorFp = (lista, fp, projectId) => lista.find((i) => i.projectId === projectId && (i.fingerprints || []).includes(fp));
+  const buscarPorFp = (lista, fp, projectId, fpLegacy) => lista.find((i) => i.projectId === projectId && ((i.fingerprints || []).includes(fp) || (fpLegacy && (i.fingerprints || []).includes(fpLegacy))));
 
-  for (const { projectId, hallazgos, senales } of porProyecto) {
+  for (const { projectId, hallazgos, senales, indice = null } of porProyecto) {
     const nuevos = [];
     const actualizados = [];
     const resumenHallazgos = [];
@@ -78,11 +79,11 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
       const recurrencia = { runId, at: ahora, count: Number(h.conteo) || 1 };
 
       let existente = (t.mergeInto && (tocados.get(t.mergeInto) || incidentes.find((i) => i.id === t.mergeInto)))
-        || [...tocados.values()].find((i) => i.projectId === projectId && i.fingerprints.includes(h.fingerprint))
-        || buscarPorFp(abiertos, h.fingerprint, projectId);
+        || [...tocados.values()].find((i) => i.projectId === projectId && (i.fingerprints.includes(h.fingerprint) || (h.fingerprintLegacy && i.fingerprints.includes(h.fingerprintLegacy))))
+        || buscarPorFp(abiertos, h.fingerprint, projectId, h.fingerprintLegacy);
       let reabierto = false;
       if (!existente) {
-        existente = buscarPorFp(cerradosRecientes, h.fingerprint, projectId);
+        existente = buscarPorFp(cerradosRecientes, h.fingerprint, projectId, h.fingerprintLegacy);
         reabierto = Boolean(existente);
       }
 
@@ -102,6 +103,7 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
           else doc.triage = { ...doc.triage, severity: doc.severity };
         }
         doc.evidence = { ...(doc.evidence || {}), ultima: h.evidencia, ultimaCorrida: runId };
+        if (h.libreria) doc.library = h.libreria;
         if (reabierto) {
           doc.status = 'open';
           doc.reopenCount = (doc.reopenCount || 0) + 1;
@@ -128,6 +130,7 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
           decision,
           process: h.proceso || null,
           processId: h.processId || null,
+          library: h.libreria || null,
           queue: h.cola || null,
           checkId: h.checkId,
           ruleId: h.ruleId || null,
@@ -151,6 +154,16 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
 
       if (h.categoria === 'deploy') {
         writes.push({ op: 'set', collection: 'history', doc_id: `hist-${runId}-${h.fingerprint.slice(0, 8)}`, data: { projectId, type: 'deploy_detected', at: ahora, summary: h.titulo, by: 'rutina' } });
+        // Las tarjetas reportadas abiertas de ese proceso se marcan con el deploy y se re-analizan
+        // (el análisis compara la versión anterior con la nueva).
+        const ev = h.evidencia || {};
+        for (const inc of [...tocados.values(), ...abiertos.filter((i) => !tocados.has(i.id))]) {
+          if (inc.projectId !== projectId || inc.process !== h.proceso || inc.category === 'deploy' || inc.status !== 'open' || !esReportable(inc.decision)) continue;
+          const d = tocados.get(inc.id) || { ...inc };
+          d.deploy = { version: ev.versionNueva || null, previous: ev.versionAnterior || null, at: ahora };
+          if (d.decision === 'escalate') { d.analysis = { ...(d.analysis || {}), status: 'pending' }; if (!analizar.includes(d.id)) analizar.push(d.id); }
+          tocados.set(d.id, d);
+        }
       }
     }
 
@@ -163,17 +176,36 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
         if (j.proceso && t && (!ultimoPorProceso[j.proceso] || t > ultimoPorProceso[j.proceso])) ultimoPorProceso[j.proceso] = t;
       }
       const colectaOk = !(senales.errores || []).some((e) => /^login/.test(e));
+      // Inventario de procesos: lo vigente de Orchestrator + lo indexado de los paquetes (índice de esta
+      // corrida o lo ya guardado si la versión no cambió).
+      const invPrevio = (proyecto.inventory && proyecto.inventory.processes) || [];
+      const idx = (indice && indice.procesos) || [];
+      const procesosInv = (senales.procesos || []).map((p) => {
+        const i = idx.find((x) => x.name === p.nombre);
+        const prev = invPrevio.find((x) => x.name === p.nombre) || {};
+        const conservado = prev.indexedVersion === p.version ? { libraries: prev.libraries, indexedVersion: prev.indexedVersion, hasSources: prev.hasSources, docs: prev.docs, hygiene: prev.hygiene } : {};
+        return { name: p.nombre, version: p.version, key: p.key, package: p.paquete || prev.package || null, ...conservado, ...(i ? { libraries: i.libraries, indexedVersion: i.indexedVersion, hasSources: i.hasSources, docs: i.docs, hygiene: i.hygiene } : {}) };
+      });
+      // Procesos nuevos de la carpeta: se suman solos al proyecto (salvo includeAllProcesses: false).
+      const declarados = new Set((proyecto.processes || []).map((x) => x.orchestratorProcess).filter(Boolean));
+      const nuevosProcesos = proyecto.includeAllProcesses === false ? [] : (senales.procesos || []).filter((p) => !declarados.has(p.nombre)).map((p) => {
+        const rol = inferirRol(p.nombre);
+        let id = slugProceso(p.nombre);
+        while ((proyecto.processes || []).some((x) => x.id === id)) id = `${id}-2`;
+        return { id, label: p.nombre, orchestratorProcess: p.nombre, role: rol, folderPath: null, repo: null, docs: { paths: [] } };
+      });
       writes.push({
         op: 'update', collection: 'projects', doc_id: projectId, if_version: proyecto.__version ?? undefined,
         data: {
           ...(colectaOk ? { watermarks: { since: senales.ventana.hasta, lastCheckedAt: ahora, lastJobByProcess: ultimoPorProceso } } : { watermarks: { lastCheckedAt: ahora } }),
           inventory: {
             ...(proyecto.inventory || {}),
-            ...(senales.procesos && senales.procesos.length ? { processes: senales.procesos.map((p) => ({ name: p.nombre, version: p.version, key: p.key })) } : {}),
+            ...(procesosInv.length ? { processes: procesosInv } : {}),
             ...(senales.triggers && senales.triggers.length ? { triggers: senales.triggers.map((t) => ({ name: t.nombre, type: t.tipo, enabled: t.habilitado, cron: t.cron, process: t.proceso })) } : {}),
             ...(senales.colas && senales.colas.length ? { queues: senales.colas.map((q) => ({ name: q.nombre, key: q.key, maxRetries: q.maxReintentos })) } : {}),
             updatedAt: ahora,
           },
+          ...(nuevosProcesos.length ? { processes: [...(proyecto.processes || []), ...nuevosProcesos] } : {}),
           updatedAt: ahora,
         },
       });
@@ -199,6 +231,26 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
     if (tocados.has(inc.id) || !proyectosCorridos.has(inc.projectId) || esReportable(inc.decision)) continue;
     if (!inc.lastSeenAt || (Date.parse(ahora) - Date.parse(inc.lastSeenAt)) / 3600000 < 24) continue;
     tocados.set(inc.id, { ...inc, status: 'closed', closedAt: ahora, closedReason: 'Sin recurrencia en 24 h (no reportado)' });
+  }
+
+  // Re-análisis pedido por un humano (requests reanalyze_incident).
+  for (const id of reanalizar) {
+    const inc = tocados.get(id) || incidentes.find((i) => i.id === id);
+    if (!inc) continue;
+    const d = tocados.get(id) || { ...inc };
+    d.analysis = { ...(d.analysis || {}), status: 'pending' };
+    tocados.set(id, d);
+    if (!analizar.includes(id)) analizar.push(id);
+  }
+
+  // Catálogo de librerías: versiones en uso con sus actividades (fusionado con lo guardado).
+  const porLib = {};
+  for (const { indice } of porProyecto) for (const [name, vers] of Object.entries((indice && indice.libraries) || {})) Object.assign((porLib[name] ||= {}), vers);
+  for (const [name, vers] of Object.entries(porLib)) {
+    const prev = librerias.find((l) => l.name === name);
+    const versions = { ...((prev && prev.versions) || {}) };
+    for (const [v, info] of Object.entries(vers)) versions[v] = { activities: info.activities, hasSources: info.hasSources, dependencies: info.dependencies };
+    writes.push({ op: 'set', collection: 'libraries', doc_id: slugProceso(name), ...(prev && prev.__version ? { if_version: prev.__version } : {}), data: { name, versions, updatedAt: ahora } });
   }
 
   // Incidentes tocados -> escrituras (set completo, fijado a la versión leída).
@@ -254,10 +306,13 @@ if (process.argv[1] && process.argv[1].endsWith('consolidar.mjs')) {
   for (const p of proyectos) {
     const hp = join(runDir, p.id, 'hallazgos.json');
     const sp = join(runDir, p.id, 'senales.json');
-    if (existsSync(hp) && existsSync(sp)) porProyecto.push({ projectId: p.id, hallazgos: leerJson(hp), senales: leerJson(sp) });
+    const ip = join(runDir, p.id, 'indice.json');
+    if (existsSync(hp) && existsSync(sp)) porProyecto.push({ projectId: p.id, hallazgos: leerJson(hp), senales: leerJson(sp), indice: existsSync(ip) ? leerJson(ip) : null });
   }
   const fin = new Date().toISOString();
-  const plan = consolidar({ runId, inicio: arg('--inicio') || fin, fin, trigger: arg('--trigger') || 'scheduled', sessionUrl: arg('--session-url'), proyectos, incidentes, trabajo, porProyecto, triage });
+  const librerias = leerColeccion(join(dbDir, 'libraries'));
+  const reanalizar = (arg('--reanalizar') || '').split(',').filter(Boolean);
+  const plan = consolidar({ runId, inicio: arg('--inicio') || fin, fin, trigger: arg('--trigger') || 'scheduled', sessionUrl: arg('--session-url'), proyectos, incidentes, trabajo, porProyecto, triage, librerias, reanalizar });
   writeFileSync(join(runDir, 'plan.json'), JSON.stringify(plan, null, 2));
   console.log(JSON.stringify({ escrituras: plan.writes.length, analizar: plan.analizar, resumen: plan.resumen }));
 }

@@ -10,8 +10,8 @@
 //   hallazgos:  candidatos a incidente, agrupados por tema (fingerprint), con evidencia redactada
 // El triage (decisión final, porqué) lo hace Claude después, con criterios y memoria.
 
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fingerprint, normalizarFirma } from './lib/fingerprint.mjs';
 import { arg, leerJson, desenvolver } from './lib/args.mjs';
 import { normalizarProyecto, procesoPorNombre } from './lib/proyecto.mjs';
@@ -151,9 +151,39 @@ const minimo = (xs) => xs.filter(Boolean).sort()[0] || null;
 const maximo = (xs) => xs.filter(Boolean).sort().slice(-1)[0] || null;
 
 // ---------- evaluación ----------
-export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = {} }) {
+const GENERICAS = new Set(['main', 'process', 'login', 'logout', 'init', 'initallapplications', 'initallsettings', 'closeallapplications', 'killallprocesses', 'gettransactiondata', 'settransactionstatus', 'retrycurrenttransaction', 'takescreenshot', 'test', 'validar', 'cerrar']);
+
+// ¿El error ocurrió dentro de una librería que usa el proceso? Busca, como palabra completa, el nombre de
+// una actividad de esas librerías (6+ letras, no genérica) o el nombre de la librería en el texto.
+export function atribuirLibreria(texto, libsDelProceso, catalogo) {
+  if (!texto || !libsDelProceso || !libsDelProceso.length) return null;
+  const t = String(texto);
+  const palabra = (w) => new RegExp(`(^|[^A-Za-z0-9_])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^A-Za-z0-9_])`).test(t);
+  for (const l of libsDelProceso) {
+    const acts = ((catalogo[l.name] && catalogo[l.name][l.version] && catalogo[l.name][l.version].activities) || [])
+      .filter((a) => a.length >= 6 && !GENERICAS.has(a.toLowerCase()))
+      .sort((a, b) => b.length - a.length);
+    const act = acts.find(palabra);
+    if (act) return { name: l.name, version: l.version, activity: act };
+  }
+  const porNombre = libsDelProceso.find((l) => palabra(l.name));
+  return porNombre ? { name: porNombre.name, version: porNombre.version, activity: null } : null;
+}
+
+export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = {}, librerias = {}, indice = null }) {
   const proyecto = normalizarProyecto(proyectoIn);
   const projectId = senales.projectId;
+  // Firma con el formato anterior de cada mensaje (para no duplicar tarjetas abiertas antes del cambio).
+  const firmaV1 = new Map();
+  for (const l of senales.logs || []) if (l.firmaV1) firmaV1.set(l.mensaje, l.firmaV1);
+  for (const q of senales.queueItems || []) if (q.firmaV1) firmaV1.set(q.motivo, q.firmaV1);
+  // Librerías por proceso (índice de esta corrida o inventario guardado) y catálogo de actividades.
+  const catalogo = { ...librerias, ...((indice && indice.libraries) || {}) };
+  const libsDe = (proc) => {
+    const i = ((indice && indice.procesos) || []).find((x) => x.name === proc)
+      || (((proyecto.inventory && proyecto.inventory.processes) || []).find((x) => x.name === proc));
+    return (i && i.libraries) || [];
+  };
   const checks = [];
   const hallazgos = [];
   const pendMax = Number(ajustes.pendingMaxMinutes || 30);
@@ -161,9 +191,16 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
 
   function hallazgo(h) {
     const fp = fingerprint({ projectId, categoria: h.categoria, proceso: h.proceso, cola: h.cola, firma: h.firmaBase ?? h.firma });
-    // Proceso del proyecto (dispatcher, performer...) al que pertenece: define qué repo mira el análisis.
+    const v1 = h.firmaBase === undefined && firmaV1.get(h.firma);
+    const fpV1 = v1 ? fingerprint({ projectId, categoria: h.categoria, proceso: h.proceso, cola: h.cola, firmaNormalizada: v1 }) : null;
+    // Proceso del proyecto (dispatcher, performer...) al que pertenece.
     const proc = procesoPorNombre(proyecto, h.proceso);
-    hallazgos.push({ id: fp, fingerprint: fp, projectId, processId: proc ? proc.id : null, ...h, firmaNormalizada: normalizarFirma(h.firmaBase ?? h.firma) });
+    // Librería donde ocurrió el error, si corresponde (procesos de los jobs / items involucrados).
+    const procesosLib = [h.proceso, ...((h.evidencia && h.evidencia.logs) || []).map((l) => l.proceso)].filter(Boolean);
+    const textos = [h.firma, ...((h.evidencia && (h.evidencia.logs || h.evidencia.muestra)) || []).map((x) => x.mensaje), ...((h.evidencia && h.evidencia.queueItems) || []).map((q) => q.motivo)].filter(Boolean).join(' \n ');
+    const libsCandidatas = [...new Map(procesosLib.flatMap(libsDe).concat(h.proceso ? [] : proyecto.processes.flatMap((x) => libsDe(x.orchestratorProcess))).map((l) => [`${l.name}@${l.version}`, l])).values()];
+    const libreria = atribuirLibreria(textos, libsCandidatas, catalogo);
+    hallazgos.push({ id: fp, fingerprint: fp, fingerprintLegacy: fpV1 && fpV1 !== fp ? fpV1 : null, projectId, processId: proc ? proc.id : null, libreria, ...h, firmaNormalizada: normalizarFirma(h.firmaBase ?? h.firma) });
   }
   function check(id, nombre, resultado, observado, umbral) {
     checks.push({ id, nombre, resultado, observado, umbral: umbral ?? null });
@@ -362,8 +399,17 @@ if (process.argv[1] && process.argv[1].endsWith('evaluate.mjs')) {
   const lista = Array.isArray(reglasIn) ? reglasIn : (reglasIn && (reglasIn.data || reglasIn.text) ? [reglasIn] : Object.entries(reglasIn || {}).map(([id, r]) => ({ id, ...r })));
   const reglas = lista.map((r) => desenvolver(r));
   const ajustes = arg('--ajustes') ? desenvolver(leerJson(arg('--ajustes'), {})) : {};
+  const indice = arg('--indice') ? leerJson(arg('--indice'), null) : null;
+  // Catálogo guardado: directorio exportado de la colección libraries (un JSON por librería: { name, versions }).
+  const librerias = {};
+  if (arg('--librerias') && existsSync(arg('--librerias'))) {
+    for (const f of readdirSync(arg('--librerias')).filter((x) => x.endsWith('.json'))) {
+      const d = desenvolver(leerJson(join(arg('--librerias'), f)));
+      if (d.name && d.versions) librerias[d.name] = d.versions;
+    }
+  }
   const salida = arg('--salida');
-  const res = evaluar({ senales, proyecto, reglas, ajustes });
+  const res = evaluar({ senales, proyecto, reglas, ajustes, indice, librerias });
   mkdirSync(dirname(salida), { recursive: true });
   writeFileSync(salida, JSON.stringify(res, null, 2));
   console.log(JSON.stringify({ projectId: res.projectId, alertas: res.checks.filter((c) => c.resultado === 'alerta').map((c) => c.id), hallazgos: res.hallazgos.length }));

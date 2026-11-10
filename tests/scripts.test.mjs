@@ -202,7 +202,8 @@ test('proyecto con varios procesos: la colecta filtra por los procesos del proye
   assert.ok(!senales.jobs.some((j) => j.proceso === 'OTRO_Proyecto_Performer'), 'no trae jobs de otro proyecto de la misma carpeta');
   assert.ok(!senales.procesos.some((p) => p.nombre === 'OTRO_Proyecto_Performer'));
   assert.deepEqual(senales.procesosDelProyecto.map((x) => x.id), ['dispatcher', 'performer']);
-  assert.equal(senales.filtradoPorProceso, true);
+  assert.equal(senales.filtradoPorProceso, false, 'por defecto se controla toda la carpeta');
+  assert.ok(filtroDeProcesos({ includeAllProcesses: false, processes: [{ orchestratorProcess: 'A', repo: { workspace: 'w', slug: 'a' } }] }).has('A'), 'solo filtra si un Admin eligió procesos');
 });
 
 test('proyecto con varios procesos: cada hallazgo sabe a qué proceso (y repo) pertenece', () => {
@@ -311,4 +312,89 @@ test('descubrimiento: agrupa procesos por carpeta, marca registrados y arma el p
   assert.ok(!JSON.stringify(plan.writes).includes('_info'));
   const { errores } = prepararLotes(plan.writes);
   assert.deepEqual(errores, []);
+});
+
+import { permitido, listar, extraerSeguro, leerDependencias, actividadesDe } from '../scripts/lib/paquetes.mjs';
+import { indexar } from '../scripts/indexar-codigo.mjs';
+import { atribuirLibreria } from '../scripts/evaluate.mjs';
+import { compactarMensajeUiPath, sanitizarLog } from '../scripts/lib/redact.mjs';
+import { readdirSync } from 'node:fs';
+
+const PKG = join(FIX, 'paquetes');
+const conFixtures = (fn) => { const prev = process.env.OPS_FIXTURES; const prevC = process.env.OPS_PAQUETES_CACHE; process.env.OPS_FIXTURES = join(FIX, 'uip'); process.env.OPS_PAQUETES_CACHE = mkdtempSync(join(tmpdir(), 'pkg-')); try { return fn(); } finally { process.env.OPS_FIXTURES = prev ?? ''; if (!prev) delete process.env.OPS_FIXTURES; process.env.OPS_PAQUETES_CACHE = prevC ?? ''; if (!prevC) delete process.env.OPS_PAQUETES_CACHE; } };
+
+test('paquetes: la extracción solo saca código y documentación (nunca datos, capturas ni rutas raras)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'x-'));
+  const sacados = extraerSeguro(join(PKG, 'FIN_Facturacion_Performer@1.4.0.nupkg'), dir);
+  assert.deepEqual(sacados.sort(), ['Framework/InitAllApplications.xaml', 'Main.xaml', 'Process.xaml', 'README.md', 'project.json']);
+  for (const e of ['content/Data/Config.xlsx', 'content/Exceptions_Screenshots/x.png', 'content/.autopilot/a.md', 'content/../evil.xaml', 'lib/net8.0/P.dll']) assert.equal(permitido(e), false, e);
+  assert.ok(!readdirSync(dir).includes('Data'));
+});
+
+test('paquetes: dependencias propias con versión exacta y actividades de la librería', () => {
+  const deps = leerDependencias({ dependencies: { 'UiPath.System.Activities': '[25.10.0]', ValidarEPS: '[1.0.147]' } });
+  assert.deepEqual(deps, [{ name: 'ValidarEPS', version: '1.0.147' }]);
+  assert.deepEqual(actividadesDe(listar(join(PKG, 'LIB_Sap@2.2.0.nupkg'))), ['GuardarFactura', 'LoginSap']);
+});
+
+test('índice: librerías directas e indirectas por proceso, sin re-indexar versiones ya vistas', () => conFixtures(() => {
+  const procesos = [{ nombre: 'FIN_Facturacion_Performer', paquete: 'FIN_Facturacion_Performer', version: '1.4.0' }];
+  const r = indexar({ procesos });
+  assert.deepEqual(r.procesos[0].libraries.map((l) => `${l.name}@${l.version}`), ['LIB_Sap@2.2.0', 'LIB_Comun@1.0.0']);
+  assert.equal(r.procesos[0].hygiene.capturas, 1);
+  assert.deepEqual(r.libraries.LIB_Comun['1.0.0'].activities, ['EnviarCorreoAlerta']);
+  assert.equal(indexar({ procesos, inventario: [{ name: 'FIN_Facturacion_Performer', indexedVersion: '1.4.0' }] }).procesos.length, 0);
+}));
+
+test('atribución: el error se asigna a la actividad de la librería, sin falsos positivos con "login"', () => {
+  const libs = [{ name: 'LIB_Sap', version: '2.2.0' }];
+  const cat = { LIB_Sap: { '2.2.0': { activities: ['GuardarFactura', 'LoginSap', 'Login'] } } };
+  assert.deepEqual(atribuirLibreria('System exception at source: LoginSap', libs, cat), { name: 'LIB_Sap', version: '2.2.0', activity: 'LoginSap' });
+  assert.equal(atribuirLibreria('Login failed: invalid credentials', libs, cat), null);
+  assert.equal(atribuirLibreria('Error en LoginSapViejo', libs, cat), null, 'palabra completa');
+});
+
+test('evidencia: se quita el bloque fijo de UiPath y queda visible "at source"', () => {
+  const m = 'Login Famisanar no se completó: Could not find the user-interface (UI) element for this action.\r\n\r\nPossible solutions:\r\n • Ensure application is opened\r\n • Increase the "Delay before" value at source: Validar - Invoke Workflow File';
+  assert.equal(compactarMensajeUiPath(m), 'Login Famisanar no se completó: Could not find the user-interface (UI) element for this action. at source: Validar - Invoke Workflow File');
+  assert.ok(sanitizarLog({ Level: 'Error', Message: m }, 'j').firmaV1);
+});
+
+test('consolidación: una tarjeta con la firma anterior se actualiza (no se duplica) y toma la librería', () => {
+  const s = { projectId: 'facturacion', ventana: { desde: '2026-11-09T10:00:00Z', hasta: '2026-11-09T11:00:00Z' }, jobs: [{ key: 'j', proceso: 'FIN_Facturacion_Performer', estado: 'Faulted', creado: '2026-11-09T10:01:00Z', fin: '2026-11-09T10:02:00Z' }],
+    logs: [sanitizarLog({ Level: 'Fatal', Message: 'Fallo at source: LoginSap\r\nPossible solutions:\r\n • x', TimeStamp: '2026-11-09T10:01:30Z' }, 'j')].map((l) => ({ ...l, proceso: 'FIN_Facturacion_Performer' })),
+    queueItems: [], colas: [], procesos: [], triggers: [], assets: [], errores: [], conteos: {} };
+  const proyectoInv = { ...proyecto(), inventory: { processes: [{ name: 'FIN_Facturacion_Performer', libraries: [{ name: 'LIB_Sap', version: '2.2.0' }] }] } };
+  const r = evaluar({ senales: s, proyecto: proyectoInv, librerias: { LIB_Sap: { '2.2.0': { activities: ['LoginSap'] } } } });
+  const h = r.hallazgos.find((x) => x.checkId === 'jobs_faulted');
+  assert.equal(h.libreria.activity, 'LoginSap');
+  assert.ok(h.fingerprintLegacy && h.fingerprintLegacy !== h.fingerprint);
+  const vieja = { id: 'inc-viejo', __version: 4, projectId: 'facturacion', status: 'open', decision: 'escalate', severity: 'P2', category: h.categoria, fingerprints: [h.fingerprintLegacy], occurrences: 1, recurrences: [], triage: {}, process: 'FIN_Facturacion_Performer' };
+  const plan = consolidar({ runId: 'r', inicio: 'x', fin: '2026-11-09T11:00:00Z', trigger: 'dry_run', proyectos: [proyectoInv], incidentes: [vieja], trabajo: [], porProyecto: [{ projectId: 'facturacion', hallazgos: r, senales: s }] });
+  assert.equal(plan.resumen.newIncidents, 0);
+  const w = plan.writes.find((x) => x.doc_id === 'inc-viejo');
+  assert.equal(w.data.library.name, 'LIB_Sap');
+});
+
+test('consolidación: un deploy marca las tarjetas abiertas del proceso y las manda a re-análisis', () => {
+  const { senales } = senalesDeFixture();
+  const p = proyecto();
+  const hall = evaluar({ senales, proyecto: p, reglas: [regla()] });
+  const abierta = { id: 'inc-a', __version: 1, projectId: 'facturacion', status: 'open', decision: 'escalate', severity: 'P2', category: 'selector', fingerprints: ['zzz'], occurrences: 1, recurrences: [], triage: {}, process: 'FIN_Facturacion_Performer', analysis: { status: 'done' } };
+  const plan = consolidar({ runId: 'r', inicio: 'x', fin: '2026-11-09T11:00:00Z', trigger: 'dry_run', proyectos: [p], incidentes: [abierta], trabajo: [], porProyecto: [{ projectId: 'facturacion', hallazgos: hall, senales }] });
+  const w = plan.writes.find((x) => x.doc_id === 'inc-a');
+  assert.deepEqual([w.data.deploy.previous, w.data.deploy.version], ['1.3.2', '1.4.0']);
+  assert.ok(plan.analizar.includes('inc-a'));
+});
+
+test('consolidación: procesos nuevos de la carpeta se suman solos; re-análisis pedido por un humano', () => {
+  const { senales } = senalesDeFixture();
+  const p = { ...proyecto(), processes: proyecto().processes.slice(0, 1) };
+  const hall = evaluar({ senales, proyecto: p });
+  const inc = { id: 'inc-r', __version: 2, projectId: 'facturacion', status: 'open', decision: 'escalate', fingerprints: ['q'], analysis: { status: 'done' } };
+  const plan = consolidar({ runId: 'r', inicio: 'x', fin: '2026-11-09T11:00:00Z', trigger: 'dry_run', proyectos: [p], incidentes: [inc], trabajo: [], porProyecto: [{ projectId: 'facturacion', hallazgos: hall, senales }], reanalizar: ['inc-r'] });
+  const wp = plan.writes.find((x) => x.collection === 'projects');
+  assert.ok(wp.data.processes.some((x) => x.orchestratorProcess === 'FIN_Facturacion_Performer'));
+  assert.ok(plan.analizar.includes('inc-r'));
+  assert.deepEqual(prepararLotes(plan.writes.filter((w) => w.collection !== 'incidents')).errores, []);
 });

@@ -10,7 +10,8 @@
       "enum": [
         "onboard_project",
         "reanalyze_project",
-        "recompile_rule"
+        "recompile_rule",
+        "reanalyze_incident"
       ]
     },
     "projectId": {
@@ -40,6 +41,10 @@
     "processedAt": {
       "type": "string",
       "maxLength": 40
+    },
+    "incidentId": {
+      "type": "string",
+      "maxLength": 200
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",

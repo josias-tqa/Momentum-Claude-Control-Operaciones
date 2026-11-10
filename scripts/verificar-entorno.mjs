@@ -227,6 +227,8 @@ lectura('or.processes', 'Listar procesos', ['or', 'processes', 'list', ...alcanc
 lectura('or.triggers.time', 'Triggers de tiempo', ['or', 'triggers', 'list', '--type', 'time', ...(carpeta ? ['--folder-path', carpeta] : []), '--limit', '50'],
   (items) => `${items.length} trigger(s); habilitados: ${JSON.stringify(contarPor(items, ['Enabled', 'enabled', 'IsEnabled']))}`);
 lectura('or.triggers.queue', 'Triggers de cola', ['or', 'triggers', 'list', '--type', 'queue', ...(carpeta ? ['--folder-path', carpeta] : []), '--limit', '50']);
+lectura('or.packages', 'Listar paquetes del feed (código desde Orchestrator)', ['or', 'packages', 'list', '--limit', '5']);
+lectura('or.libraries', 'Listar librerías del feed', ['or', 'libraries', 'list', '--limit', '5']);
 lectura('or.machines', 'Listar máquinas', ['or', 'machines', 'list', ...(carpeta ? ['--folder-path', carpeta] : []), '--limit', '20']);
 
 // ---------- 5) fallback REST OData (independiente del CLI) ----------
@@ -320,7 +322,7 @@ if (process.env.BITBUCKET_TOKEN && repoPrueba) {
     }
   }
 } else {
-  registrar('bb.lsremote', 'Bitbucket', 'omitido', 'faltan BITBUCKET_TOKEN o --repo');
+  registrar('bb.lsremote', 'Bitbucket (opcional: solo respaldo)', 'omitido', 'sin BITBUCKET_TOKEN o --repo: el código sale de los paquetes de Orchestrator');
 }
 
 // ---------- 7) red: hosts bloqueados por el proxy durante la verificación ----------

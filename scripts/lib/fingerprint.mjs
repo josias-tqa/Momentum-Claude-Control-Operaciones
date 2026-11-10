@@ -20,7 +20,7 @@ export function normalizarFirma(mensaje) {
     .slice(0, 160);
 }
 
-export function fingerprint({ projectId, categoria, proceso, cola, firma }) {
-  const base = [projectId || '', categoria || '', proceso || '', cola || '', normalizarFirma(firma)].join('|');
+export function fingerprint({ projectId, categoria, proceso, cola, firma, firmaNormalizada }) {
+  const base = [projectId || '', categoria || '', proceso || '', cola || '', firmaNormalizada ?? normalizarFirma(firma)].join('|');
   return createHash('sha1').update(base).digest('hex').slice(0, 16);
 }

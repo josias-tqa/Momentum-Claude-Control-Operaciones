@@ -215,6 +215,35 @@
         "null"
       ],
       "maxLength": 60
+    },
+    "library": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "activity": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        }
+      }
+    },
+    "deploy": {
+      "type": [
+        "object",
+        "null"
+      ]
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",

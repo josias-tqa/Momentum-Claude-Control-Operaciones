@@ -63,6 +63,9 @@ export function carpetasDe(p) {
 // limita a ellos (útil cuando la carpeta se comparte con otros proyectos); si falta alguno, se
 // consulta la carpeta completa para no perder señales.
 export function filtroDeProcesos(p) {
+  // Por defecto (includeAllProcesses distinto de false) se controla TODA la carpeta: los procesos nuevos
+  // se suman solos. Solo se filtra cuando un Admin eligió explícitamente qué procesos son del proyecto.
+  if (p.includeAllProcesses !== false) return null;
   const n = normalizarProyecto(p);
   if (!n.processes.length || n.processes.some((x) => !x.orchestratorProcess)) return null;
   return new Set(n.processes.map((x) => x.orchestratorProcess));

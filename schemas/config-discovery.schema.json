@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config-discovery",
+  "type": "object",
+  "required": [
+    "folders",
+    "at"
+  ],
+  "properties": {
+    "at": {
+      "type": "string",
+      "maxLength": 40
+    },
+    "folders": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "required": [
+          "folderPath"
+        ],
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "procesos": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          "jobs30d": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

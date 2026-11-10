@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
+import { normalizarFirma } from './fingerprint.mjs';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -23,6 +24,17 @@ function cargarPatrones() {
 }
 
 export const LARGO_MAXIMO_TEXTO = 600;
+
+// Los errores de UI de UiPath traen un bloque fijo "Possible solutions: • … • …" que ocupa casi todo el
+// espacio y deja afuera el final ("at source: <actividad>"), que es lo que dice dónde falló. Se quita.
+export function compactarMensajeUiPath(texto) {
+  if (texto === null || texto === undefined) return texto;
+  return String(texto)
+    .replace(/\s*Possible solutions:[\s\S]*?(?=\s*\bat\s+[Ss]ource:|$)/g, ' ')
+    .replace(/[ \t]*\r?\n[ \t]*/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
 
 export function redactarTexto(texto, { largo = LARGO_MAXIMO_TEXTO } = {}) {
   if (texto === null || texto === undefined) return texto;
@@ -60,7 +72,8 @@ export function sanitizarQueueItem(item, cola) {
     cola: cola || (item.QueueDefinition && item.QueueDefinition.Name) || null,
     estado: item.Status ?? null,
     tipoExcepcion: tipoExcepcion(item),
-    motivo: redactarTexto(textoExcepcion(pe)),
+    motivo: redactarTexto(compactarMensajeUiPath(textoExcepcion(pe))),
+    firmaV1: normalizarFirma(redactarTexto(textoExcepcion(pe))),
     detalle: pe && typeof pe === 'object' && pe.Details ? redactarTexto(pe.Details, { largo: 300 }) : null,
     referenciaHash: hashCorto(item.Reference),
     reintento: item.RetryNumber ?? null,
@@ -97,7 +110,9 @@ export function sanitizarLog(linea, jobKey) {
   return {
     jobKey: jobKey ?? null,
     nivel: linea.Level ?? null,
-    mensaje: redactarTexto(linea.Message),
+    mensaje: redactarTexto(compactarMensajeUiPath(linea.Message)),
+    // Firma con el formato anterior (sin compactar): solo para no duplicar tarjetas abiertas antes del cambio.
+    firmaV1: normalizarFirma(redactarTexto(linea.Message)),
     fecha: linea.TimeStamp ?? null,
   };
 }
