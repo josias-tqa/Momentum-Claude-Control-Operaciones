@@ -108,12 +108,27 @@ test('regla "known": marca el hallazgo como comportamiento conocido', () => {
   assert.equal(r.hallazgos.find((h) => h.checkId === 'queue_abandoned').conocidoPor, 'k1');
 });
 
-function correr(incidentes, trabajo = [], runId = 'run-1', fin = '2026-11-09T11:00:00Z') {
+function correr(incidentes, trabajo = [], runId = 'run-1', fin = '2026-11-09T11:00:00Z', ajustes = {}) {
   const { senales } = senalesDeFixture();
   const p = proyecto();
-  const hallazgos = evaluar({ senales, proyecto: p, reglas: [regla()] });
-  return consolidar({ runId, inicio: fin, fin, trigger: 'dry_run', proyectos: [p], incidentes, trabajo, porProyecto: [{ projectId: p.id, hallazgos, senales }] });
+  const hallazgos = evaluar({ senales, proyecto: p, reglas: [regla()], ajustes });
+  return consolidar({ runId, inicio: fin, fin, trigger: 'dry_run', proyectos: [p], incidentes, trabajo, porProyecto: [{ projectId: p.id, hallazgos, senales }], ajustes });
 }
+
+test('idioma: al pasar a inglés, las tarjetas que se repiten cambian título y porqué, sin duplicarse', () => {
+  const r1 = correr([]);
+  const es = comoIncidentes(r1);
+  assert.ok(es.every((i) => i.language === 'es'));
+  const r2 = correr(es, [], 'run-2', '2026-11-09T12:00:00Z', { language: 'en' });
+  assert.equal(r2.resumen.newIncidents, 0, 'mismas tarjetas: los fingerprints no dependen del idioma');
+  const en = comoIncidentes(r2);
+  assert.equal(en.length, es.length);
+  for (const i of en) {
+    assert.equal(i.language, 'en');
+    assert.ok(!/[áéíóúñ]|job\(s\) con|Cola /.test(i.title), `título en inglés: ${i.title}`);
+    assert.ok(!/Clasificación automática|Coincide con la regla/.test(i.triage.rationale), `porqué en inglés: ${i.triage.rationale}`);
+  }
+});
 
 const comoIncidentes = (plan) => plan.writes.filter((w) => w.collection === 'incidents').map((w) => ({ id: w.doc_id, __version: 1, ...w.data }));
 

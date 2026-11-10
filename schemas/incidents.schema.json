@@ -37,6 +37,11 @@
       "type": "string",
       "maxLength": 200
     },
+    "language": {
+      "type": "string",
+      "enum": ["es", "en"],
+      "description": "Idioma en que la rutina escribió el título y el porqué (config/settings.language). Si cambia, la próxima recurrencia los reescribe."
+    },
     "category": {
       "type": "string",
       "enum": [

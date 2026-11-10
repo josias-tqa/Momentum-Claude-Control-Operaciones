@@ -97,6 +97,10 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
         doc.lastSeenAt = maxIso(doc.lastSeenAt, h.ultima || ahora);
         doc.recurrences = [...(doc.recurrences || []), recurrencia].slice(-50);
         doc.severity = masGrave(doc.severity, severidad);
+        // El título lo genera cada corrida (script o triage), en el idioma de Ajustes: se refresca para que una
+        // tarjeta que se repite no quede en el idioma anterior. Si cambió el idioma, también el porqué del triage.
+        doc.title = String(t.title || h.titulo).slice(0, 200);
+        if (doc.language !== lang) { if (doc.triage) doc.triage = { ...doc.triage, rationale: tri.rationale }; doc.language = lang; }
         if (doc.severity !== sevAnterior) doc.severityRaisedAt = ahora;
         if (doc.decision !== decision || doc.severity !== sevAnterior) {
           doc.triageHistory = [...(doc.triageHistory || []), doc.triage].filter(Boolean).slice(-10);
@@ -127,6 +131,7 @@ export function consolidar({ runId, inicio, fin, trigger, sessionUrl, proyectos,
           status: 'open',
           fingerprints: [h.fingerprint],
           title: String(t.title || h.titulo).slice(0, 200),
+          language: lang,
           category: categoria,
           severity: severidad,
           decision,
