@@ -38,7 +38,7 @@ Solo lectura en Orchestrator y Bitbucket (ver `CLAUDE.md`). El proyecto ya exist
    - Por cada proceso: `node scripts/fetch-codigo.mjs --proyecto … --proceso <id> --destino work/$RUN/codigo/<id>/<processId>`. El código, las librerías y la documentación salen del paquete de la versión desplegada. El repo (si hay) es solo respaldo.
    - `hygiene` del índice: si el paquete publica capturas, datos o carpetas internas, es una discrepancia de tipo `hygiene` (paso 5), como recomendación para desarrollo (ver `docs/recomendaciones-publicacion.md`).
    Después, por cada proceso, identificá:
-   - el estilo (XAML/REFramework, coded-first, mixto) y si está `.claude/tqa-project.json`;
+   - el estilo (XAML/REFramework, coded-first, mixto) y si el proyecto trae configuración propia para Claude (`.claude/*.json`);
    - los entry points y dispatcher/performer;
    - las colas y assets referenciados en el Config (`Data/Config.xlsx` o `Config.json`; para el xlsx alcanza con los nombres de hojas y claves; podés usar `unzip -p` sobre el xml);
    - las excepciones de negocio definidas;

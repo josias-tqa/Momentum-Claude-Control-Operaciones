@@ -99,7 +99,7 @@ Notas para el diseño:
    - **GO**: login headless OK y lecturas de jobs, queue items y procesos OK con el CLI.
    - **GO CON FALLBACK**: el CLI falla pero la API REST OData responde con el token de client credentials.
      El colector usa REST con el header `X-UIPATH-OrganizationUnitId` y un User-Agent propio. El default
-     de algunos clientes recibe 403 de Cloudflare (lección del harness TQA).
+     de algunos clientes recibe 403 de Cloudflare.
    - **NO-GO**: ninguno responde. Se replantea, por ejemplo con una rutina local por Remote Control.
 5. Además: Bitbucket `ls-remote` y clon OK, y escritura con `ArtifactData` **sin pedir aprobación**,
    requisito de una rutina desatendida.

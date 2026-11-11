@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Clona (superficial, solo lectura) el repo de UN PROCESO de un proyecto desde Bitbucket, en la versión
-// desplegada cuando existe el tag `v<versión>` (estándar 14 de TQA); si no, en la rama configurada.
+// desplegada cuando existe el tag `v<versión>` (convención de publicación); si no, en la rama configurada.
 //
 // Uso:
 //   node scripts/fetch-repo.mjs --proyecto <project.json> --proceso <id|nombre en Orchestrator> --destino work/<run>/repos/<id>/<proceso> [--version 1.4.0]

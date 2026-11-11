@@ -1,22 +1,31 @@
-# Entrega a Grupo Momentum
+# Instalación en Grupo Momentum
 
-TQA desarrolla y prueba la Torre de Control con su cuenta. Después Momentum pasa a ser dueña de todo: el repo, el entorno, la rutina y el tablero. Un artifact no se transfiere de cuenta, así que Momentum publica **su propio** tablero desde este repo y migra la configuración.
+Momentum es dueña de todo: el código, el entorno cloud, la rutina y el tablero. Todo corre con la cuenta de
+Claude de Momentum y con credenciales propias de Momentum. El tablero arranca con la base vacía y los
+proyectos se descubren desde cero escaneando Orchestrator.
 
-## Pasos
+**La guía interactiva es el skill `/instalar-torre`** (`.claude/skills/instalar-torre/SKILL.md`). Para
+empezar, ver `LEEME-PRIMERO.md`.
 
-1. **Repo:** transferir o importar `Momentum-Claude-Control-Operaciones` al GitHub de Momentum. La app de Claude para GitHub tiene que tener acceso.
-2. **Cuenta dueña:** una cuenta de servicio en la organización de claude.ai de Momentum (Team o Enterprise). Así los miembros de Momentum tienen los tres roles con permisos reales.
-3. **Credenciales propias de Momentum:** una External App de UiPath de solo lectura y un token de Bitbucket de solo lectura. **No se reutilizan las de prueba.**
-4. **Entorno cloud** `momentum-operaciones` en la cuenta de Momentum, según `docs/configuracion-cloud.md`. Después, `/verificar-entorno`.
-5. **Publicar el tablero:** desde una sesión de esa cuenta, publicar `dashboard/index.html` con las capacidades de `dashboard/capabilities.json`. Se obtiene una URL nueva, con la base vacía.
-   - Las capacidades incluyen las reglas de acceso de cada colección y `downloads` (bajar un documento como `.md`). Si cambia `capabilities.json`, hay que volver a publicar pasándolas: sin eso, por ejemplo, un Operador no puede responder discrepancias.
-   - La ayuda ya viene compilada dentro del archivo. Antes de publicar, `npm run check:ayuda` y `npm run check:i18n` confirman que la ayuda y los textos (español e inglés) están al día.
-6. **Configurar** `OPS_ARTIFACT_URL` en el entorno con esa URL y correr `/control-mantenimiento seed`.
-   - En un tablero sin migración, el primer paso del Admin es indicar en **Ajustes** la carpeta de Orchestrator a escanear: ver `docs/cliente-nuevo.md`.
-7. **Migrar** (opcional): en el tablero de TQA, `/control-mantenimiento export`. En el de Momentum, `/control-mantenimiento import`.
-   - Se migran proyectos, memorias, reglas, historial, documentos subidos y discrepancias con sus respuestas.
-   - **No** se migran los incidentes ni las corridas de prueba.
-   - Los proyectos entran "En revisión" para que el Admin de Momentum los active.
-8. **Rutina programada** en la cuenta de Momentum.
-9. **Compartir** el tablero: Viewer, Contributor y Editor según el rol de cada persona.
-10. **Apagar** la rutina y el entorno de prueba de TQA, y revocar sus credenciales.
+## Resumen de fases
+
+| Fase | Qué | Dónde | Detalle |
+|---|---|---|---|
+| A | Revisar la carpeta y correr los tests | Claude Code en la computadora de quien instala | `npm ci && npm test`, `npm run check:ayuda`, `npm run check:i18n` |
+| B | Guardar el código en Bitbucket (y el espejo de solo lectura en GitHub, si hace falta) | Bitbucket / GitHub | `docs/instalacion/bitbucket-y-espejo.md` |
+| C | Acceso de solo lectura a Orchestrator | UiPath Automation Cloud | `docs/instalacion/uipath-acceso-cli.md` |
+| D | Entorno cloud `momentum-operaciones` (red, setup script, variables) | claude.ai/code | `docs/configuracion-cloud.md` |
+| E | Verificar accesos y publicar el tablero | Sesión cloud en ese entorno | `/verificar-entorno`, `dashboard/capabilities.json` |
+| F | Seed, prueba en seco y rutina programada | Sesión cloud | `/control-mantenimiento seed`, `/control-corrida --dry-run` |
+| G | Primer uso: carpeta a escanear, registrar y activar proyectos, compartir | Tablero | `docs/cliente-nuevo.md`, `docs/guia-operador.md` |
+
+## Decisiones que toma Momentum
+
+- **Cuenta dueña.** La misma cuenta de Claude publica el tablero, crea el entorno y es dueña de la rutina:
+  solo el dueño del tablero puede escribir corridas e incidentes. Conviene una cuenta de servicio o
+  compartida del área de operaciones, para que no dependa de una persona.
+- **Zona horaria** de los horarios de la rutina y del tablero (`seed/settings.json`, `timezone`).
+- **Horario de la rutina** (por defecto, cada hora en horario operativo).
+- **Bitbucket como respaldo de código** de los proyectos UiPath (opcional: el código ya sale de los paquetes publicados en Orchestrator).
+
+La migración de datos (`/control-mantenimiento export`/`import`) no se usa en esta instalación.

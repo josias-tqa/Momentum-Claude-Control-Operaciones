@@ -56,6 +56,7 @@ datos, `OPS_ARTIFACT_URL`, usada sin parámetros como `?sk=…`). El equipo de M
 | Propuestas de reglas: similitud entre procesos y revisión diaria (nunca activa nada) | skill `/control-reglas` |
 | Retención, rollups, seed y export/import para la entrega | skill `/control-mantenimiento` |
 | Verificación del entorno (credenciales, red, permisos) | skill `/verificar-entorno` |
+| Instalación guiada en Momentum (Bitbucket, UiPath, entorno, tablero, rutina) | skill `/instalar-torre` · `LEEME-PRIMERO.md` · `docs/instalacion/` |
 | Modelo de datos del tablero | `docs/modelo-de-datos.md` y `schemas/` |
 | Scripts deterministas (colecta, evaluación, consolidación, lotes) | `scripts/` (tests: `npm test`) |
 | Tablero (fuente del artifact) | `dashboard/index.html` |

@@ -306,7 +306,7 @@ export function evaluar({ senales, proyecto: proyectoIn, reglas = [], ajustes = 
       evidencia: { jobs: grupo.slice(0, 20).map((j) => ({ key: j.key, creado: j.creado, inicio: j.inicio || null, estado: j.estado })), minutosMaximo: Math.round(peor) } });
   }
 
-  // 4) Falla silenciosa: job Successful con logs Fatal (quirk del framework TQA: GetTransactionData
+  // 4) Falla silenciosa: job Successful con logs Fatal (comportamiento conocido del REFramework: GetTransactionData
   //    agota reintentos, loguea Fatal y el job termina Successful).
   const silenciosos = senales.jobs.filter((j) => j.estado === 'Successful' && (logsPorJob.get(j.key) || []).some((l) => l.nivel === 'Fatal'));
   check('silent_failure', M('eval.check.silent_failure'), silenciosos.length ? 'alerta' : 'ok', silenciosos.length, 0);

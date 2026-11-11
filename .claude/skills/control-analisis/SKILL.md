@@ -31,7 +31,7 @@ Si la causa requiere un fix, se dice **qué** y **dónde**, para que lo tome un 
      - el que la consume (Performer), para saber si falla al procesarlos.
    - Si el incidente no tiene proceso asociado, elegilo por la evidencia (el `proceso` de los jobs o logs) o por la memoria.
 2. **Ubicar el paso que falla:**
-   - Con los mensajes de la evidencia (`evidence.ultima.logs`, `queueItems[].motivo`) y los marcadores del framework TQA (`Started/Finished SubProcess|Component`, `"<Handler>: Process started."`), encontrá el workflow (`.xaml`) o la clase (`.cs`) donde se lanza la excepción.
+   - Con los mensajes de la evidencia (`evidence.ultima.logs`, `queueItems[].motivo`) y los marcadores de log del framework de los proyectos (`Started/Finished SubProcess|Component`, `"<Handler>: Process started."`), encontrá el workflow (`.xaml`) o la clase (`.cs`) donde se lanza la excepción.
    - Para leer XAML/C# apoyate en el skill `uipath-rpa`. Para el razonamiento causal, en el método de `uipath-troubleshoot`:
      - anclar la entidad;
      - extraer señales;

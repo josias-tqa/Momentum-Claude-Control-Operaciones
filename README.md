@@ -4,8 +4,8 @@ Tablero compartido y rutina de Claude para controlar en producción los proyecto
 
 La rutina corre periódicamente en Claude cloud. Lee tres fuentes:
 - Orchestrator, con el CLI `uip`.
-- El código, desde Bitbucket.
-- La documentación PDD/SDD de cada proyecto.
+- El código, las librerías y la documentación, desde los paquetes publicados en Orchestrator (Bitbucket es respaldo opcional).
+- La documentación PDD/SDD/Runbook que se sube al tablero.
 
 Con eso detecta incidentes, los clasifica (triage), los analiza antes de escalarlos y los publica en el
 tablero. Ahí el equipo los responde, delega, descarta o pospone, y cada proyecto acumula su memoria de
@@ -19,17 +19,17 @@ producción.
 |---|---|
 | 0 — Validación de `uip` en Claude cloud y de los accesos | ✅ GO ([detalle](docs/validacion-uip-cloud.md)) |
 | 1 — Colector, evaluación, consolidación, lotes de escritura (con tests) | ✅ |
-| 2 — Tablero publicado (prueba TQA) | ✅ https://claude.ai/artifact/L6VEZqxytm8QYnFJovx93u |
+| 2 — Tablero publicado (prueba) | ✅ |
 | 3 — Skills de la rutina | ✅ |
 | 4 — Rutina programada y piloto con un proyecto real | ⏳ |
-| 5 — Entrega a Momentum | Pendiente ([pasos](docs/entrega-momentum.md)) |
+| 5 — Instalación en Momentum | En curso: empezar por [LEEME-PRIMERO.md](LEEME-PRIMERO.md) |
 
 ## Mapa
 
 | Qué | Dónde |
 |---|---|
 | Reglas de operación de la rutina | `CLAUDE.md` |
-| Skills | `.claude/skills/` (`control-corrida`, `control-alta-proyecto`, `control-descubrir`, `control-analisis`, `control-aprendizaje`, `control-reglas`, `control-mantenimiento`, `verificar-entorno`) |
+| Skills | `.claude/skills/` (`control-corrida`, `control-alta-proyecto`, `control-descubrir`, `control-analisis`, `control-aprendizaje`, `control-reglas`, `control-mantenimiento`, `verificar-entorno`, `instalar-torre`) |
 | Scripts deterministas | `scripts/` |
 | Bloqueo de solo lectura | `.claude/hooks/guard-solo-lectura.mjs` |
 | Tablero | `dashboard/index.html` + `dashboard/capabilities.json` |
@@ -39,6 +39,7 @@ producción.
 | Entorno y rutina | `docs/configuracion-cloud.md` |
 | Guía para el equipo de Momentum | `docs/guia-operador.md` |
 | Puesta en marcha con un cliente nuevo | `docs/cliente-nuevo.md` |
+| Instalación guiada en Momentum | `LEEME-PRIMERO.md`, skill `/instalar-torre`, `docs/instalacion/` |
 
 ## Tests
 

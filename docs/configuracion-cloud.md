@@ -14,7 +14,7 @@ Después de cambiar variables, correr `/verificar-entorno` en una sesión nueva 
 
 ## 2. Rutina (scheduled task)
 
-- **Tipo:** una sesión nueva en cada disparo, en el entorno `momentum-operaciones`, con este repo como fuente.
+- **Tipo:** una sesión nueva en cada disparo, en el entorno `momentum-operaciones`, con este repo como fuente (o su espejo de GitHub: `docs/instalacion/bitbucket-y-espejo.md`).
 - **Frecuencia:** cada hora en horario operativo. El mínimo habitual de la plataforma es 1 hora.
   - Ejemplo de cron: `CRON_TZ=America/Argentina/Buenos_Aires 7 6-22 * * *`, que corre a los :07 entre las 6 y las 22.
   - Usar la zona horaria real de Momentum.
@@ -25,7 +25,11 @@ La rutina corre como la cuenta dueña del tablero. Por eso es la única que pued
 
 Para probar sin tocar UiPath: `/control-corrida --dry-run` usa los fixtures sintéticos y no escribe en el tablero.
 
-## 3. Si algo falla
+## 3. Volver a publicar el tablero
+
+Cuando cambia `dashboard/index.html` o `dashboard/capabilities.json`, se vuelve a publicar **desde la cuenta dueña**, en una sesión del entorno, sobre la **misma URL** (`OPS_ARTIFACT_URL`) y pasando las capacidades de `dashboard/capabilities.json`. Una URL nueva sería un tablero nuevo con la base vacía.
+
+## 4. Si algo falla
 
 | Síntoma en el tablero | Qué mirar |
 |---|---|

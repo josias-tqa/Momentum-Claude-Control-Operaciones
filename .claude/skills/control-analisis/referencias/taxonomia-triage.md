@@ -1,8 +1,7 @@
-# Taxonomía de triage (adaptada del harness TQA)
+# Taxonomía de triage
 
 Fuentes:
-- `tqa-uipath` 0.11.1: skill `troubleshoot-plus`, sus runbooks y el agente `troubleshooter`;
-- estándar 09 (manejo de errores) y estándar 08 (Orchestrator y configuración);
+- buenas prácticas de manejo de errores y de configuración de Orchestrator en proyectos REFramework;
 - skill oficial `uipath-troubleshoot` 1.205.0, para el método causal.
 
 Adaptada al monitoreo de producción.
@@ -19,12 +18,12 @@ Adaptada al monitoreo de producción.
 | `scheduling` | jobs en Pending demasiado tiempo, trigger deshabilitado, proceso que no corrió | P2 si hay SLA comprometido |
 | `business` | excepciones de negocio por encima del baseline | P3. Rara vez requiere fix: suele ser un dato de origen. |
 | `application` | excepción de sistema sin categoría más específica | P3 |
-| `silent_failure` | job Successful con logs Fatal (quirk Q1 del framework TQA: GetTransactionData agota reintentos, loguea Fatal y el job termina Successful) | P2. **El estado del job no alcanza.** |
+| `silent_failure` | job Successful con logs Fatal (comportamiento conocido del REFramework: GetTransactionData agota reintentos, loguea Fatal y el job termina Successful) | P2. **El estado del job no alcanza.** |
 | `regression` | errores nuevos que aparecen después de un deploy | P2 |
 | `deploy` | cambio de versión detectado | P4, informativo (`monitor`) |
 | `monitoring` | la Torre de Control no pudo leer (credenciales vencidas, permisos) | P2 si falla el login |
 
-## Business vs Application (estándar 09)
+## Business vs Application
 
 - **Business:** regla de negocio o condición de datos. Se decide en el Sub-Process. No consume reintentos de la cola.
 - **Application/System:** falla técnica que sube al Handler o al REFramework. Consume reintentos (`RetryNo` lo maneja Orchestrator).
@@ -40,7 +39,7 @@ Adaptada al monitoreo de producción.
 | `monitor` | Hay que vigilar la tendencia sin molestar (deploys, valores apenas sobre el umbral) | "Fuera de bandeja" |
 | `known` | La memoria de producción o una regla `known` dice que es esperado | "Fuera de bandeja", con la cita |
 
-## Orden de evidencia (runbook §1)
+## Orden de evidencia
 
 1. El job fallido y la **versión** que corrió. Dispatcher y Performer son procesos distintos en XAML.
 2. El log completo del job, usando los marcadores Start/Finished para ubicar el paso.

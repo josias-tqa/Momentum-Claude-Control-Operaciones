@@ -1,0 +1,18 @@
+# Espejo Bitbucket -> GitHub para la Torre de Control.
+# Copiar a la raíz del repo como "bitbucket-pipelines.yml" (ver docs/instalacion/bitbucket-y-espejo.md).
+# Requiere:
+#   - SSH key de Pipelines cargada como deploy key con escritura en el repo espejo de GitHub;
+#   - github.com en Known hosts de Pipelines;
+#   - variable de repositorio GITHUB_ESPEJO = "<org>/<repo>" del espejo.
+image: alpine/git:2.45.2
+
+clone:
+  depth: full
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Espejo de main en GitHub (solo lectura para Claude cloud)
+          script:
+            - git push --force "git@github.com:${GITHUB_ESPEJO}.git" "HEAD:refs/heads/main"
