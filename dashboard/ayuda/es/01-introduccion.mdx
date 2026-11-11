@@ -2,6 +2,10 @@
 
 <Seccion id="introduccion" titulo="Qué es la Torre de Control" breve="Qué hace, cómo trabaja, qué no hace nunca y qué puede hacer cada rol.">
 
+<Animacion nombre="sistema" etiquetas="Orchestrator|Rutina programada|Tablero|Equipo|solo lectura|hallazgos|respuestas" alt="Esquema animado: muchas señales van de Orchestrator a la rutina programada, que solo lee. Unos pocos hallazgos salen de la rutina al tablero, donde trabaja el equipo, y las respuestas del equipo vuelven a la rutina." pie="Los tres componentes: la rutina lee Orchestrator, publica en el tablero y aprende de las respuestas del equipo." />
+
+<Animacion nombre="corrida" etiquetas="Lee|Evalúa reglas|Clasifica|Analiza|Publica|aprende de las respuestas" alt="Esquema animado de una corrida: la rutina lee muchas señales, las reglas marcan una parte, el triage aparta el ruido y lo ya conocido, lo nuevo se analiza y llega al tablero como tarjeta. Las respuestas del equipo vuelven y ajustan las reglas." pie="Una corrida por dentro: entran muchas señales y salen pocas tarjetas. Las cantidades son ilustrativas." />
+
 La Torre de Control vigila los robots de UiPath que Grupo Momentum tiene en producción. Cada hora una **rutina** de Claude revisa Orchestrator, detecta lo que anda mal, decide qué tan grave es y lo deja en este tablero, explicado y ordenado.
 
 El tablero es donde el equipo trabaja: ve lo que requiere atención, lo responde, lo delega o lo descarta. Con cada respuesta la rutina aprende: la próxima vez sabe qué es normal en cada proyecto y qué no.
