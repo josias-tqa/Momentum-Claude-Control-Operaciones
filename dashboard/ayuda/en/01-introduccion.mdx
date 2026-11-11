@@ -2,6 +2,10 @@
 
 <Seccion id="introduccion" titulo="What the Control Tower is" breve="What it does, how it works, what it never does and what each role can do.">
 
+<Animacion nombre="sistema" etiquetas="Orchestrator|Scheduled routine|Dashboard|Team|read-only|findings|answers" alt="Animated diagram: many signals travel from Orchestrator to the scheduled routine, which only reads. A few findings go from the routine to the dashboard, where the team works, and the team's answers travel back to the routine." pie="The three components: the routine reads Orchestrator, publishes to the dashboard and learns from the team's answers." />
+
+<Animacion nombre="corrida" etiquetas="Reads|Checks rules|Classifies|Analyzes|Publishes|learns from the answers" alt="Animated diagram of one run: the routine reads many signals, the rules flag some of them, the triage sets aside noise and what is already known, what is new is analyzed and reaches the dashboard as a card. The team's answers travel back and tune the rules." pie="Inside one run: many signals go in and a few cards come out. The volumes are illustrative." />
+
 The Control Tower watches over the UiPath robots that Grupo Momentum runs in production. Every hour a Claude **routine** reviews Orchestrator, detects what is going wrong, decides how serious it is and leaves it on this dashboard, explained and sorted.
 
 The dashboard is where the team works: you see what needs attention, then answer it, delegate it or dismiss it. With every answer the routine learns: next time it knows what is normal in each project and what is not.

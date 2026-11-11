@@ -82,3 +82,12 @@ function anclasYLinks(l) {
   const vistas = app.match(/const vistas = \{([\s\S]*?)\};/)[1];
   for (const [, n] of bloque.html.matchAll(/<!--vista:([\w-]+):/g)) assert.ok(n === 'selector' || n === 'tarjeta' || new RegExp(`(^|[\\s{,'])${n}'?:`).test(vistas), `vista desconocida: ${n}`);
 }
+
+test('ayuda: las animaciones existen en el tablero y son las mismas en todos los idiomas', () => {
+  const de = (l) => [...bloques[l].html.matchAll(/<canvas data-anim="([\w-]+)" data-t="([^"]*)"/g)].map((m) => `${m[1]}:${m[2].split('|').length}`);
+  const [base, ...otros] = IDIOMAS_AYUDA;
+  assert.ok(de(base).length >= 2, 'la introducción lleva sus animaciones');
+  for (const l of otros) assert.deepEqual(de(l), de(base), `${l}: las animaciones (y su cantidad de etiquetas) difieren de ${base}`);
+  const escenas = app.match(/const ANIM_ESC = \{([\s\S]*?)\n\};/)[1];
+  for (const x of de(base)) assert.ok(new RegExp(`\\n  ${x.split(':')[0]}: \\{`).test(escenas), `animación desconocida en el tablero: ${x}`);
+});

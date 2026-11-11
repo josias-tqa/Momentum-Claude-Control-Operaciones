@@ -10,6 +10,8 @@
 //   <Termino id nombre>definición</Termino>   entrada del glosario; la definición es su tooltip
 //   <Vista nombre variante nota />    vista real de la app, dibujada con datos de ejemplo al abrir la ayuda
 //   <Nota titulo>texto</Nota>         recuadro destacado (advertencias de la configuración inicial)
+//   <Animacion nombre etiquetas alt pie />   esquema animado (canvas); etiquetas = textos del dibujo separados por |,
+//                                     alt = descripción para lectores de pantalla, pie = epígrafe. Ver ANIM_ESC en index.html
 //
 // El bloque generado empieza con el índice (<nav class="ay-toc">, tres niveles) y las tarjetas de entrada
 // (una por sección de nivel 1, con su breve). El tablero arma con eso el índice lateral, el buscador y
@@ -24,6 +26,9 @@ const TXT_BUILD = {
   es: { ejemplo: 'Ejemplo con datos ficticios', solo: 'Solo', toc: 'Contenido de la ayuda' },
   en: { ejemplo: 'Example with sample data', solo: 'Only', toc: 'Help contents' },
 };
+
+// Animaciones que sabe dibujar el tablero (ANIM_ESC en index.html) y cuántas etiquetas lleva cada una.
+const ANIMACIONES = { sistema: 7, corrida: 6 };
 
 // ---------- runtime JSX → HTML ----------
 class Html { constructor(s) { this.s = s; } }
@@ -73,6 +78,14 @@ function componentes(tips, T) {
     },
     Nota({ titulo, children }) {
       return new Html(`<div class="ay-nota" role="note">${titulo ? `<b>${esc(titulo)}</b>` : ''}${aHtml(children)}</div>`);
+    },
+    Animacion({ nombre, etiquetas, alt, pie }) {
+      const n = ANIMACIONES[nombre];
+      if (!n) throw new Error(`Animacion desconocida: ${nombre}`);
+      if (String(etiquetas || '').split('|').filter((x) => x.trim()).length !== n) throw new Error(`Animacion ${nombre}: lleva ${n} etiquetas separadas por |`);
+      if (!alt || !pie) throw new Error(`Animacion ${nombre}: faltan alt o pie`);
+      // El tablero dibuja el canvas mientras la ayuda está abierta (ver ANIM_ESC y animTick en index.html).
+      return new Html(`<figure class="ay-anim"><canvas data-anim="${esc(nombre)}" data-t="${esc(etiquetas)}" role="img" aria-label="${esc(alt)}"></canvas><figcaption>${esc(pie)}</figcaption></figure>`);
     },
     Vista({ nombre, variante = '', nota }) {
       if (!/^[a-z-]+$/.test(nombre || '') || !/^[a-z-]*$/.test(variante)) throw new Error(`Vista inválida: ${nombre}/${variante}`);

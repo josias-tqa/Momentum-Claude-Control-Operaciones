@@ -964,6 +964,13 @@ const visible = (page, sel) => page.waitForSelector(sel, { timeout: 3000 }).then
   await page.waitForSelector('.ayuda', { timeout: 3000 });
   await sinEspanol('.ayuda', 'ayuda');
   assert.ok(await visible(page, '.ayuda >> text=Example with sample data'));
+  // Las animaciones de la introducción llevan las etiquetas del idioma activo y se mueven.
+  assert.equal(await page.getAttribute('canvas[data-anim="sistema"]', 'data-t'), 'Orchestrator|Scheduled routine|Dashboard|Team|read-only|findings|answers');
+  assert.match(await page.getAttribute('canvas[data-anim="corrida"]', 'data-t'), /^Reads\|Checks rules\|/);
+  await page.waitForTimeout(300);
+  const cuadro = () => page.evaluate(() => document.querySelector('canvas[data-anim="corrida"]').toDataURL());
+  const c1 = await cuadro(); await page.waitForTimeout(300);
+  assert.notEqual(await cuadro(), c1, 'la animación de la corrida avanza');
   // Tooltips en inglés.
   await page.evaluate(() => { location.hash = '#inicio'; });
   await page.waitForTimeout(150);
